@@ -32,7 +32,7 @@ export default function Home() {
           })}
           href={siteConfig.links.docs}
         >
-          Documentation
+          
         </Link>
         <Link
           isExternal
