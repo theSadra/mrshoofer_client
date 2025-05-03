@@ -25,6 +25,7 @@ model Passenger {
 
 enum TripStatus {
   wating_info
+  wating_location
   wating_start
   intrip
   done

@@ -1,6 +1,6 @@
-import React from 'react'
-import TripInfo from './components/tripinfo'
-import { TripStatus } from '@prisma/client'
+import React from "react";
+import TripInfo from "./components/tripinfo";
+import { TripStatus } from "@prisma/client";
 
 function Upcoming() {
   // Mocked trip object
@@ -17,16 +17,35 @@ function Upcoming() {
     StartsAt: new Date(),
     passengerId: 5,
     locationId: 2,
-    status: TripStatus.wating_info,
+    status: TripStatus.intrip,
     PassengerSmsSent: false,
     AdminApproved: false,
-  }
+  };
 
   return (
     <div>
-      <TripInfo trip={trip} />
+      <TripInfo
+        trip={{
+          id: 0,
+          TicketCode: "24597503",
+          TripCode: null,
+          Origin_id: 1,
+          Destination_id: 2,
+          OriginCity: "تهران",
+          DestinationCity: "اصفهان",
+          CarName: "کمری|سوناتا|سافران",
+          ServiceName: "تشریفات VIP",
+          StartsAt: new Date(),
+          passengerId: 0,
+          PassengerSmsSent: false,
+          AdminApproved: false,
+          status: TripStatus.wating_info,
+          locationId: null,
+          Location: null, // if using the relation
+        }}
+      />
     </div>
-  )
+  );
 }
 
-export default Upcoming
+export default Upcoming;

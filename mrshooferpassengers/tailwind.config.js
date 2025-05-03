@@ -16,7 +16,9 @@ const config = {
     },
   },
   darkMode: "class",
-  plugins: [heroui()],
+  plugins: [heroui({
+      addCommonColors: true,
+    })],
 }
 
 module.exports = config;

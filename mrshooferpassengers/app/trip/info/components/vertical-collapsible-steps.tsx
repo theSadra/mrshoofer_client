@@ -1,28 +1,37 @@
 "use client";
 
-import type {ComponentProps} from "react";
-import type {ButtonProps} from "@heroui/react";
+import type { ComponentProps } from "react";
+import type { ButtonProps } from "@heroui/react";
 
 import React from "react";
-import {Spacer} from "@heroui/react";
-import {useControlledState} from "@react-stately/utils";
-import {m, LazyMotion, domAnimation} from "framer-motion";
-import {cn} from "@heroui/react";
+import { Spacer } from "@heroui/react";
+import { useControlledState } from "@react-stately/utils";
+import { m, LazyMotion, domAnimation } from "framer-motion";
+import { cn } from "@heroui/react";
+import PaymentAndInfo from "./steps/selectandpayment";
 
-export type VerticalCollapsibleStepProps = {
-  className?: string;
-  description?: React.ReactNode;
-  title?: React.ReactNode;
-  details?: string[];
-};
+import PassnegerInfo from "./steps/passnegerinfo";
 
-export interface VerticalCollapsibleStepsProps extends React.HTMLAttributes<HTMLButtonElement> {
+import LocationCardInfo from "./steps/locationcardinfo";
+import { Prisma } from "@prisma/client";
+
+import TripDone from "./steps/tripdone";
+
+// export type VerticalCollapsibleStepProps = {
+//   className?: string;
+//   description?: React.ReactNode;
+//   title?: React.ReactNode;
+//   details?: string[];
+// };
+
+export interface VerticalCollapsibleStepsProps
+  extends React.HTMLAttributes<HTMLButtonElement> {
   /**
    * An array of steps.
    *
    * @default []
    */
-  steps?: VerticalCollapsibleStepProps[];
+  // steps?: VerticalCollapsibleStepProps[];
   /**
    * The color of the steps.
    *
@@ -51,15 +60,23 @@ export interface VerticalCollapsibleStepsProps extends React.HTMLAttributes<HTML
    * Callback function when the step index changes.
    */
   onStepChange?: (stepIndex: number) => void;
+
+  trip: Prisma.TripGetPayload<{ include: { Location: true } }>;
 }
 
 function CheckIcon(props: ComponentProps<"svg">) {
   return (
-    <svg {...props} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <svg
+      {...props}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
       <m.path
-        animate={{pathLength: 1}}
+        animate={{ pathLength: 1 }}
         d="M5 13l4 4L19 7"
-        initial={{pathLength: 0}}
+        initial={{ pathLength: 0 }}
         strokeLinecap="round"
         strokeLinejoin="round"
         transition={{
@@ -73,24 +90,28 @@ function CheckIcon(props: ComponentProps<"svg">) {
   );
 }
 
-const VerticalCollapsibleSteps = React.forwardRef<HTMLButtonElement, VerticalCollapsibleStepsProps>(
+const VerticalCollapsibleSteps = React.forwardRef<
+  HTMLButtonElement,
+  VerticalCollapsibleStepsProps
+>(
   (
     {
       color = "success",
-      steps = [],
+      // steps = [],
       defaultStep = 0,
       onStepChange,
       currentStep: currentStepProp,
       stepClassName,
       className,
+      trip,
       ...props
     },
-    ref,
+    ref
   ) => {
     const [currentStep, setCurrentStep] = useControlledState(
       currentStepProp,
       defaultStep,
-      onStepChange,
+      onStepChange
     );
 
     const colors = React.useMemo(() => {
@@ -147,16 +168,42 @@ const VerticalCollapsibleSteps = React.forwardRef<HTMLButtonElement, VerticalCol
     return (
       <nav aria-label="Progress">
         <ol className={cn("flex flex-col gap-y-3", colors, className)}>
-          {steps?.map((step, stepIdx) => {
+          <PaymentAndInfo
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+          ></PaymentAndInfo>
+
+          <PassnegerInfo
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+          ></PassnegerInfo>
+
+          <LocationCardInfo
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+            trip={trip}
+          ></LocationCardInfo>
+
+          <TripDone
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+            trip={trip}
+          ></TripDone>
+
+          {/* {steps?.map((step, stepIdx) => {
             let status =
-              currentStep === stepIdx ? "active" : currentStep < stepIdx ? "inactive" : "complete";
+              currentStep === stepIdx
+                ? "active"
+                : currentStep < stepIdx
+                  ? "inactive"
+                  : "complete";
 
             return (
               <li
                 key={stepIdx}
                 className={cn(
                   "group relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
-                  stepClassName,
+                  stepClassName
                 )}
                 data-status={status}
               >
@@ -166,20 +213,22 @@ const VerticalCollapsibleSteps = React.forwardRef<HTMLButtonElement, VerticalCol
                     ref={ref}
                     aria-current={status === "active" ? "step" : undefined}
                     className={cn(
-                      "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5",
+                      "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5"
                     )}
-                    onClick={() => setCurrentStep(stepIdx)}
+                    onClick={() => {
+                      setCurrentStep(stepIdx);
+                      step.title = "MEGGZ";
+                    }}
                     {...props}
                   >
-
-<div className="flex-1 text-right">
+                    <div className="flex-1 text-right">
                       <div>
                         <div
                           className={cn(
                             "text-medium font-medium text-default-foreground transition-[color,opacity] duration-300 group-active:opacity-80",
                             {
                               "text-default-500": status === "inactive",
-                            },
+                            }
                           )}
                         >
                           {step.title}
@@ -189,7 +238,7 @@ const VerticalCollapsibleSteps = React.forwardRef<HTMLButtonElement, VerticalCol
                             "text-tiny text-default-600 transition-[color,opacity] duration-300 group-active:opacity-80 lg:text-small",
                             {
                               "text-default-500": status === "inactive",
-                            },
+                            }
                           )}
                         >
                           {step.description}
@@ -204,10 +253,10 @@ const VerticalCollapsibleSteps = React.forwardRef<HTMLButtonElement, VerticalCol
                               "relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold text-default-foreground",
                               {
                                 "shadow-lg": status === "complete",
-                              },
+                              }
                             )}
                             initial={false}
-                            transition={{duration: 0.25}}
+                            transition={{ duration: 0.35 }}
                             variants={{
                               inactive: {
                                 backgroundColor: "transparent",
@@ -220,7 +269,8 @@ const VerticalCollapsibleSteps = React.forwardRef<HTMLButtonElement, VerticalCol
                                 color: "var(--active-color)",
                               },
                               complete: {
-                                backgroundColor: "var(--complete-background-color)",
+                                backgroundColor:
+                                  "var(--complete-background-color)",
                                 borderColor: "var(--complete-border-color)",
                               },
                             }}
@@ -229,14 +279,19 @@ const VerticalCollapsibleSteps = React.forwardRef<HTMLButtonElement, VerticalCol
                               {status === "complete" ? (
                                 <CheckIcon className="h-6 w-6 text-[var(--active-fg-color)]" />
                               ) : (
-                                <span>{stepIdx + 1}</span>
+                                <span>
+                                  {status === "inactive" ? (
+                                    <>{stepIdx + 1}</>
+                                  ) : (
+                                    <>{stepIdx + 1}</>
+                                  )}
+                                </span>
                               )}
                             </div>
                           </m.div>
                         </m.div>
                       </LazyMotion>
                     </div>
-                    
                   </button>
                 </div>
                 {step.details && step.details?.length > 0 && (
@@ -258,13 +313,13 @@ const VerticalCollapsibleSteps = React.forwardRef<HTMLButtonElement, VerticalCol
                         },
                       }}
                       variants={{
-                        active: {opacity: 1, height: "auto"},
-                        inactive: {opacity: 0, height: 0},
-                        complete: {opacity: 0, height: 0},
+                        active: { opacity: 1, height: "auto" },
+                        inactive: { opacity: 0, height: 0 },
+                        complete: { opacity: 0, height: 0 },
                       }}
                     >
-                      <Spacer x={14} />
-                      <ul className="list-disc pb-4 pl-1 pr-12 text-default-400">
+                      <Spacer x={1} />
+                      <ul className="list-disc pb-4 pe-3 pr-12 text-default-400 text-start mt-2">
                         {step.details.map((detail, idx) => (
                           <li key={idx} className="mb-1 text-tiny">
                             {detail}
@@ -276,11 +331,11 @@ const VerticalCollapsibleSteps = React.forwardRef<HTMLButtonElement, VerticalCol
                 )}
               </li>
             );
-          })}
+          })} */}
         </ol>
       </nav>
     );
-  },
+  }
 );
 
 VerticalCollapsibleSteps.displayName = "VerticalCollapsibleSteps";
