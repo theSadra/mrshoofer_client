@@ -1,10 +1,19 @@
 import React from "react";
 import { LazyMotion, m, domAnimation } from "framer-motion";
-import { Spacer } from "@heroui/react";
+import { Button, Card, Spacer } from "@heroui/react";
 import { cn } from "@heroui/react";
 import type { ComponentProps } from "react";
 
 import { Prisma, TripStatus } from "@prisma/client";
+
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from "@heroui/react";
 
 export default function StepItem({
   currentStep,
@@ -83,6 +92,8 @@ export default function StepItem({
       "هماهنگی‌های لازم از طرف مسترشوفر، با شماره وارد شده انجام خواهد گرفت",
     ],
   };
+
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   const status: "active" | "inactive" | "complete" =
     trip.status === TripStatus.wating_info ? "active" : "complete";
@@ -178,35 +189,91 @@ export default function StepItem({
           </div>
         </button>
       </div>
-      {content.details && content.details?.length > 0 && (
-        <LazyMotion features={domAnimation}>
-          <m.div
-            key={0}
-            animate={currentStep == 2 ? "open" : "closed"}
-            className="flex"
-            exit="complete"
-            initial={false}
-            transition={{
-              opacity: { duration: 0.25 },
-              height: { type: "spring", stiffness: 300, damping: 30 },
-            }}
-            variants={{
-              open: { opacity: 1, height: "auto" },
-              closed: { opacity: 0, height: 0 },
-              // complete: { opacity: 0, height: 0 },
-            }}
-          >
-            <Spacer x={1} />
-            <ul className="list-disc pb-4 pe-3 pr-12 text-default-400 text-start mt-2">
-              {content.details.map((detail, idx) => (
-                <li key={idx} className="mb-1 text-tiny">
-                  {detail}
-                </li>
-              ))}
-            </ul>
-          </m.div>
-        </LazyMotion>
-      )}
+      <LazyMotion features={domAnimation}>
+        <m.div
+          key={0}
+          animate={currentStep == 2 ? "open" : "closed"}
+          className="flex"
+          exit="complete"
+          initial={false}
+          transition={{
+            opacity: { duration: 0.25 },
+            height: { type: "spring", stiffness: 300, damping: 30 },
+          }}
+          variants={{
+            open: { opacity: 1, height: "auto" },
+            closed: { opacity: 0, height: 0 },
+            // complete: { opacity: 0, height: 0 },
+          }}
+        >
+          <Spacer x={1} />
+
+          <Card className="p-3 mx-3 mb-3 w-full">
+            <Button
+              color="primary"
+              variant="faded"
+              className="border-dashed text-gray-600 mx-5 my-1 border-warning"
+              onPress={onOpen}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="size-4"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+              ثبت آدرس و لوکیشن
+            </Button>
+          </Card>
+        </m.div>
+      </LazyMotion>
+
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="full">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                موقعیت مبدا
+              </ModalHeader>
+              <ModalBody>
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Nullam pulvinar risus non risus hendrerit venenatis.
+                  Pellentesque sit amet hendrerit risus, sed porttitor quam.
+                </p>
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Nullam pulvinar risus non risus hendrerit venenatis.
+                  Pellentesque sit amet hendrerit risus, sed porttitor quam.
+                </p>
+                <p>
+                  Magna exercitation reprehenderit magna aute tempor cupidatat
+                  consequat elit dolor adipisicing. Mollit dolor eiusmod sunt ex
+                  incididunt cillum quis. Velit duis sit officia eiusmod Lorem
+                  aliqua enim laboris do dolor eiusmod. Et mollit incididunt
+                  nisi consectetur esse laborum eiusmod pariatur proident Lorem
+                  eiusmod et. Culpa deserunt nostrud ad veniam.
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Close
+                </Button>
+                <Button color="primary" onPress={onClose}>
+                  Action
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </li>
   );
 }
