@@ -1,8 +1,11 @@
+"use client";
+
 import React from "react";
 import { LazyMotion, m, domAnimation } from "framer-motion";
 import { Button, Card, Spacer } from "@heroui/react";
 import { cn } from "@heroui/react";
 import type { ComponentProps } from "react";
+import dynamic from "next/dynamic";
 
 import { Prisma, TripStatus } from "@prisma/client";
 
@@ -14,6 +17,10 @@ import {
   ModalFooter,
   useDisclosure,
 } from "@heroui/react";
+
+const LocationSelector = dynamic(() => import("./locationSelector"), {
+  ssr: false,
+});
 
 export default function StepItem({
   currentStep,
@@ -213,7 +220,9 @@ export default function StepItem({
               color="primary"
               variant="faded"
               className="border-dashed text-gray-600 mx-5 my-1 border-warning"
-              onPress={onOpen}
+              onPress={() => {
+                onOpen();
+              }}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -239,32 +248,15 @@ export default function StepItem({
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                موقعیت مبدا
+              <ModalHeader className="flex flex-col gap-1 mt-0 pb-1 font-normal">
+                انتخاب مبدأ
               </ModalHeader>
-              <ModalBody>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Nullam pulvinar risus non risus hendrerit venenatis.
-                  Pellentesque sit amet hendrerit risus, sed porttitor quam.
-                </p>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Nullam pulvinar risus non risus hendrerit venenatis.
-                  Pellentesque sit amet hendrerit risus, sed porttitor quam.
-                </p>
-                <p>
-                  Magna exercitation reprehenderit magna aute tempor cupidatat
-                  consequat elit dolor adipisicing. Mollit dolor eiusmod sunt ex
-                  incididunt cillum quis. Velit duis sit officia eiusmod Lorem
-                  aliqua enim laboris do dolor eiusmod. Et mollit incididunt
-                  nisi consectetur esse laborum eiusmod pariatur proident Lorem
-                  eiusmod et. Culpa deserunt nostrud ad veniam.
-                </p>
+              <ModalBody className="h-100 px-0 pt-1">
+                <LocationSelector isOpen={isOpen} />
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="light" onPress={onClose}>
-                  Close
+                  لغو
                 </Button>
                 <Button color="primary" onPress={onClose}>
                   Action
