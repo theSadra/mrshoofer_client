@@ -15,3 +15,7 @@
 width: 100%;
 }
 
+body.modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}

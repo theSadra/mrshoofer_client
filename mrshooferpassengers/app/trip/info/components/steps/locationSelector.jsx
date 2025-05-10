@@ -388,38 +388,47 @@ function LocationSelector({ isOpen }) {
 
   return (
     <div
-      className="rounded-lg"
-      style={{ position: "relative", width: "100%", height: "100%" }}
+      className="flex flex-col min-h-screen w-full h-full"
+      style={{ position: "relative" }}
     >
-      {loading && (
-        <div
-          className="flex items-center justify-center flex-col text-gay-600"
-          style={{
-            position: "absolute",
-            zIndex: 2000,
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(255,255,255,0.95)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1rem",
-            fontWeight: "bold",
-          }}
-        >
-          <Image
-            src="/mrshoofer_logo_full.png"
-            width={190}
-            height={40}
-            alt="mrshoofer"
-          ></Image>
-          در حال بارگذاری نقشه...
-        </div>
-      )}
-      {isOpen && (
-        <>
+      {/* Map area */}
+      <div
+        style={{
+          flex: "1 1 0%",
+          minHeight: 0,
+          position: "relative",
+          overflow: "hidden",
+          paddingBottom: "110px", // Add padding so map content isn't hidden by the fixed button
+        }}
+      >
+        {loading && (
+          <div
+            className="flex items-center justify-center flex-col text-gay-600"
+            style={{
+              position: "absolute",
+              zIndex: 2000,
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background: "rgba(255,255,255,0.95)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1rem",
+              fontWeight: "bold",
+            }}
+          >
+            <Image
+              src="/mrshoofer_logo_full.png"
+              width={190}
+              height={40}
+              alt="mrshoofer"
+            ></Image>
+            در حال بارگذاری نقشه...
+          </div>
+        )}
+        {isOpen && (
           <MapComponent
             options={{
               mapKey: MAP_KEY,
@@ -443,238 +452,247 @@ function LocationSelector({ isOpen }) {
             }}
             mapSetter={mapSetter}
           />
-        </>
-      )}
+        )}
 
-      {!loading && (
-        <div className="mt-7 mx-3">
-          <Button
-            className="w-full"
-            variant="solid"
-            color="warning"
-            size="lg"
-            onClick={handleSelectLocation}
-          >
-            انتخاب
-          </Button>
-
-          <div>
-            {/* Address display */}
-            <Card>
-              <CardBody>
-                <div style={{ fontWeight: "bold", marginBottom: 4 }}>
-                  آدرس انتخاب شده:
-                </div>
-                <div>{currentAddress || "..."}</div>
-              </CardBody>
-            </Card>
-            <div></div>
-          </div>
-        </div>
-      )}
-
-      {/* Picker icon always in center */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          transform: isMoving
-            ? "translate(-50%, -107%)"
-            : "translate(-50%, -93%)",
-          transition: "transform 0.3s cubic-bezier(.4,2,.6,1)",
-          zIndex: 10,
-          pointerEvents: "none",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
+        {/* Picker icon always in center */}
         <div
           style={{
-            background: "white",
-            color: "#250ECD",
-            padding: "6px 10px",
-            borderRadius: "9px",
-            marginBottom: "8px",
-            fontWeight: "semibold",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-            fontSize: "16px",
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: isMoving
+              ? "translate(-50%, -107%)"
+              : "translate(-50%, -93%)",
+            transition: "transform 0.3s cubic-bezier(.4,2,.6,1)",
+            zIndex: 10,
             pointerEvents: "none",
-            userSelect: "none",
-          }}
-        >
-          مبدا را انتخاب کنید
-        </div>
-        <div
-          style={{
-            position: "relative",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            height: "62px",
-            width: "48px",
           }}
         >
-          <img
-            src="/pin.png"
-            alt="Pin"
+          <div
             style={{
-              width: "48px",
-              height: "48px",
-              userSelect: "none",
+              background: "white",
+              color: "#250ECD",
+              padding: "3px 7px",
+              borderRadius: "9px",
+              marginBottom: "8px",
+              fontWeight: "normal",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              fontSize: "14px",
               pointerEvents: "none",
-              display: "block",
+              userSelect: "none",
+            }}
+          >
+            مبدا را انتخاب کنید
+          </div>
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              height: "62px",
+              width: "48px",
+            }}
+          >
+            <img
+              src="/pin.png"
+              alt="Pin"
+              style={{
+                width: "48px",
+                height: "48px",
+                userSelect: "none",
+                pointerEvents: "none",
+                display: "block",
+              }}
+            />
+            {isMoving && (
+              <div
+                style={{
+                  width: "14px",
+                  height: "14px",
+                  background: "rgba(128,128,128,0.5)",
+                  borderRadius: "50%",
+                  position: "absolute",
+                  left: "50%",
+                  bottom: "-6px",
+                  transform: "translateX(-50%)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                  pointerEvents: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span>
+                  <svg
+                    fill="#000FFFF"
+                    width="14px"
+                    height="14px"
+                    viewBox="0 0 19.55 19.0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    stroke="#000000"
+                    strokeWidth="0.0002"
+                  >
+                    <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      <path d="M7.8 10a2.2 2.2 0 0 0 4.4 0 2.2 2.2 0 0 0-4.4 0z" />
+                    </g>
+                  </svg>
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Search bar */}
+        <div
+          style={{
+            position: "absolute",
+            top: 16,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            width: "90%",
+            maxWidth: 400,
+          }}
+        >
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              searchNeshan(e.target.value);
+            }}
+            onFocus={() => search && setShowDropdown(true)}
+            placeholder="جستجو در نقشه..."
+            style={{
+              width: "100%",
+              padding: "10px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              fontSize: "16px",
+              outline: "none",
+              boxSizing: "border-box",
             }}
           />
-          {isMoving && (
+          {showDropdown && (
             <div
               style={{
-                width: "14px",
-                height: "14px",
-                background: "rgba(128,128,128,0.5)",
-                borderRadius: "50%",
+                background: "#fff",
+                border: "1px solid #eee",
+                borderRadius: "0 0 8px 8px",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.16)",
+                maxHeight: 250,
+                overflowY: "auto",
+                marginTop: "-2px",
+                direction: "rtl",
                 position: "absolute",
-                left: "50%",
-                bottom: "-6px",
-                transform: "translateX(-50%)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                pointerEvents: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                left: 0,
+                right: 0,
+                zIndex: 3000,
               }}
             >
-              <span>
-                <svg
-                  fill="#000FFFF"
-                  width="14px"
-                  height="14px"
-                  viewBox="0 0 19.55 19.0"
-                  xmlns="http://www.w3.org/2000/svg"
-                  stroke="#000000"
-                  strokeWidth="0.0002"
+              {results.length === 0 ? (
+                <div
+                  style={{
+                    padding: "12px",
+                    color: "#888",
+                    textAlign: "center",
+                  }}
                 >
-                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                  <g
-                    id="SVGRepo_tracerCarrier"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  ></g>
-                  <g id="SVGRepo_iconCarrier">
-                    <path d="M7.8 10a2.2 2.2 0 0 0 4.4 0 2.2 2.2 0 0 0-4.4 0z" />
-                  </g>
-                </svg>
-              </span>
+                  نتیجه ای یافت نشد
+                </div>
+              ) : (
+                results.map((item) => (
+                  <div
+                    key={item.location.x + "," + item.location.y}
+                    style={{
+                      padding: "10px",
+                      cursor: "pointer",
+                      borderBottom: "1px solid #f0f0f0",
+                    }}
+                    onClick={() => {
+                      setShowDropdown(false);
+                      setSearch(item.title);
+                      setResults([]);
+                      if (window.neshanMapInstance) {
+                        window.neshanMapInstance.setCenter([
+                          item.location.x,
+                          item.location.y,
+                        ]);
+                        window.neshanMapInstance.setZoom(17);
+                      }
+                      searchNeshan(item.title);
+                    }}
+                  >
+                    <div style={{ fontWeight: "bold" }}>{item.title}</div>
+                    <div style={{ fontSize: "13px", color: "#888" }}>
+                      {item.address}
+                    </div>
+                    {item.type && (
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          color: "#2196f3",
+                          marginTop: "2px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <span>{getTypeIcon(item.type)}</span>
+                        <span>نوع: {item.type}</span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Search bar */}
+      {/* Fixed Bottom controls: Button and Address Card */}
       <div
+        className="w-full px-3 pb-4 pt-2 bg-white/90"
         style={{
-          position: "absolute",
-          top: 16,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 1000,
-          width: "90%",
-          maxWidth: 400,
+          position: "fixed",
+          left: 0,
+          bottom: 0,
+          width: "100vw",
+          zIndex: 4000,
+          boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
         }}
       >
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            searchNeshan(e.target.value);
-          }}
-          onFocus={() => search && setShowDropdown(true)}
-          placeholder="جستجو در نقشه..."
-          style={{
-            width: "100%",
-            padding: "10px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-            fontSize: "16px",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
-        />
-        {showDropdown && (
-          <div
-            style={{
-              background: "#fff",
-              border: "1px solid #eee",
-              borderRadius: "0 0 8px 8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-              maxHeight: 250,
-              overflowY: "auto",
-              marginTop: "-2px",
-              direction: "rtl",
-            }}
-          >
-            {results.length === 0 ? (
-              <div
-                style={{
-                  padding: "12px",
-                  color: "#888",
-                  textAlign: "center",
-                }}
-              >
-                نتیجه ای یافت نشد
-              </div>
-            ) : (
-              results.map((item) => (
-                <div
-                  key={item.location.x + "," + item.location.y}
-                  style={{
-                    padding: "10px",
-                    cursor: "pointer",
-                    borderBottom: "1px solid #f0f0f0",
-                  }}
-                  onClick={() => {
-                    setShowDropdown(false);
-                    setSearch(item.title);
-                    setResults([]);
-                    if (window.neshanMapInstance) {
-                      window.neshanMapInstance.setCenter([
-                        item.location.x,
-                        item.location.y,
-                      ]);
-                      window.neshanMapInstance.setZoom(17);
-                    }
-                    searchNeshan(item.title);
-                  }}
-                >
-                  <div style={{ fontWeight: "bold" }}>{item.title}</div>
-                  <div style={{ fontSize: "13px", color: "#888" }}>
-                    {item.address}
-                  </div>
-                  {item.type && (
-                    <div
-                      style={{
-                        fontSize: "14px",
-                        color: "#2196f3",
-                        marginTop: "2px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      <span>{getTypeIcon(item.type)}</span>
-                      <span>نوع: {item.type}</span>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        <Card className="mb-3">
+          <CardBody dir="rtl" className="text-start">
+           <lable>
+            آدرس انتخاب شده
+            </lable>
+            <div>{currentAddress || "..."}</div>
+          </CardBody>
+        </Card>
+        <Button
+          className="w-full mb-2 py-6"
+          variant="solid"
+          color="warning"
+          size="lg"
+          onClick={handleSelectLocation}
+        >
+          انتخاب
+        </Button>
       </div>
-
-      {/* Address display */}
     </div>
   );
 }
