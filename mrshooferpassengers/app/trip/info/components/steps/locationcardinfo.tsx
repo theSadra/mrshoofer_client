@@ -1,27 +1,24 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { LazyMotion, m, domAnimation } from "framer-motion";
 import { Button, Card, Spacer } from "@heroui/react";
 import { cn } from "@heroui/react";
 import type { ComponentProps } from "react";
 import dynamic from "next/dynamic";
+import { Drawer, DrawerContent, DrawerHeader, DrawerBody } from "@heroui/react";
+import { Prisma } from "@prisma/client";
+import { Sheet } from "react-modal-sheet";
+import TripInfo from "../tripinfo";
 
-import { Prisma, TripStatus } from "@prisma/client";
-
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-} from "@heroui/react";
-
+// Properly dynamically import Sheet with SSR disabled
 const LocationSelector = dynamic(() => import("./locationSelector"), {
   ssr: false,
 });
 
+const TripStatus = {
+  wating_info: "wating_info",
+};
 export default function StepItem({
   currentStep,
   setCurrentStep,
@@ -32,7 +29,7 @@ export default function StepItem({
 }: {
   currentStep: number;
   setCurrentStep: (stepIdx: number) => void;
-  trip: Prisma.TripGetPayload<{ include: { Location: true } }>;
+  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }>;
   stepClassName?: string;
   ref?: React.Ref<HTMLButtonElement>;
   [key: string]: any;
@@ -82,7 +79,6 @@ export default function StepItem({
                 />
               </svg>
             </span>
-
             <span className="text-red-500">
               هنوز مبدا برای این سفر ثبت نشده است
             </span>
@@ -100,19 +96,30 @@ export default function StepItem({
     ],
   };
 
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const onOpen = useCallback(() => {
+    setIsOpen(true);
+  }, []);
+
+  const onClose = useCallback(() => setIsOpen(false), []);
+
+  const [sheetIsOpen, setSheetIsOpen] = useState(false);
+  const openSheet = useCallback(() => {
+    console.log("Opening sheet...");
+    setSheetIsOpen(true);
+  }, []);
+
+  const closeSheet = useCallback(() => setSheetIsOpen(false), []);
 
   const status: "active" | "inactive" | "complete" =
     trip.status === TripStatus.wating_info ? "active" : "complete";
 
-  let openState: "open" | "closed";
-  if (status === "active") {
-    openState = "open";
-  } else if (currentStep == 2) {
-    openState = "open";
-  } else {
-    openState = "closed";
-  }
+  // Only render Sheet on client to avoid hydration errors
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <li
@@ -166,29 +173,26 @@ export default function StepItem({
                   }
                 )}
               >
-                <div className="fle x items-center justify-center">
+                <div className="flex items-center justify-center">
                   {status === "active" ? (
                     <>!</>
                   ) : (
-                    <>
-                      {" "}
-                      <svg
-                        className="h-6 w-6 text-[var(--active-fg-color)]"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          d="M5 13l4 4L19 7"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          pathLength={1}
-                          strokeDashoffset="0px"
-                          strokeDasharray="1px 1px"
-                        />
-                      </svg>
-                    </>
+                    <svg
+                      className="h-6 w-6 text-[var(--active-fg-color)]"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M5 13l4 4L19 7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        pathLength={1}
+                        strokeDashoffset="0px"
+                        strokeDasharray="1px 1px"
+                      />
+                    </svg>
                   )}
                 </div>
               </div>
@@ -210,7 +214,6 @@ export default function StepItem({
           variants={{
             open: { opacity: 1, height: "auto" },
             closed: { opacity: 0, height: 0 },
-            // complete: { opacity: 0, height: 0 },
           }}
         >
           <Spacer x={1} />
@@ -219,10 +222,10 @@ export default function StepItem({
             <Button
               color="primary"
               variant="faded"
-              className="border-dashed text-gray-600 mx-5 my-1 border-warning"
-              onPress={() => {
-                onOpen();
-              }}
+              className="border-dashed text-gray-600 mx-5 my-1 border-secondary"
+              onClick={onOpen}
+              // Adding data-open attribute to help with debugging
+              data-open="location-drawer"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -244,28 +247,31 @@ export default function StepItem({
         </m.div>
       </LazyMotion>
 
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="full">
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1 mt-0 pb-1 font-normal">
-                انتخاب مبدأ
-              </ModalHeader>
-              <ModalBody className="h-100 px-0 pt-1">
-                <LocationSelector isOpen={isOpen} />
-              </ModalBody>
-              <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
-                  لغو
-                </Button>
-                <Button color="primary" onPress={onClose}>
-                  Action
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+      {/* Fixed Drawer implementation */}
+
+      <Drawer
+        isOpen={isOpen}
+        size={"full"}
+        onClose={onClose}
+        // Increased z-index to ensure drawer is on top of everything
+        className="z-[100]"
+        isDismissable={false}
+        // Remove key prop as it might cause remounting issues with focus
+      >
+        <DrawerContent className="p-0 m-0">
+          <DrawerHeader className="flex flex-col pb-1 font-normal">
+            📍 انتخاب مبدأ
+          </DrawerHeader>
+          <DrawerBody className="p-0 m-0" style={{ overflow: "hidden" }}>
+            <LocationSelector
+              key={isOpen ? "open" : "closed"}
+              isOpen={isOpen}
+              trip={trip}
+            />
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+      {/* Sheet is only rendered on client side with correct dynamic import */}
     </li>
   );
 }

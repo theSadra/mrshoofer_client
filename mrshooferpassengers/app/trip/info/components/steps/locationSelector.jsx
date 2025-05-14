@@ -1,13 +1,53 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { MapComponent, MapTypes } from "@neshan-maps-platform/mapbox-gl-react";
 import nmp_mapboxgl from "@neshan-maps-platform/mapbox-gl";
 import polyline from "@mapbox/polyline";
 import "@neshan-maps-platform/mapbox-gl/dist/NeshanMapboxGl.css";
 import Image from "next/image";
 import { Button } from "@heroui/button";
+import { Input } from "@heroui/react";
 import { Card, CardBody } from "@heroui/card";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerFooter,
+  Textarea,
+  useDisclosure,
+} from "@heroui/react";
+
+export const SearchIcon = (props) => {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      focusable="false"
+      height="1em"
+      role="presentation"
+      viewBox="0 0 24 24"
+      width="1em"
+      {...props}
+    >
+      <path
+        d="M11.5 21C16.7467 21 21 16.7467 21 11.5C21 6.25329 16.7467 2 11.5 2C6.25329 2 2 6.25329 2 11.5C2 16.7467 6.25329 21 11.5 21Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M22 22L20 20"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+};
 
 const MAP_KEY =
   process.env.NEXT_PUBLIC_NESHAN_MAP_KEY ||
@@ -16,16 +56,49 @@ const API_KEY =
   process.env.NEXT_PUBLIC_NESHAN_API_KEY ||
   "service.6f5734c50a9c43cba6f43a6254c1b668";
 
-function LocationSelector({ isOpen }) {
+function LocationSelector({ isOpen, trip }) {
   const [isMoving, setIsMoving] = useState(false);
   const [zoom, setZoom] = useState(11);
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState("");
   const [loading, setLoading] = useState(true);
   const selectedMarkerRef = useRef(null);
   const userMarkerRef = useRef(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [showPicker, setShowPicker] = useState(true);
+
+  const [selectedAddress, setSelectedAddress] = useState("");
+  const [mounted, setMounted] = useState(true); // Always mounted for debug
+  const [sheetKey, setSheetKey] = useState(0);
+  const inputRef = useRef(null); // 1. Add ref
+
+  const [numberPhone, setNumberPhone] = useState(trip.Passenger.numberPhone);
+  const [description, setDescription] = useState("");
+
+  const {
+    isOpen: sheetIsOpen,
+    onOpen: openSheet,
+    onOpenChange,
+  } = useDisclosure();
+
+  // Get user location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          });
+        },
+        () => {},
+        { enableHighAccuracy: true }
+      );
+    }
+  }, []);
+
+  const selectedCordinates = useRef({ lat: 0, lng: 0 });
 
   const mapSetter = (neshanMap) => {
     window.neshanMapInstance = neshanMap;
@@ -105,11 +178,8 @@ function LocationSelector({ isOpen }) {
     neshanMap.on("movestart", () => {
       setIsMoving(true);
     });
-    neshanMap.on("moveend", async () => {
+    neshanMap.on("moveend", () => {
       setIsMoving(false);
-      const center = neshanMap.getCenter();
-      const address = await getAddressFromNeshan(center.lat, center.lng);
-      setCurrentAddress(address);
     });
   };
 
@@ -118,29 +188,17 @@ function LocationSelector({ isOpen }) {
     if (isOpen && window.neshanMapInstance) {
       setTimeout(() => {
         window.neshanMapInstance.resize();
-      }, 50);
+      }, 10);
     }
   }, [isOpen]);
+
+  // Only render Sheet on client to avoid hydration errors
+  // const [mounted, setMounted] = useState(false);
+  // useEffect(() => {
+  //   setMounted(true);
+  // }, []);
 
   // Add this effect - it will force the map to resize multiple times
-  useEffect(() => {
-    if (isOpen) {
-      const timers = [];
-      // Force multiple resize attempts at different intervals
-      [100, 300].forEach((delay) => {
-        timers.push(
-          setTimeout(() => {
-            if (window.neshanMapInstance) {
-              window.neshanMapInstance.resize();
-            }
-          }, delay)
-        );
-      });
-
-      return () => timers.forEach(clearTimeout);
-    }
-  }, [isOpen]);
-
   // Add this final method - it will ensure the map is fully rendered
   useEffect(() => {
     if (isOpen) {
@@ -150,34 +208,34 @@ function LocationSelector({ isOpen }) {
           // METHOD 1: Basic resize
           window.neshanMapInstance.resize();
 
-          // METHOD 2: Force reflow
-          window.neshanMapInstance._update();
+          // // METHOD 2: Force reflow
+          // window.neshanMapInstance._update();
 
-          // METHOD 3: Trigger repaint (internal method)
-          if (window.neshanMapInstance._render) {
-            window.neshanMapInstance._render();
-          }
+          // // METHOD 3: Trigger repaint (internal method)
+          // if (window.neshanMapInstance._render) {
+          //   window.neshanMapInstance._render();
+          // }
 
-          // METHOD 4: Force style recalculation
-          window.neshanMapInstance.getCanvas().style.visibility = "hidden";
-          setTimeout(() => {
-            if (
-              window.neshanMapInstance &&
-              window.neshanMapInstance.getCanvas()
-            ) {
-              window.neshanMapInstance.getCanvas().style.visibility = "visible";
+          // // METHOD 4: Force style recalculation
+          // window.neshanMapInstance.getCanvas().style.visibility = "hidden";
+          // setTimeout(() => {
+          //   if (
+          //     window.neshanMapInstance &&
+          //     window.neshanMapInstance.getCanvas()
+          //   ) {
+          //     window.neshanMapInstance.getCanvas().style.visibility = "visible";
 
-              // METHOD 5: Nudge the center to force a redraw
-              try {
-                const center = window.neshanMapInstance.getCenter();
-                window.neshanMapInstance.jumpTo({
-                  center: [center.lng, center.lat],
-                });
-              } catch (e) {
-                console.log("Map center adjustment failed", e);
-              }
-            }
-          }, 50);
+          //     // METHOD 5: Nudge the center to force a redraw
+          //     try {
+          //       const center = window.neshanMapInstance.getCenter();
+          //       window.neshanMapInstance.jumpTo({
+          //         center: [center.lng, center.lat],
+          //       });
+          //     } catch (e) {
+          //       console.log("Map center adjustment failed", e);
+          //     }
+          //   }
+          // }, 50);
         }
       };
 
@@ -188,7 +246,6 @@ function LocationSelector({ isOpen }) {
       // );
 
       // Also trigger on window resize
-      window.addEventListener("resize", forceMapRender);
 
       return () => {
         window.removeEventListener("resize", forceMapRender);
@@ -252,25 +309,20 @@ function LocationSelector({ isOpen }) {
   //   };
   // }, []);
 
-  async function getAddressFromNeshan(lat, lng) {
-    const url = `https://api.neshan.org/v5/reverse?lat=${lat}&lng=${lng}`;
-    const response = await fetch(url, {
-      headers: {
-        "Api-Key": API_KEY,
-      },
-    });
-    const data = await response.json();
-    return data.formatted_address || "آدرس پیدا نشد";
-  }
-
   async function searchNeshan(query) {
     if (!query) {
       setResults([]);
       return;
     }
+    // Use user location if available, otherwise default to Tehran
+
+    const center = window.neshanMapInstance.getCenter();
+
+    const lat = center.lat;
+    const lng = center.lng;
     const url = `https://api.neshan.org/v1/search?term=${encodeURIComponent(
       query
-    )}&lat=35.6892&lng=51.3890`;
+    )}&lat=${lat}&lng=${lng}`;
     const response = await fetch(url, {
       headers: {
         "Api-Key": API_KEY,
@@ -286,6 +338,7 @@ function LocationSelector({ isOpen }) {
       case "street":
         return "🛣️";
       case "primary":
+        return "🛤️";
       case "secondary":
         return "🚦";
       case "highway":
@@ -323,68 +376,195 @@ function LocationSelector({ isOpen }) {
     }
   }
 
+  async function getAddressFromNeshan(lat, lng) {
+    const url = `https://api.neshan.org/v5/reverse?lat=${lat}&lng=${lng}`;
+    const response = await fetch(url, {
+      headers: {
+        "Api-Key": API_KEY,
+      },
+    });
+    const data = await response.json();
+    return data.formatted_address || "";
+  }
+
+  const lastMarkerRef = useRef(null);
+
   const handleSelectLocation = async () => {
-    if (window.neshanMapInstance) {
+    if (window.neshanMapInstance && nmp_mapboxgl && nmp_mapboxgl.Marker) {
       setIsMoving(true);
-      setTimeout(() => setIsMoving(false), 300);
+      setTimeout(() => setIsMoving(false), 350);
 
       const center = window.neshanMapInstance.getCenter();
 
-      // Get address from Neshan
-      const address = await getAddressFromNeshan(center.lat, center.lng);
+      // نمایش مختصات به صورت alert
+      console.log(
+        `مختصات انتخاب شده:\nLatitude: ${center.lat}\nLongitude: ${center.lng}`
+      );
 
-      // Remove previous marker if exists
-      if (selectedMarkerRef.current) {
-        selectedMarkerRef.current.remove();
-      }
+      // // ساخت دایره سیاه (مثل خط 625، اما بدون انیمیشن)
+      // const blackDot = document.createElement("div");
+      // blackDot.style.width = "8px";
+      // blackDot.style.height = "8px";
+      // blackDot.style.background = "rgba(128,128,128,0.5)";
+      // blackDot.style.borderRadius = "50%";
+      // blackDot.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+      // blackDot.style.pointerEvents = "none";
+      // blackDot.style.display = "flex";
+      // blackDot.style.alignItems = "center";
+      // blackDot.style.justifyContent = "center";
+      // blackDot.style.opacity = "0.7";
 
-      // Create a marker element with address and pin
+      // // ساخت مارکر با تصویر پین (مثلاً pin.png)
+      // const pinImg = document.createElement("img");
+      // pinImg.src = "/pin.png"; // مسیر تصویر پین خود را قرار دهید
+      // pinImg.style.width = "40px";
+      // pinImg.style.height = "40px";
+      // pinImg.style.objectFit = "contain";
+      // pinImg.style.pointerEvents = "none";
+      // pinImg.alt = "Pin";
+
+      // // new nmp_mapboxgl.Marker(pinImg, { anchor: "bottom" })
+      // //   .setLngLat([center.lng, center.lat])
+      // //   .addTo(window.neshanMapInstance);
+
+      // new nmp_mapboxgl.Marker(blackDot, { anchor: "bottom" })
+      //   .setLngLat([center.lng, center.lat])
+      //   .addTo(window.neshanMapboxgl);
+
       const el = document.createElement("div");
       el.style.display = "flex";
       el.style.flexDirection = "column";
       el.style.alignItems = "center";
-      el.style.justifyContent = "center";
-      el.style.background = "none";
       el.style.pointerEvents = "none";
-      el.style.position = "relative";
+      el.style.background = "transparent";
+      el.style.justifyContent = "center";
 
-      // Address box (styled like your picker)
-      const addressDiv = document.createElement("div");
-      addressDiv.innerText = "مبدأ سفر";
-      addressDiv.style.background = "white";
-      addressDiv.style.color = "#250ECD";
-      addressDiv.style.padding = "3px 6px";
-      addressDiv.style.borderRadius = "8px";
-      addressDiv.style.marginBottom = "7px";
-      addressDiv.style.fontWeight = "normal";
-      addressDiv.style.fontFamily = "Vazir";
-      addressDiv.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
-      addressDiv.style.fontSize = "16px";
-      addressDiv.style.pointerEvents = "auto";
-      addressDiv.style.userSelect = "text";
-      addressDiv.style.border = "2px solid #FFD600"; // Add yellow border
-      el.appendChild(addressDiv);
+      // --- Add the label above the pin ---
+      const labelDiv = document.createElement("div");
+      labelDiv.innerText = "مبدا";
+      labelDiv.style.background = "white";
+      labelDiv.style.fontFamily = "Vazir, sans-serif";
+      labelDiv.style.padding = "1px 8px";
+      labelDiv.style.borderRadius = "9px";
+      labelDiv.style.marginBottom = "8px";
+      labelDiv.style.fontWeight = "bold";
+      labelDiv.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+      labelDiv.style.fontSize = "14px";
+      labelDiv.style.pointerEvents = "none";
+      labelDiv.style.border = "2px solid perpule"; // Change to your desired color
+      labelDiv.style.userSelect = "none";
+      el.appendChild(labelDiv);
+      // --- End label block ---
 
-      // Pin image
-      const img = document.createElement("img");
-      img.src = "/pin.png";
-      img.alt = "Pin";
-      img.style.width = "48px";
-      img.style.height = "48px";
-      img.style.userSelect = "none";
-      img.style.pointerEvents = "none";
-      el.appendChild(img);
+      const pinSpan = document.createElement("span");
+      pinSpan.style.width = "33px";
+      pinSpan.style.height = "33px";
+      pinSpan.style.userSelect = "none";
+      pinSpan.style.pointerEvents = "none";
+      pinSpan.style.zIndex = "19";
+      pinSpan.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 375 375" style="display:block">
+        <defs>
+          <clipPath id="b3c8e86a90">
+            <path d="M 187.5 0 C 83.945312 0 0 83.945312 0 187.5 C 0 291.054688 83.945312 375 187.5 375 C291.054688 375 375 291.054688 375 187.5 C375 83.945312 291.054688 0 187.5 0 Z" clip-rule="nonzero"/>
+          </clipPath>
+          <clipPath id="d1aebc7008">
+            <path d="M 25.109375 25.109375 L 349.890625 25.109375 L 349.890625 349.890625 L 25.109375 349.890625 Z" clip-rule="nonzero"/>
+          </clipPath>
+          <clipPath id="afb7a861b6">
+            <path d="M 187.5 25.109375 C 97.8125 25.109375 25.109375 97.8125 25.109375 187.5 C 25.109375 277.1875 97.8125 349.890625 187.5 349.890625 C277.1875 349.890625 349.890625 277.1875 349.890625 187.5 C349.890625 97.8125 277.1875 25.109375 187.5 25.109375 Z" clip-rule="nonzero"/>
+          </clipPath>
+          <clipPath id="66f3aec7f3">
+            <path d="M 118.664062 118.664062 L 256.335938 118.664062 L 256.335938 256.335938 L 118.664062 256.335938 Z" clip-rule="nonzero"/>
+          </clipPath>
+          <clipPath id="70d46462f1">
+            <path d="M 187.5 118.664062 C 149.480469 118.664062 118.664062 149.480469 118.664062 187.5 C 118.664062 225.519531 149.480469 256.335938 187.5 256.335938 C225.519531 256.335938 256.335938 225.519531 256.335938 187.5 C256.335938 149.480469 225.519531 118.664062 187.5 118.664062 Z" clip-rule="nonzero"/>
+          </clipPath>
+        </defs>
+        <g clip-path="url(#b3c8e86a90)">
+          <rect x="-37.5" width="450" fill="#ffffff" y="-37.5" height="450" fill-opacity="1"/>
+        </g>
+        <g clip-path="url(#d1aebc7008)">
+          <g clip-path="url(#afb7a861b6)">
+            <path fill="#004aad" d="M 25.109375 25.109375 L 349.890625 25.109375 L 349.890625 349.890625 L 25.109375 349.890625 Z" fill-opacity="1" fill-rule="nonzero"/>
+          </g>
+        </g>
+        <g clip-path="url(#66f3aec7f3)">
+          <g clip-path="url(#70d46462f1)">
+            <path fill="#ffffff" d="M 118.664062 118.664062 L 256.335938 118.664062 L 256.335938 256.335938 L 118.664062 256.335938 Z" fill-opacity="1" fill-rule="nonzero"/>
+          </g>
+        </g>
+      </svg>
+    `;
 
-      const marker = new nmp_mapboxgl.Marker(el, {
-        anchor: "bottom",
-        offset: [0, -7],
-      })
+      el.appendChild(pinSpan);
+
+      const lineSvg = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "svg"
+      );
+      lineSvg.setAttribute("width", "2");
+      lineSvg.setAttribute("height", "22");
+      lineSvg.setAttribute("viewBox", "0 0 2 24");
+      lineSvg.style.zIndex = "15";
+      lineSvg.style.pointerEvents = "none";
+      lineSvg.innerHTML = `<line x1="1" y1="0" x2="1" y2="24" stroke="black" stroke-width="1" stroke-linecap="round"/>`;
+      el.appendChild(lineSvg);
+
+      // Add marker to map
+      const marker = new nmp_mapboxgl.Marker(el, { anchor: "bottom" })
         .setLngLat([center.lng, center.lat])
         .addTo(window.neshanMapInstance);
 
-      selectedMarkerRef.current = marker;
+      lastMarkerRef.current = marker;
+
+      window.neshanMapInstance.easeTo({ zoom: 16.2, duration: 1200 });
+
+      const address = await getAddressFromNeshan(center.lat, center.lng);
+      setSelectedAddress(address);
+
+      selectedCordinates.current = { lat: center.lat, lng: center.lng };
+
+      console.log(trip);
+      console.log(trip.Passenger);
+      console.log(trip);
+
+      setTimeout(() => {
+        openSheet();
+      }, 300);
+      setShowPicker(false);
     }
   };
+
+  async function getCoordinatesFromCityName(cityName) {
+    // Example: using Neshan’s search API with the city name
+    const url = `https://api.neshan.org/v1/search?term=${encodeURIComponent(
+      cityName
+    )}&lat=35.6892&lng=51.389`;
+    const response = await fetch(url, {
+      headers: {
+        "Api-Key": API_KEY, // Same as used above
+      },
+    });
+    const data = await response.json();
+    if (data.items && data.items.length > 0) {
+      const { x: lng, y: lat } = data.items[0].location;
+      return { lat, lng };
+    }
+    return null;
+  }
+
+  // Then call it (e.g., in useEffect)
+  useEffect(() => {
+    if (isOpen && trip?.OriginCity) {
+      getCoordinatesFromCityName(trip.OriginCity).then((coords) => {
+        if (coords && window.neshanMapInstance) {
+          window.neshanMapInstance.setCenter([coords.lng, coords.lat]);
+          window.neshanMapInstance.setZoom(13);
+        }
+      });
+    }
+  }, [trip?.OriginCity, isOpen]);
 
   return (
     <div
@@ -411,7 +591,7 @@ function LocationSelector({ isOpen }) {
               left: 0,
               width: "100%",
               height: "100%",
-              background: "rgba(255,255,255,0.95)",
+              background: "rgba(255,255,255,0.70)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -420,12 +600,13 @@ function LocationSelector({ isOpen }) {
             }}
           >
             <Image
+              className="mb-4"
               src="/mrshoofer_logo_full.png"
               width={190}
               height={40}
               alt="mrshoofer"
             ></Image>
-            در حال بارگذاری نقشه...
+            <span>در حال بارگذاری نقشه...</span>
           </div>
         )}
         {isOpen && (
@@ -434,13 +615,13 @@ function LocationSelector({ isOpen }) {
               mapKey: MAP_KEY,
               mapType: MapTypes.neshanPlaces,
               zoom: 15,
-              center: [51.353441, 35.767757],
               isTouchPlatform: true,
               doubleClickZoom: true,
               dragPan: true,
               dragRotate: true,
               traffic: true,
               poi: true,
+              trackResize: true,
               maxZoom: 19,
               minZoom: 5,
               mapTypeControllerStatus: {
@@ -454,83 +635,186 @@ function LocationSelector({ isOpen }) {
           />
         )}
 
-        {/* Picker icon always in center */}
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: isMoving
-              ? "translate(-50%, -107%)"
-              : "translate(-50%, -93%)",
-            transition: "transform 0.3s cubic-bezier(.4,2,.6,1)",
-            zIndex: 10,
-            pointerEvents: "none",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
+        {/* Picker icon always in center of visible map */}
+
+        {showPicker && (
           <div
             style={{
-              background: "white",
-              color: "#250ECD",
-              padding: "3px 7px",
-              borderRadius: "9px",
-              marginBottom: "8px",
-              fontWeight: "normal",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-              fontSize: "14px",
+              position: "absolute",
+              left: "50%",
+              top: "calc(50% - 55px)", // shift up by half the bottom bar height
+              // Remove vertical animation: always keep at center
+              transform: "translate(-50%, -92%)",
+              transition: "none",
+              zIndex: 10,
               pointerEvents: "none",
-              userSelect: "none",
-            }}
-          >
-            مبدا را انتخاب کنید
-          </div>
-          <div
-            style={{
-              position: "relative",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              height: "62px",
-              width: "48px",
             }}
           >
-            <img
-              src="/pin.png"
-              alt="Pin"
+            <div
+              className="text-gray-800"
               style={{
-                width: "48px",
-                height: "48px",
+                background: "white",
+                padding: "3px 6px",
+                borderRadius: "9px",
+                marginBottom: "8px",
+                fontWeight: "normal",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                fontSize: "14px",
                 userSelect: "none",
-                pointerEvents: "none",
-                display: "block",
               }}
-            />
-            {isMoving && (
-              <div
+            >
+              مبدا را انتخاب کنید
+            </div>
+            <div
+              style={{
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                height: "62px",
+                width: "48px",
+              }}
+            >
+              {/* Black line between pin and dot */}
+              <svg
                 style={{
-                  width: "14px",
-                  height: "14px",
-                  background: "rgba(128,128,128,0.5)",
-                  borderRadius: "50%",
                   position: "absolute",
                   left: "50%",
-                  bottom: "-6px",
+                  top: isMoving ? "40%" : "50%",
                   transform: "translateX(-50%)",
+                  zIndex: 15,
+                  pointerEvents: "none",
+                  transition: "top 0.2s",
+                }}
+                width="2"
+                height="22"
+                viewBox="0 0 2 24"
+              >
+                <line
+                  x1="1"
+                  y1="0"
+                  x2="1"
+                  y2="24"
+                  stroke="black"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              {/* Green dot at the exact selection point */}
+
+              {/* Pin SVG, bottom center at map center */}
+              <span
+                style={{
+                  width: isMoving ? "28px" : "33px",
+                  height: isMoving ? "28px" : "33px",
+                  display: "block",
+                  position: "relative",
+                  bottom: 0,
+                  userSelect: "none",
+                  pointerEvents: "none",
+                  transition: "width 0.2s, height 0.2s",
+                  zIndex: 19,
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="100%"
+                  height="100%"
+                  viewBox="0 0 375 375"
+                  style={{ display: "block" }}
+                >
+                  <defs>
+                    <clipPath id="b3c8e86a90">
+                      <path
+                        d="M 187.5 0 C 83.945312 0 0 83.945312 0 187.5 C 0 291.054688 83.945312 375 187.5 375 C291.054688 375 375 291.054688 375 187.5 C375 83.945312 291.054688 0 187.5 0 Z"
+                        clipRule="nonzero"
+                      />
+                    </clipPath>
+                    <clipPath id="d1aebc7008">
+                      <path
+                        d="M 25.109375 25.109375 L 349.890625 25.109375 L 349.890625 349.890625 L 25.109375 349.890625 Z"
+                        clipRule="nonzero"
+                      />
+                    </clipPath>
+                    <clipPath id="afb7a861b6">
+                      <path
+                        d="M 187.5 25.109375 C 97.8125 25.109375 25.109375 97.8125 25.109375 187.5 C 25.109375 277.1875 97.8125 349.890625 187.5 349.890625 C277.1875 349.890625 349.890625 277.1875 349.890625 187.5 C349.890625 97.8125 277.1875 25.109375 187.5 25.109375 Z"
+                        clipRule="nonzero"
+                      />
+                    </clipPath>
+                    <clipPath id="66f3aec7f3">
+                      <path
+                        d="M 118.664062 118.664062 L 256.335938 118.664062 L 256.335938 256.335938 L 118.664062 256.335938 Z"
+                        clipRule="nonzero"
+                      />
+                    </clipPath>
+                    <clipPath id="70d46462f1">
+                      <path
+                        d="M 187.5 118.664062 C 149.480469 118.664062 118.664062 149.480469 118.664062 187.5 C 118.664062 225.519531 149.480469 256.335938 187.5 256.335938 C225.519531 256.335938 256.335938 225.519531 256.335938 187.5 C256.335938 149.480469 225.519531 118.664062 187.5 118.664062 Z"
+                        clipRule="nonzero"
+                      />
+                    </clipPath>
+                  </defs>
+                  <g clipPath="url(#b3c8e86a90)">
+                    <rect
+                      x="-37.5"
+                      width="450"
+                      fill="#ffffff"
+                      y="-37.5"
+                      height="450"
+                      fillOpacity="1"
+                    />
+                  </g>
+                  <g clipPath="url(#d1aebc7008)">
+                    <g clipPath="url(#afb7a861b6)">
+                      <path
+                        fill="#004aad"
+                        d="M 25.109375 25.109375 L 349.890625 25.109375 L 349.890625 349.890625 L 25.109375 349.890625 Z"
+                        fillOpacity="1"
+                        fillRule="nonzero"
+                      />
+                    </g>
+                  </g>
+                  <g clipPath="url(#66f3aec7f3)">
+                    <g clipPath="url(#70d46462f1)">
+                      <path
+                        fill="#ffffff"
+                        d="M 118.664062 118.664062 L 256.335938 118.664062 L 256.335938 256.335938 L 118.664062 256.335938 Z"
+                        fillOpacity="1"
+                        fillRule="nonzero"
+                      />
+                    </g>
+                  </g>
+                </svg>
+              </span>
+              {/* Animated shadow - keep it fixed under the dot, not moving */}
+              <div
+                style={{
+                  width: isMoving ? "19px" : "8px",
+                  height: isMoving ? "11px" : "8px",
+                  background: "rgba(128,128,128,0.5)",
+                  borderRadius: isMoving ? "40%" : "50%",
+                  position: "absolute",
+                  left: "50%",
+                  top: "82%",
+                  transform: "translate(-50%, -5%)", // always just below the dot
                   boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                   pointerEvents: "none",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  opacity: isMoving ? 0.8 : 0.7,
+                  transition: "width 0.25s, height 0.25s, opacity 0.25s",
                 }}
               >
                 <span>
                   <svg
                     fill="#000FFFF"
-                    width="14px"
-                    height="14px"
+                    width={isMoving ? "14px" : "8px"}
+                    height={isMoving ? "14px" : "8px"}
                     viewBox="0 0 19.55 19.0"
                     xmlns="http://www.w3.org/2000/svg"
                     stroke="#000000"
@@ -548,9 +832,9 @@ function LocationSelector({ isOpen }) {
                   </svg>
                 </span>
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Search bar */}
         <div
@@ -564,26 +848,43 @@ function LocationSelector({ isOpen }) {
             maxWidth: 400,
           }}
         >
-          <input
-            type="text"
+          <Input
+            isClearable
+            classNames={{
+              label: "text-black/50 dark:text-white/90",
+              input: [
+                // Remove "bg-transparent" to use default background
+                "text-black/90 dark:text-white/90",
+                "placeholder:text-default-700/50 dark:placeholder:text-white/60",
+              ],
+              innerWrapper: "", // Remove "bg-transparent"
+              inputWrapper: [
+                "shadow-xl",
+                "bg-default-200/50",
+                "dark:bg-default/60",
+                "backdrop-blur-xl",
+                "backdrop-saturate-200",
+                "hover:bg-default-200/70",
+                "dark:hover:bg-default/70",
+                "group-data-[focus=true]:bg-default-200/50",
+                "dark:group-data-[focus=true]:bg-default/60",
+                "!cursor-text",
+              ],
+            }}
+            label="جستجو"
+            placeholder="جستجوی نام محله، خیابان، شرکت ..."
+            radius="lg"
+            startContent={
+              <SearchIcon className="text-black/50 mb-0.5 dark:text-white/90 text-slate-400 pointer-events-none flex-shrink-0" />
+            }
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               searchNeshan(e.target.value);
             }}
             onFocus={() => search && setShowDropdown(true)}
-            placeholder="جستجو در نقشه..."
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              fontSize: "16px",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
           />
-          {showDropdown && (
+          {showDropdown && search && (
             <div
               style={{
                 background: "#fff",
@@ -613,6 +914,7 @@ function LocationSelector({ isOpen }) {
               ) : (
                 results.map((item) => (
                   <div
+                    className="text-sm"
                     key={item.location.x + "," + item.location.y}
                     style={{
                       padding: "10px",
@@ -628,71 +930,146 @@ function LocationSelector({ isOpen }) {
                           item.location.x,
                           item.location.y,
                         ]);
-                        window.neshanMapInstance.setZoom(17);
                       }
                       searchNeshan(item.title);
                     }}
                   >
-                    <div style={{ fontWeight: "bold" }}>{item.title}</div>
-                    <div style={{ fontSize: "13px", color: "#888" }}>
-                      {item.address}
-                    </div>
-                    {item.type && (
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          color: "#2196f3",
-                          marginTop: "2px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <span>{getTypeIcon(item.type)}</span>
-                        <span>نوع: {item.type}</span>
+                    <div className="flex justify-normal">
+                      {item.type && (
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            color: "#2196f3",
+                            marginTop: "2px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <span>{getTypeIcon(item.type)}</span>
+                        </div>
+                      )}
+
+                      <div className="flex-1 ms-4">
+                        <div style={{ fontWeight: "bold" }}>{item.title}</div>
+                        <div style={{ fontSize: "13px", color: "#888" }}>
+                          {item.address}
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 ))
               )}
             </div>
           )}
         </div>
+
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            bottom: 0,
+            width: "100vw",
+            zIndex: 4000,
+            background: "rgba(255,255,255,0.96)",
+            boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
+            padding: "16px 16px 12px 16px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Button
+            className="w-full mb-2 py-6"
+            variant="solid"
+            color="warning"
+            size="lg"
+            onClick={handleSelectLocation}
+          >
+            انتخاب
+          </Button>
+        </div>
       </div>
 
-      {/* Fixed Bottom controls: Button and Address Card */}
-      <div
-        className="w-full px-3 pb-4 pt-2 bg-white/90"
-        style={{
-          position: "fixed",
-          left: 0,
-          bottom: 0,
-          width: "100vw",
-          zIndex: 4000,
-          boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
+      <Drawer
+        isOpen={sheetIsOpen}
+        onOpenChange={(open) => {
+          onOpenChange(open);
+          if (!open && lastMarkerRef.current) {
+            lastMarkerRef.current.remove();
+            lastMarkerRef.current = null;
+            setShowPicker(true);
+            setIsMoving(true);
+            setTimeout(() => setIsMoving(false), 380);
+            window.neshanMapInstance.zoomIn();
+          }
         }}
+        placement="bottom"
       >
-        <Card className="mb-3">
-          <CardBody dir="rtl" className="text-start">
-           <lable>
-            آدرس انتخاب شده
-            </lable>
-            <div>{currentAddress || "..."}</div>
-          </CardBody>
-        </Card>
-        <Button
-          className="w-full mb-2 py-6"
-          variant="solid"
-          color="warning"
-          size="lg"
-          onClick={handleSelectLocation}
-        >
-          انتخاب
-        </Button>
-      </div>
+        <DrawerContent>
+          {(onClose) => (
+            <>
+              <DrawerHeader className="flex pb-2 justify-center">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold">تایید مبدأ</h2>
+                </div>
+              </DrawerHeader>
+              <DrawerBody className="gap-1">
+                <Textarea
+                  label="آدرس"
+                  labelPlacement="outside"
+                  value={selectedAddress}
+                  onChange={(e) => setSelectedAddress(e.target.value)}
+                  placeholder="آدرس موقعیت شما"
+                  variant={"faded"}
+                  maxRows={2}
+                  disableAutosize
+                />
+
+                <p className="text-sm font-light mt-1">شماره تلفن</p>
+
+                <Input
+                  defaultValue={trip.Passenger?.NumberPhone || ""}
+                  variant="faded"
+                  value={numberPhone}
+                  onChange={(e) => setNumberPhone(e.target.value)}
+                />
+
+                <p className="text-sm font-light mt-1">
+                  توضیحات
+                  <span className="text-xs font-light ms-1"></span>
+                </p>
+
+                <Input
+                  type="text"
+                  placeholder="(اختیاری)"
+                  variant="faded"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </DrawerBody>
+              <DrawerFooter className="flex flex-col align-super">
+                <Button
+                  variant="solid"
+                  color="secondary"
+                  className="w-100"
+                  size="lg"
+                  onPress={() => {
+                    // Remove last marker
+                    if (lastMarkerRef.current) {
+                      lastMarkerRef.current.remove();
+                      lastMarkerRef.current = null;
+                    }
+                    onClose();
+                  }}
+                >
+                  تایید
+                </Button>
+              </DrawerFooter>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

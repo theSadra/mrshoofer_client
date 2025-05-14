@@ -1,49 +1,42 @@
 import React from "react";
 import TripInfo from "./components/tripinfo";
-import { TripStatus } from "@prisma/client";
+import { Prisma, TripStatus } from "@prisma/client";
+
+var trip: Prisma.TripGetPayload<{
+  include: { Location: true; Passenger: true };
+}>;
 
 function Upcoming() {
   // Mocked trip object
-  const trip = {
+  trip = {
     id: 1,
     TicketCode: "ABC123",
     TripCode: "TRIP001",
     Origin_id: 10,
     Destination_id: 20,
     OriginCity: "تهران",
-    DestinationCity: "شیراز",
+    DestinationCity: "اصفهان",
     CarName: "سمند|پژو",
     ServiceName: "سرویس اکو",
     StartsAt: new Date(),
     passengerId: 5,
     locationId: 2,
-    status: TripStatus.intrip,
+    status: TripStatus.wating_info,
     PassengerSmsSent: false,
     AdminApproved: false,
+
+    Passenger: {
+      id: 5,
+      Firstname: "علی",
+      Lastname: "احمدی",
+      NumberPhone: "09902063015",
+      NaCode: "NA123",
+    },
   };
 
   return (
     <div>
-      <TripInfo
-        trip={{
-          id: 0,
-          TicketCode: "24597503",
-          TripCode: null,
-          Origin_id: 1,
-          Destination_id: 2,
-          OriginCity: "تهران",
-          DestinationCity: "اصفهان",
-          CarName: "کمری|سوناتا|سافران",
-          ServiceName: "تشریفات VIP",
-          StartsAt: new Date(),
-          passengerId: 0,
-          PassengerSmsSent: false,
-          AdminApproved: false,
-          status: TripStatus.wating_info,
-          locationId: null,
-          Location: null, // if using the relation
-        }}
-      />
+      <TripInfo trip={trip} />
     </div>
   );
 }
