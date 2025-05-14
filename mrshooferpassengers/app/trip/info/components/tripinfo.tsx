@@ -18,7 +18,7 @@ import { Badge } from "@heroui/badge";
 import Steps from "./steps";
 
 type TripInfoProps = {
-  trip: Prisma.TripGetPayload<{ include: { Location: true } }>;
+  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }>;
 };
 
 function TripInfo({ trip }: TripInfoProps) {

@@ -32,6 +32,7 @@ function Upcoming() {
       NumberPhone: "09902063015",
       NaCode: "NA123",
     },
+    Location: null,
   };
 
   return (

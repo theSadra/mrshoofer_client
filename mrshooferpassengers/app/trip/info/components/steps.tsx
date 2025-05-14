@@ -9,7 +9,7 @@ import { Prisma } from "@prisma/client";
 import TripInfoText from "./tripinfotext";
 
 type StepsProps = {
-  trip: Prisma.TripGetPayload<{ include: { Location: true } }>;
+  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }>;
 };
 
 export default function Component({ trip }: StepsProps) {

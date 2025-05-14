@@ -61,7 +61,7 @@ export interface VerticalCollapsibleStepsProps
    */
   onStepChange?: (stepIndex: number) => void;
 
-  trip: Prisma.TripGetPayload<{ include: { Location: true } }>;
+  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }>;
 }
 
 function CheckIcon(props: ComponentProps<"svg">) {

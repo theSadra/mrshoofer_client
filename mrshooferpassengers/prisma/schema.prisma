@@ -14,13 +14,13 @@ generator client {
 }
 
 model Passenger {
-  id           Int        @id @default(autoincrement())
-  Firstname    String
-  Lastname     String
-  NumberPhone  String
-  NaCode       String
-  Trips        Trip[]
-  Locations    Location[]
+  id          Int        @id @default(autoincrement())
+  Firstname   String
+  Lastname    String
+  NumberPhone String
+  NaCode      String?
+  Trips       Trip[]
+  Locations   Location[]
 }
 
 enum TripStatus {
@@ -33,7 +33,7 @@ enum TripStatus {
 }
 
 model Trip {
-  id               Int         @id @default(autoincrement())
+  id               Int        @id @default(autoincrement())
   TicketCode       String
   TripCode         String?
   Origin_id        Int
@@ -43,22 +43,24 @@ model Trip {
   CarName          String
   ServiceName      String
   StartsAt         DateTime
-  Passenger        Passenger   @relation(fields: [passengerId], references: [id])
+  Passenger        Passenger  @relation(fields: [passengerId], references: [id])
   passengerId      Int
-  Location         Location?   @relation(fields: [locationId], references: [id])
+  Location         Location?  @relation(fields: [locationId], references: [id])
   locationId       Int?
   PassengerSmsSent Boolean
   AdminApproved    Boolean
-  status           TripStatus  @default(wating_info)
+  status           TripStatus @default(wating_info)
 }
 
 model Location {
-  id          Int         @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   Title       String
   Latitude    Float?
   Longitude   Float?
-  Description String
-  Passenger   Passenger   @relation(fields: [passengerId], references: [id])
+  Description String?
+  TextAddress String?
+  PhoneNumber String?
+  Passenger   Passenger @relation(fields: [passengerId], references: [id])
   passengerId Int
   Trips       Trip[]
 }
