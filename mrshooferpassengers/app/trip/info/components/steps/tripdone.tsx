@@ -143,7 +143,9 @@ export default function StepItem({
               >
                 <div className="fle x items-center justify-center align-center">
                   {status === "active" ? (
-                    <>!</>
+                    <>
+                      <span className="self-center text-center">⌛</span>
+                    </>
                   ) : (
                     <>
                       <span className="self-center text-center">⌛</span>

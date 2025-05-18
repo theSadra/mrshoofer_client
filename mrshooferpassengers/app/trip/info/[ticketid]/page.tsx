@@ -1,14 +1,14 @@
 import React from "react";
-import TripInfo from "./components/tripinfo";
-import { Prisma, TripStatus } from "@prisma/client";
-
-var trip: Prisma.TripGetPayload<{
+import TripInfo from "../components/tripinfo";
+import { Prisma, PrismaClient, TripStatus } from "@prisma/client";
+var mocked_trip: Prisma.TripGetPayload<{
   include: { Location: true; Passenger: true };
 }>;
 
-function Upcoming() {
+async function Upcoming({ params }: { params: { ticketid: string } }) {
+  const prisma = new PrismaClient();
   // Mocked trip object
-  trip = {
+  mocked_trip = {
     id: 1,
     TicketCode: "ABC123",
     TripCode: "TRIP001",
@@ -35,9 +35,14 @@ function Upcoming() {
     Location: null,
   };
 
+  const trip = await prisma.trip.findUnique({
+    where: { TicketCode: params.ticketid },
+    include: { Passenger: true, Location: true },
+  });
+
   return (
     <div>
-      <TripInfo trip={trip} />
+      <TripInfo trip={trip ?? mocked_trip} />
     </div>
   );
 }

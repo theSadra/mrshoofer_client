@@ -10,11 +10,15 @@ import TripInfoText from "./tripinfotext";
 
 type StepsProps = {
   trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }>;
+  currentStep?: number;
+  setCurrentStep?: (step: number) => void;
 };
 
-export default function Component({ trip }: StepsProps) {
-  const [currentStep, setCurrentStep] = React.useState(2);
-
+export default function Component({
+  trip,
+  currentStep,
+  setCurrentStep,
+}: StepsProps) {
   // const steps = [
   //   // {
   //   //   title:

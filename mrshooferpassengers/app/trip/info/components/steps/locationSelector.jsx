@@ -19,6 +19,8 @@ import {
   useDisclosure,
 } from "@heroui/react";
 
+import { UpdateLocation } from "@/app/trip/actions";
+
 export const SearchIcon = (props) => {
   return (
     <svg
@@ -56,7 +58,7 @@ const API_KEY =
   process.env.NEXT_PUBLIC_NESHAN_API_KEY ||
   "service.6f5734c50a9c43cba6f43a6254c1b668";
 
-function LocationSelector({ isOpen, trip }) {
+function LocationSelector({ isOpen, trip, setIsOpen }) {
   const [isMoving, setIsMoving] = useState(false);
   const [zoom, setZoom] = useState(11);
   const [search, setSearch] = useState("");
@@ -75,6 +77,8 @@ function LocationSelector({ isOpen, trip }) {
 
   const [numberPhone, setNumberPhone] = useState(trip.Passenger.numberPhone);
   const [description, setDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const {
     isOpen: sheetIsOpen,
@@ -133,41 +137,6 @@ function LocationSelector({ isOpen, trip }) {
     };
 
     neshanMap.on("load", function () {
-      neshanMap.addSource("route", {
-        type: "geojson",
-        data: routeObj,
-      });
-      neshanMap.addSource("points1", {
-        type: "geojson",
-        data: pointsObj,
-      });
-
-      neshanMap.addLayer({
-        id: "route-line",
-        type: "line",
-        source: "route",
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#250ECD",
-          "line-width": 9,
-        },
-      });
-
-      neshanMap.addLayer({
-        id: "points1",
-        type: "circle",
-        source: "points1",
-        paint: {
-          "circle-color": "#9fbef9",
-          "circle-stroke-color": "#FFFFFF",
-          "circle-stroke-width": 2,
-          "circle-radius": 5,
-        },
-      });
-
       setLoading(false); // Hide loading when map is ready
     });
 
@@ -207,45 +176,8 @@ function LocationSelector({ isOpen, trip }) {
         if (window.neshanMapInstance) {
           // METHOD 1: Basic resize
           window.neshanMapInstance.resize();
-
-          // // METHOD 2: Force reflow
-          // window.neshanMapInstance._update();
-
-          // // METHOD 3: Trigger repaint (internal method)
-          // if (window.neshanMapInstance._render) {
-          //   window.neshanMapInstance._render();
-          // }
-
-          // // METHOD 4: Force style recalculation
-          // window.neshanMapInstance.getCanvas().style.visibility = "hidden";
-          // setTimeout(() => {
-          //   if (
-          //     window.neshanMapInstance &&
-          //     window.neshanMapInstance.getCanvas()
-          //   ) {
-          //     window.neshanMapInstance.getCanvas().style.visibility = "visible";
-
-          //     // METHOD 5: Nudge the center to force a redraw
-          //     try {
-          //       const center = window.neshanMapInstance.getCenter();
-          //       window.neshanMapInstance.jumpTo({
-          //         center: [center.lng, center.lat],
-          //       });
-          //     } catch (e) {
-          //       console.log("Map center adjustment failed", e);
-          //     }
-          //   }
-          // }, 50);
         }
       };
-
-      // Call multiple times with increasing delays
-      // const delays = [50, 200, 500, 1000];
-      // const timers = delays.map((delay) =>
-      //   setTimeout(() => forceMapRender(), delay)
-      // );
-
-      // Also trigger on window resize
 
       return () => {
         window.removeEventListener("resize", forceMapRender);
@@ -266,7 +198,6 @@ function LocationSelector({ isOpen, trip }) {
   //       const el = document.createElement("div");
   //       el.style.width = "18px";
   //       el.style.height = "18px";
-  //       el.style.background = "#2196f3";
   //       el.style.border = "3px solid #fff";
   //       el.style.borderRadius = "50%";
   //       el.style.boxShadow = "0 2px 8px rgba(33,150,243,0.3)";
@@ -557,14 +488,26 @@ function LocationSelector({ isOpen, trip }) {
   // Then call it (e.g., in useEffect)
   useEffect(() => {
     if (isOpen && trip?.OriginCity) {
-      getCoordinatesFromCityName(trip.OriginCity).then((coords) => {
-        if (coords && window.neshanMapInstance) {
-          window.neshanMapInstance.setCenter([coords.lng, coords.lat]);
-          window.neshanMapInstance.setZoom(13);
+      // There is no pre selected location
+      // Picking the center of the map
+      if (trip?.Location == null) {
+        getCoordinatesFromCityName(trip.OriginCity).then((coords) => {
+          if (coords && window.neshanMapInstance) {
+            window.neshanMapInstance.setCenter([coords.lng, coords.lat]);
+            window.neshanMapInstance.setZoom(13);
+          }
+        });
+      }
+      // The location exists and just needs to be updated
+      else {
+        const { Latitude, Longitude } = trip.Location;
+        if (window.neshanMapInstance) {
+          window.neshanMapInstance.setCenter([Longitude, Latitude]);
+          window.neshanMapInstance.setZoom(14.5);
         }
-      });
+      }
     }
-  }, [trip?.OriginCity, isOpen]);
+  }, [isOpen]);
 
   return (
     <div
@@ -882,7 +825,9 @@ function LocationSelector({ isOpen, trip }) {
               setSearch(e.target.value);
               searchNeshan(e.target.value);
             }}
-            onFocus={() => search && setShowDropdown(true)}
+            onClick={() => {
+              if (!showDropdown && search == null) setShowDropdown(true);
+            }}
           />
           {showDropdown && search && (
             <div
@@ -931,7 +876,6 @@ function LocationSelector({ isOpen, trip }) {
                           item.location.y,
                         ]);
                       }
-                      searchNeshan(item.title);
                     }}
                   >
                     <div className="flex justify-normal">
@@ -1015,56 +959,100 @@ function LocationSelector({ isOpen, trip }) {
                 </div>
               </DrawerHeader>
               <DrawerBody className="gap-1">
-                <Textarea
-                  label="آدرس"
-                  labelPlacement="outside"
-                  value={selectedAddress}
-                  onChange={(e) => setSelectedAddress(e.target.value)}
-                  placeholder="آدرس موقعیت شما"
-                  variant={"faded"}
-                  maxRows={2}
-                  disableAutosize
-                />
+                <form
+                  onSubmit={async (event) => {
+                    event.preventDefault();
+                    setIsSubmitting(true);
+                    setErrorMessage("");
 
-                <p className="text-sm font-light mt-1">شماره تلفن</p>
+                    const data = new FormData(event.currentTarget);
+                    data.set("tripId", trip.id);
+                    data.set("lat", selectedCordinates.current.lat.toString());
+                    data.set("lng", selectedCordinates.current.lng.toString());
+                    data.set("address", selectedAddress);
+                    data.set("phonenumber", numberPhone);
+                    data.set("description", description);
 
-                <Input
-                  defaultValue={trip.Passenger?.NumberPhone || ""}
-                  variant="faded"
-                  value={numberPhone}
-                  onChange={(e) => setNumberPhone(e.target.value)}
-                />
-
-                <p className="text-sm font-light mt-1">
-                  توضیحات
-                  <span className="text-xs font-light ms-1"></span>
-                </p>
-
-                <Input
-                  type="text"
-                  placeholder="(اختیاری)"
-                  variant="faded"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </DrawerBody>
-              <DrawerFooter className="flex flex-col align-super">
-                <Button
-                  variant="solid"
-                  color="secondary"
-                  className="w-100"
-                  size="lg"
-                  onPress={() => {
-                    // Remove last marker
-                    if (lastMarkerRef.current) {
-                      lastMarkerRef.current.remove();
-                      lastMarkerRef.current = null;
+                    try {
+                      await UpdateLocation(data);
+                      onClose();
+                      setIsOpen(false);
+                      // e.g., close Drawer or show success
+                    } catch (error) {
+                      setErrorMessage(
+                        "خطا در اتصال به سرور، لطفاً دوباره امتحان کنید"
+                      );
+                    } finally {
+                      setIsSubmitting(false);
                     }
-                    onClose();
                   }}
                 >
-                  تایید
-                </Button>
+                  {errorMessage && (
+                    <p className="text-red-600 text-sm mb-2">{errorMessage}</p>
+                  )}
+                  <Textarea
+                    value={selectedAddress}
+                    onChange={(e) => setSelectedAddress(e.target.value)}
+                    placeholder="آدرس موقعیت شما"
+                    label="آدرس"
+                    labelPlacement="outside"
+                    variant={"faded"}
+                    maxRows={2}
+                    disableAutosize
+                  />
+
+                  <p className="text-sm font-light mt-1">شماره تلفن</p>
+
+                  <Input
+                    defaultValue={trip.Passenger?.NumberPhone || ""}
+                    variant="faded"
+                    value={numberPhone}
+                    onChange={(e) => setNumberPhone(e.target.value)}
+                  />
+
+                  <p className="text-sm font-light mt-1">
+                    توضیحات
+                    <span className="text-xs font-light ms-1"></span>
+                  </p>
+
+                  <Input
+                    type="text"
+                    placeholder="(اختیاری)"
+                    variant="faded"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                  <Button
+                    variant={isSubmitting ? "faded" : "solid"}
+                    color="secondary"
+                    className="w-full mt-5 transition-all ease-linear duration-200"
+                    size="lg"
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "درحال ثبت مبدأ ..." : "تایید"}
+                  </Button>
+                </form>
+              </DrawerBody>
+              <DrawerFooter className="text-center mx-5 pt-0">
+                <p className=" text-sm text-gray-500 font-extralight leading-tight">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="size-4 inline me-2 text-zinc-600"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                    />
+                  </svg>
+                  در صورت نیاز تا قبل از شروع سفر‌، می‌توانید موقعیت انتخاب شده
+                  را تعییر دهید
+                </p>
               </DrawerFooter>
             </>
           )}

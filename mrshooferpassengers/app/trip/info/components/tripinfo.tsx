@@ -3,6 +3,10 @@
 import React from "react";
 import { Prisma, Trip, TripStatus } from "@prisma/client";
 
+const PersianDate = require("persian-date");
+
+import { format } from "date-fns";
+
 import { Snippet } from "@heroui/snippet";
 
 import { Card } from "@heroui/card";
@@ -22,6 +26,23 @@ type TripInfoProps = {
 };
 
 function TripInfo({ trip }: TripInfoProps) {
+  const [currentStep, setCurrentStep] = React.useState(-1);
+  const persianStartDate = new PersianDate(trip.StartsAt);
+
+  React.useEffect(() => {
+    switch (trip.status) {
+      case TripStatus.wating_info:
+        setCurrentStep(2);
+        break;
+      case TripStatus.wating_start:
+        setCurrentStep(3);
+        break;
+      default:
+        setCurrentStep(3);
+        break;
+    }
+  }, [trip.status]);
+
   let status_content;
   let status_color:
     | "default"
@@ -123,14 +144,22 @@ function TripInfo({ trip }: TripInfoProps) {
                 <div className="flex-1">
                   <div className="flex flex-col align-middle flex-1">
                     <div className="flex justify-between">
-                      <span className="text-sm font-semibold block ">
-                        12 اردیبهشت
-                        <span className="ms-1 font-md">1404</span>
+                      <span className="text-sm font-medium block ">
+                        <span className="ms-1">
+                          {persianStartDate.format("DD")}
+                        </span>
+                        <span className="ms-1">
+                          {persianStartDate.format("MMMM")}
+                        </span>
+
+                        <span className="ms-1  font-light text-sm">
+                          {persianStartDate.format("YYYY")}
+                        </span>
                       </span>
                     </div>
 
                     <label className="font-light text-sm text-start align-middle ">
-                      دوشنبه
+                      {persianStartDate.format("dddd")}
                     </label>
                   </div>
                 </div>
@@ -148,8 +177,18 @@ function TripInfo({ trip }: TripInfoProps) {
                     </div>
 
                     <label className="font-left text-sm text-start align-middle ">
-                      12:30
-                      <span className="ms-1 font-light text-xs">شب</span>
+                      <span className="ms-1 font-light text-xs">
+                        {format(trip.StartsAt, "HH:mm")}
+                      </span>
+                      <span className="ms-1 font-light text-xs">
+                        {(() => {
+                          const hour = new Date(trip.StartsAt).getHours();
+                          if (hour >= 5 && hour < 12) return "صبح";
+                          if (hour >= 12 && hour < 16) return "ظهر";
+                          if (hour >= 16 && hour < 20) return "بعدازظهر";
+                          return "شب";
+                        })()}
+                      </span>
                     </label>
                   </div>
                 </div>
@@ -174,7 +213,11 @@ function TripInfo({ trip }: TripInfoProps) {
       </Card>
 
       <div className="flex justify-center">
-        <Steps trip={trip}></Steps>
+        <Steps
+          trip={trip}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+        ></Steps>
       </div>
     </div>
   );

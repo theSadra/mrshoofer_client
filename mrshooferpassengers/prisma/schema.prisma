@@ -34,7 +34,7 @@ enum TripStatus {
 
 model Trip {
   id               Int        @id @default(autoincrement())
-  TicketCode       String
+  TicketCode       String     @unique
   TripCode         String?
   Origin_id        Int
   Destination_id   Int
@@ -54,7 +54,6 @@ model Trip {
 
 model Location {
   id          Int       @id @default(autoincrement())
-  Title       String
   Latitude    Float?
   Longitude   Float?
   Description String?

@@ -28,8 +28,11 @@ function tripinfotext({ trip }: TripInfoProps) {
     case TripStatus.wating_start:
       statusContent = (
         <>
-          <h1 className="mb-2 font-md text-center" id="getting-started">
-            همه چیز آمادست! ✅
+          <h1
+            className="mb-2 font-md text-center py-2 bg-green-100 border-solid border rounded-2xl"
+            id="getting-started"
+          >
+            سفر شما آمادست! ✅
           </h1>
           <p className="mb-5 text-small text-center font-light text-default-500">
             همه چیز برای یک سفر آرام و به موقع، مهیاست
