@@ -48,13 +48,13 @@ const AppearanceSetting = React.forwardRef<
           Adjust the web font size.
         </p>
       </div>
-      <Select className="max-w-[200px]" defaultSelectedKeys={["large"]}>
+      {/* <Select className="max-w-[200px]" defaultSelectedKeys={["large"]}>
         {fontSizeOptions.map((fontSizeOption) => (
           <SelectItem key={fontSizeOption.value} value={fontSizeOption.value}>
             {fontSizeOption.label}
           </SelectItem>
         ))}
-      </Select>
+      </Select> */}
     </div>
     <Spacer y={4} />
     {/* Translucent UI */}

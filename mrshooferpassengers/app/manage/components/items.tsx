@@ -10,14 +10,14 @@ import { type SidebarItem } from "./sidebar";
 export const items: SidebarItem[] = [
   {
     key: "home",
-    href: "#",
+    href: "/manage",
     icon: "solar:home-2-linear",
     title: "خانه",
   },
 
   {
-    key: "trips",
-    href: "#",
+    key: "upcoming",
+    href: "/manage/upcoming",
     icon: "solar:checklist-minimalistic-outline",
     title: "سفرها",
   },

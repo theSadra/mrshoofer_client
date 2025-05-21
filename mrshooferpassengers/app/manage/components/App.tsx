@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Children } from "react";
+import React, { Suspense } from "react";
 import {
   Avatar,
   Button,
@@ -13,12 +13,12 @@ import {
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useMediaQuery } from "usehooks-ts";
-import { usePathname } from "next/navigation";
+import { usePathname, useSelectedLayoutSegment } from "next/navigation";
 
 import { AcmeLogo } from "./acme";
 import ProfileSetting from "./profile-setting";
 import AppearanceSetting from "./appearance-setting";
-import AccountSetting from "./account-setting";
+// import AccountSetting from "./account-setting";
 import BillingSetting from "./billing-setting";
 import TeamSetting from "./team-setting";
 import SidebarDrawer from "./sidebar-drawer";
@@ -47,7 +47,12 @@ import { items } from "./items";
  * <Sidebar defaultSelectedKey="home" selectedKeys={[currentPath]} />
  * ```
  */
-export default function Component({ children }: { children: React.ReactNode }) {
+export default function App({
+  children,
+  pageTitle,
+}: {
+  children: React.ReactNode;
+}) {
   const { isOpen, onOpenChange } = useDisclosure();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -56,8 +61,8 @@ export default function Component({ children }: { children: React.ReactNode }) {
     setIsCollapsed((prev) => !prev);
   }, []);
 
-  const pathname = usePathname();
-  const currentKey = pathname.split("/")[2] || "home";
+  const segment = useSelectedLayoutSegment();
+  const currentKey = segment || "home";
 
   return (
     <div className="flex h-dvh w-full gap-4 border rounded-2xl">
@@ -240,11 +245,10 @@ export default function Component({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </SidebarDrawer>
-
       {/*  Settings Content */}
-      <div className="w-full overflow-visible max-w-2xl flex-1 p-4 mt-5">
+      <div className="overflow-y-auto-visible flex-1 p-4 mt-5">
         {/* Title */}
-        <div className="flex items-center gap-x-3">
+        <div className="inline-flex items-center gap-x-3">
           <Button
             isIconOnly
             className="sm:hidden"
@@ -258,13 +262,9 @@ export default function Component({ children }: { children: React.ReactNode }) {
               width={20}
             />
           </Button>
-          <h1 className="text-3xl font-bold leading-9 text-default-foreground">
-            Settings
-          </h1>
+          {/* Render the page title here */}
         </div>
-        <h2 className="mt-2 text-small text-default-500">
-          Customize settings, email preferences, and web appearance.
-        </h2>
+
         {/*  Tabs */}
         {/* <Tabs
           fullWidth
@@ -290,6 +290,7 @@ export default function Component({ children }: { children: React.ReactNode }) {
             <TeamSetting />
           </Tab>
         </Tabs> */}
+
         {children}
       </div>
     </div>
