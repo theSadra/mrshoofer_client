@@ -50,6 +50,19 @@ model Trip {
   PassengerSmsSent Boolean
   AdminApproved    Boolean
   status           TripStatus @default(wating_info)
+
+  driverId Int?
+  Driver   Driver? @relation(fields: [driverId], references: [id])
+}
+
+model Driver {
+  id Int @id @default(autoincrement())
+
+  Firstname   String
+  Lastname    String
+  CarName     String?
+  PhoneNumber String
+  Trip        Trip[]
 }
 
 model Location {

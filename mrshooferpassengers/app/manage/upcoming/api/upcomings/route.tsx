@@ -25,6 +25,9 @@ export async function GET(req: NextRequest) {
 
   const trips = await prisma.trip.findMany({
     orderBy: { StartsAt: "asc" },
+    include: {
+      Driver: true,
+    },
   });
 
   return NextResponse.json(trips);

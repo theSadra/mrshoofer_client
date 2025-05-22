@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Table,
   TableHeader,
@@ -17,6 +17,8 @@ import {
   Chip,
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
+import AssignDriverModal from "./AssignDriverModal";
+import { useDisclosure } from "@heroui/react";
 
 const PersianDate = require("persian-date");
 
@@ -48,8 +50,14 @@ export default function TripsTable() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch trips from your API route
-  useEffect(() => {
+  // Modal state for assigning driver
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedTripId, setSelectedTripId] = useState<string | number | null>(
+    null
+  );
+
+  // Fetch trips from your API route (useCallback for reuse)
+  const fetchTrips = useCallback(() => {
     setLoading(true);
     fetch("/manage/upcoming/api/upcomings?day=2025-10-01")
       .then((res) => res.json())
@@ -57,20 +65,27 @@ export default function TripsTable() {
         setTrips(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false)); // Handle errors gracefully
+      .catch(() => setLoading(false));
   }, []);
 
-  const filteredItems = React.useMemo(() => {
+  // Initial fetch
+  useEffect(() => {
+    fetchTrips();
+  }, [fetchTrips]);
+
+  // Filtering logic
+  const filteredItems = useMemo(() => {
     let filtered = [...trips];
     if (filterValue) {
       filtered = filtered.filter((trip) =>
-        trip.TicketCode.toLowerCase().includes(filterValue.toLowerCase())
+        trip.TicketCode?.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
     return filtered;
   }, [trips, filterValue]);
 
-  const renderCell = React.useCallback((trip, columnKey) => {
+  // Table cell rendering
+  const renderCell = useCallback((trip, columnKey) => {
     const cellValue = trip[columnKey];
     switch (columnKey) {
       case "Status":
@@ -86,26 +101,25 @@ export default function TripsTable() {
         );
 
       case "Direction":
-        const startDateTime = new Date(trip.StartsAt); // Convert StartsAt to a Date object
-        const persian_start_date = new PersianDate(startDateTime.getTime()); // Pass the timestamp to PersianDate
+        const startDateTime = new Date(trip.StartsAt);
+        const persian_start_date = new PersianDate(startDateTime.getTime());
         return (
           <>
             <Chip
               variant="flat"
-              className="text-medium font-bold   "
+              className="text-medium font-bold"
               startContent={
                 <Icon
                   icon="solar:clock-circle-broken"
                   className="text-default-600"
                   width={22}
-                ></Icon>
+                />
               }
               color="primary"
             >
               {persian_start_date.format("HH:mm")}{" "}
             </Chip>
-
-            <div className="flex md:flex-row  flex-col gap-1">
+            <div className="flex md:flex-row flex-col gap-1">
               <span className="text-default-700 font-bold">
                 {trip.OriginCity}
               </span>
@@ -123,6 +137,30 @@ export default function TripsTable() {
             <Chip variant="bordered" className="rounded-lg" color="warning">
               <span className="text-default-700">{trip.CarName}</span>
             </Chip>
+          </div>
+        );
+
+      case "Driver":
+        return trip.Driver ? (
+          <Chip variant="bordered" className="rounded-lg" color="warning">
+            <span className="text-default-700">راننده دارد</span>
+          </Chip>
+        ) : (
+          <div>
+            <Button
+              size="sm"
+              variant="flat"
+              color="primary"
+              startContent={
+                <Icon icon="solar:user-plus-rounded-broken" width={22} />
+              }
+              onClick={() => {
+                setSelectedTripId(trip.id);
+                setAssignModalOpen(true);
+              }}
+            >
+              افزودن راننده
+            </Button>
           </div>
         );
       case "actions":
@@ -147,7 +185,7 @@ export default function TripsTable() {
     }
   }, []);
 
-  const onSearchChange = React.useCallback((value) => {
+  const onSearchChange = useCallback((value) => {
     if (value) {
       setFilterValue(value);
     } else {
@@ -155,7 +193,7 @@ export default function TripsTable() {
     }
   }, []);
 
-  const topContent = React.useMemo(
+  const topContent = useMemo(
     () => (
       <div className="flex justify-between items-center">
         <Input
@@ -171,37 +209,50 @@ export default function TripsTable() {
   );
 
   return (
-    <Table
-      isHeaderSticky
-      aria-label="Trips table with custom cells and sorting"
-      topContent={topContent}
-      topContentPlacement="outside"
-      sortDescriptor={{ column: "StartsAt", direction: "ascending" }}
-      isLoading={loading}
-    >
-      <TableHeader columns={columns}>
-        {(column) => (
-          <TableColumn
-            key={column.uid}
-            align={column.uid === "actions" ? "center" : "start"}
-            allowsSorting={column.sortable}
-          >
-            {column.name}
-          </TableColumn>
-        )}
-      </TableHeader>
-      <TableBody
-        emptyContent={loading ? "درحال بارگزاری سفرها ..." : "سفری پیدا نشد ❌"}
-        items={filteredItems}
+    <>
+      <Table
+        isHeaderSticky
+        aria-label="Trips table with custom cells and sorting"
+        topContent={topContent}
+        topContentPlacement="outside"
+        sortDescriptor={{ column: "StartsAt", direction: "ascending" }}
+        isLoading={loading}
       >
-        {(item) => (
-          <TableRow key={item.id}>
-            {(columnKey) => (
-              <TableCell>{renderCell(item, columnKey)}</TableCell>
-            )}
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+        <TableHeader columns={columns}>
+          {(column) => (
+            <TableColumn
+              key={column.uid}
+              align={column.uid === "actions" ? "center" : "start"}
+              allowsSorting={column.sortable}
+            >
+              {column.name}
+            </TableColumn>
+          )}
+        </TableHeader>
+        <TableBody
+          emptyContent={
+            loading ? "درحال بارگزاری سفرها ..." : "سفری پیدا نشد ❌"
+          }
+          items={filteredItems}
+        >
+          {(item) => (
+            <TableRow key={item.id}>
+              {(columnKey) => (
+                <TableCell>{renderCell(item, columnKey)}</TableCell>
+              )}
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+      <AssignDriverModal
+        open={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        tripId={selectedTripId ?? ""}
+        onAssigned={() => {
+          setAssignModalOpen(false);
+          fetchTrips(); // Refetch trips after assigning a driver
+        }}
+      />
+    </>
   );
 }
