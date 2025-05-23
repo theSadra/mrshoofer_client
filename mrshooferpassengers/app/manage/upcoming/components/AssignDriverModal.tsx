@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Input, Button, Spinner } from "@heroui/react";
-import { addToast, Button } from "@heroui/react";
+import { addToast } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import {
   Modal,

@@ -9,7 +9,7 @@ export default function ManageLayout({
 }) {
   return (
     <div className="flex items-center justify-center bg-background">
-      <div className="lg:container sm:mx-0 sm:px-1 mx-auto w-full md:px-0 lg:mx-10">
+      <div className="lg:container sm:mx-0 sm:px-1 mx-auto w-full md:px-0 ">
         <Layout>{children}</Layout>
       </div>
     </div>

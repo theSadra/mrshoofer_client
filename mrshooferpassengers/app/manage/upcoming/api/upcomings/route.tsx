@@ -27,6 +27,8 @@ export async function GET(req: NextRequest) {
     orderBy: { StartsAt: "asc" },
     include: {
       Driver: true,
+      Passenger: true,
+      Location: true,
     },
   });
 

@@ -27,6 +27,7 @@
     "@heroui/switch": "2.2.15",
     "@heroui/system": "2.4.13",
     "@heroui/theme": "2.4.13",
+    "@heroui/toast": "^2.0.9",
     "@iconify/react": "^6.0.0",
     "@mapbox/polyline": "^1.2.1",
     "@neshan-maps-platform/mapbox-gl": "^1.1.5",

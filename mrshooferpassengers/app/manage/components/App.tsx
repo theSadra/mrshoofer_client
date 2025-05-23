@@ -246,7 +246,7 @@ export default function App({
         </div>
       </SidebarDrawer>
       {/*  Settings Content */}
-      <div className="overflow-y-auto-visible flex-1 p-4 mt-5">
+      <div className="overflow-auto  flex-1 p-4 mt-5">
         {/* Title */}
         <div className="inline-flex items-center gap-x-3">
           <Button

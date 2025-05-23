@@ -11,9 +11,9 @@ import { IncomingMessage } from "http";
 
 import TripsTable from "./components/table";
 
-function page() {
+function Page() {
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <h1 className="text-3xl font-bold leading-9 text-default-foreground inline ms-2 md:ms-0 mb-2">
         سفرهای پیش‌رو
       </h1>
@@ -58,9 +58,11 @@ function page() {
         </Button>
       </div>
 
-      <TripsTable></TripsTable>
-    </>
+      <div className="flex-1">
+        <TripsTable />
+      </div>
+    </div>
   );
 }
 
-export default page;
+export default Page;
