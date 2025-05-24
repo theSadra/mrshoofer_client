@@ -2,6 +2,7 @@ import { Link } from "@heroui/link";
 import { Snippet } from "@heroui/snippet";
 import { Code } from "@heroui/code";
 import { button as buttonStyles } from "@heroui/theme";
+import { addToast } from "@heroui/toast";
 
 import { siteConfig } from "@/config/site";
 import { title, subtitle } from "@/components/primitives";
@@ -32,7 +33,7 @@ export default function Home() {
           })}
           href={siteConfig.links.docs}
         >
-          
+
         </Link>
         <Link
           isExternal
@@ -51,6 +52,17 @@ export default function Home() {
           </span>
         </Snippet>
       </div>
+      {/* TEST TOAST BUTTON */}
+      <button
+        className="mt-8 px-4 py-2 bg-primary text-white rounded"
+        onClick={() => addToast({
+          title: "Test Toast",
+          description: "This is a test toast from the homepage.",
+          color: "primary"
+        })}
+      >
+        Show Test Toast
+      </button>
     </section>
   );
 }
