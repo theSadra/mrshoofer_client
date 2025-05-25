@@ -1,12 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/modal";
-import { Input, Button, Select, SelectItem } from "@heroui/react";
+import { Input, Button } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { addToast } from "@heroui/toast";
-import carnamesRaw from "./carnames.json";
-
-const carnames: string[] = Array.isArray(carnamesRaw) ? carnamesRaw : [];
 
 interface AddDriverModalProps {
     open: boolean;
@@ -26,6 +23,26 @@ export default function AddDriverModal({ open, onClose, onDriverAdded }: AddDriv
         e.preventDefault();
         setLoading(true);
         setError("");
+        if (!Firstname.trim()) {
+            setError("لطفاً نام راننده را وارد کنید.");
+            setLoading(false);
+            return;
+        }
+        if (!Lastname.trim()) {
+            setError("لطفاً نام خانوادگی راننده را وارد کنید.");
+            setLoading(false);
+            return;
+        }
+        if (!PhoneNumber.trim()) {
+            setError("لطفاً شماره تماس راننده را وارد کنید.");
+            setLoading(false);
+            return;
+        }
+        if (!CarName.trim()) {
+            setError("لطفاً نام خودرو را وارد کنید.");
+            setLoading(false);
+            return;
+        }
         try {
             const res = await fetch("/manage/api/drivers", {
                 method: "POST",
@@ -46,9 +63,8 @@ export default function AddDriverModal({ open, onClose, onDriverAdded }: AddDriv
             // Show toast after successful driver creation
             addToast({
                 title: "راننده جدید",
-                description: "راننده جدید با موفقیت اضافه شد برای ایجاد تغییرات میتوانید در بخش رانندگان این کارو انجام بدید",
-                color: "primary",
-                variant: "bordered",
+                description: "راننده جدید با موفقیت اضافه شد.",
+                color: "success",
             });
             onClose();
         } catch (err: any) {
@@ -58,7 +74,7 @@ export default function AddDriverModal({ open, onClose, onDriverAdded }: AddDriv
     };
 
     return (
-        <Modal isOpen={open} onClose={onClose} scrollBehavior="inside">
+        <Modal isOpen={open} onClose={onClose} scrollBehavior="inside" variant="bordered">
             <ModalContent className="max-w-md w-full">
                 <ModalHeader className="flex flex-col gap-2 items-start">
                     <div className="flex items-center gap-2 w-full">
@@ -66,47 +82,51 @@ export default function AddDriverModal({ open, onClose, onDriverAdded }: AddDriv
                         <span className="font-bold text-lg">افزودن راننده جدید</span>
                     </div>
                 </ModalHeader>
-                <form onSubmit={handleSubmit} className="w-full">
+                <form onSubmit={handleSubmit} className="w-full" noValidate>
                     <ModalBody className="space-y-3">
                         <Input
-                            label="نام راننده"
+                            label={<span>نام راننده <span className="text-danger">*</span></span>}
+                            placeholder="نام راننده را وارد کنید"
                             value={Firstname}
                             onChange={e => setFirstname(e.target.value)}
                             required
                             className="w-full"
+                            variant="bordered"
                         />
                         <Input
-                            label="نام خانوادگی راننده"
+                            label={<span>نام خانوادگی راننده <span className="text-danger">*</span></span>}
+                            placeholder="نام خانوادگی راننده را وارد کنید"
                             value={Lastname}
                             onChange={e => setLastname(e.target.value)}
                             required
                             className="w-full"
+                            variant="bordered"
                         />
+                        <div>
+                            <Input
+                                label={<span>شماره تماس <span className="text-danger">*</span></span>}
+                                placeholder="شماره تماس راننده را وارد کنید"
+                                value={PhoneNumber}
+                                onChange={e => setPhoneNumber(e.target.value)}
+                                required
+                                className="w-full"
+                                type="tel"
+                                pattern="[0-9]+"
+                                variant="bordered"
+                            />
+                            <div className="text-xs text-default-400 mt-1 mb-2">
+                                موقعیت مسافران، به شماره تلفن وارد شده ارسال خواهد شد
+                            </div>
+                        </div>
                         <Input
-                            label="شماره تماس"
-                            value={PhoneNumber}
-                            onChange={e => setPhoneNumber(e.target.value)}
+                            label={<span>نام خودرو <span className="text-danger">*</span></span>}
+                            placeholder="نام خودرو را وارد کنید"
+                            value={CarName}
+                            onChange={e => setCarName(e.target.value)}
                             required
                             className="w-full"
-                            type="tel"
-                            pattern="[0-9]+"
+                            variant="bordered"
                         />
-                        {/* CarName as a HeroUI Select dropdown */}
-                        <Select
-                            label="نام خودرو"
-                            placeholder="یک خودرو انتخاب کنید"
-                            selectedKeys={CarName ? [CarName] : []}
-                            onSelectionChange={keys => {
-                                const val = Array.from(keys)[0] as string;
-                                setCarName(val);
-                            }}
-                            required
-                            className="w-full"
-                        >
-                            {carnames.map((name) => (
-                                <SelectItem key={name}>{name}</SelectItem>
-                            ))}
-                        </Select>
                         {error && <div className="text-danger text-sm text-center">{error}</div>}
                     </ModalBody>
                     <ModalFooter className="flex flex-col gap-2 sm:flex-row sm:justify-between">

@@ -78,7 +78,7 @@ export default function App({
       >
         <div
           className={cn(
-            "will-change relative flex h-full w-72 flex-col bg-default-100 p-6 transition-width",
+            "will-change relative flex h-full w-72 flex-col bg-[#F1F5F9] p-6 transition-width text-gray-900", // compromise: slightly darker but still light
             {
               "w-[83px] items-center px-[6px] py-6": isCollapsed,
             }
