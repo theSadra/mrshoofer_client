@@ -23,7 +23,7 @@ export const items: SidebarItem[] = [
   },
   {
     key: "drivers",
-    href: "#",
+    href: "/manage/drivers",
     icon: "solar:users-group-two-rounded-outline",
     title: "رانندگان",
   },

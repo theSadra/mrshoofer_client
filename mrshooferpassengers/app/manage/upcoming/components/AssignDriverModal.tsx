@@ -114,7 +114,7 @@ export default function AssignDriverModal({
       isOpen={open}
       onClose={onClose}
       scrollBehavior="inside"
-      className="overflow-visible z-[9999]"
+      className="z-[9999]"
     >
       <ModalContent className="overflow-visible z-[9999]">
         <ModalHeader className="flex flex-col gap-2 items-start min-h-20">
@@ -153,7 +153,7 @@ export default function AssignDriverModal({
             />
           </div>
         </ModalHeader>
-        <ModalBody className="h-auto max-h-none overflow-visible">
+        <ModalBody className="h-auto max-h-[60vh] overflow-y-auto overflow-x-visible">
           {loading ? (
             <div className="flex justify-center items-center h-full min-h-[250px]">
               <Spinner />
@@ -269,7 +269,7 @@ export default function AssignDriverModal({
               )}
             </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1 py-3">
               {drivers.map((driver) => (
                 <li
                   key={driver.id}

@@ -105,13 +105,13 @@ function Page() {
   // If a custom date is selected, use it for filtering
   const selectedDay = selected
     ? (() => {
-        const d = new Date(selected);
-        d.setHours(0, 0, 0, 0);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
-      })()
+      const d = new Date(selected);
+      d.setHours(0, 0, 0, 0);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    })()
     : getDayString(tabToOffset[selectedTab as keyof typeof tabToOffset] || 0);
 
   // When a tab is selected, clear the custom date selection
