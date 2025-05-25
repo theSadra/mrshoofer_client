@@ -33,16 +33,12 @@ export default function DriversPage() {
             </h1>
             <p className="mb-6 text-default-500">در این صفحه می‌توانید رانندگان را مشاهده و مدیریت کنید.</p>
             {/* Top controls: search bar and add button on one line */}
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
-                <div className="w-full sm:max-w-xs">
-                    <DriverTable key={refreshKey} onEdit={driver => setEditDriver(driver)} hideSearchBar={false} />
-                </div>
+            <div className="flex justify-end mb-4">
                 <Button color="primary" onClick={() => setAddOpen(true)} startContent={<Icon icon="fluent-color:add-circle-20" width={22} />}>
                     افزودن راننده جدید
                 </Button>
             </div>
-            {/* Main table without search bar below */}
-            <DriverTable key={refreshKey + 1000} onEdit={driver => setEditDriver(driver)} hideSearchBar={true} />
+            <DriverTable key={refreshKey} onEdit={driver => setEditDriver(driver)} />
             <AddDriverModal open={addOpen} onClose={() => setAddOpen(false)} onDriverAdded={handleDriverAdded} />
             <EditDriverModal
                 open={!!editDriver}

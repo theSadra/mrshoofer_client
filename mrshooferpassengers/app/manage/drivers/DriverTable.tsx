@@ -75,7 +75,7 @@ export default function DriverTable({ onEdit, hideSearchBar = false }: DriverTab
                     <Input
                         className="max-w-xs w-full sm:w-auto"
                         variant="bordered"
-                        placeholder="جستجو راننده..."
+                        placeholder="جستجو کنید (نام، نام خانوادگی، شماره تماس یا خودرو)"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         startContent={<Icon icon="solar:magnifer-linear" width={20} />}
