@@ -50,6 +50,7 @@ model Trip {
   PassengerSmsSent Boolean
   AdminApproved    Boolean
   status           TripStatus @default(wating_info)
+  SecureToken       String     @unique
 
   driverId Int?
   Driver   Driver? @relation(fields: [driverId], references: [id])

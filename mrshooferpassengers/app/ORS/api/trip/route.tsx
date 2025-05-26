@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { sendPassengerSMS } from "@/lib/SmsService/PassengerSMSSender";
 
 const prisma = new PrismaClient();
 
@@ -41,6 +42,11 @@ export async function POST(req: NextRequest) {
             status: 'wating_info',
         },
     });
+    // Sending sms to client asycronously
+
+    sendPassengerSMS(upsertedPassenger.NumberPhone, newTrip, upsertedPassenger);
+
+    // Example: send SMS after trip creation
     return NextResponse.json({ trip: newTrip, passenger: upsertedPassenger }, { status: 201 });
     // } catch (error) {
     //     return NextResponse.json({ error: "خطا در ثبت سفر" }, { status: 500 });
