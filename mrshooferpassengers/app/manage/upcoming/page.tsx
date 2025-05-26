@@ -123,7 +123,8 @@ function Page() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <h1 className="text-3xl font-bold leading-9 text-default-foreground inline ms-2 md:ms-0 mb-2">
+      <h1 className="text-3xl font-bold leading-9 text-default-foreground ms-2 md:ms-0 mb-2 flex items-center">
+        <Icon icon="solar:calendar-line-duotone" width={32} className="me-2 text-primary" />
         سفرهای پیش‌رو
       </h1>
 

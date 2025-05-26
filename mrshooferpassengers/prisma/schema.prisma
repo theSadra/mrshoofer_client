@@ -17,7 +17,7 @@ model Passenger {
   id          Int        @id @default(autoincrement())
   Firstname   String
   Lastname    String
-  NumberPhone String
+  NumberPhone String     @unique
   NaCode      String?
   Trips       Trip[]
   Locations   Location[]
