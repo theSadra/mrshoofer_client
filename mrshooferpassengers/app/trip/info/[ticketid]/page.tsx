@@ -36,7 +36,7 @@ async function Upcoming({ params }: { params: { ticketid: string } }) {
   };
 
   const trip = await prisma.trip.findUnique({
-    where: { TicketCode: params.ticketid },
+    where: { SecureToken: params.ticketid },
     include: { Passenger: true, Location: true },
   });
 

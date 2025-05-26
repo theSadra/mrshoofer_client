@@ -4,6 +4,16 @@ import { sendPassengerSMS } from "@/lib/SmsService/PassengerSMSSender";
 
 const prisma = new PrismaClient();
 
+// Helper to generate a 9-character unique token
+function generateSecureToken(length = 9) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < length; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+}
+
 // POST /ORS/api/trip
 export async function POST(req: NextRequest) {
     // try {
@@ -40,6 +50,7 @@ export async function POST(req: NextRequest) {
             PassengerSmsSent: false,
             AdminApproved: false,
             status: 'wating_info',
+            SecureToken: generateSecureToken(),
         },
     });
     // Sending sms to client asycronously
