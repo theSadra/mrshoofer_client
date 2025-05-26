@@ -4,8 +4,8 @@ import { sendPassengerSMS } from "@/lib/SmsService/PassengerSMSSender";
 
 const prisma = new PrismaClient();
 
-// Helper to generate a 9-character unique token
-function generateSecureToken(length = 9) {
+// Helper to generate a 5-character alphanumeric token
+function generateSecureToken(length = 5) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let token = '';
     for (let i = 0; i < length; i++) {
