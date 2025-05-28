@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { sendDriverSMS } from '@/lib/SmsService/DriverSMSSender';
 
 const prisma = new PrismaClient();
 
@@ -20,6 +21,25 @@ export async function POST(req: NextRequest) {
       include: { Driver: true },
     });
 
+    // Send SMS to the assigned driver
+    if (updatedTrip.Driver?.PhoneNumber) {
+      try {
+        const smsResult = await sendDriverSMS(updatedTrip.Driver.PhoneNumber, updatedTrip);
+        if (!smsResult) {
+          return NextResponse.json(
+            { error: "Failed to send SMS to driver" },
+            { status: 500 }
+          );
+        }
+      } catch (smsError) {
+        console.error('Failed to send SMS to driver:', smsError);
+        return NextResponse.json(
+          { error: "Failed to send SMS to driver", details: smsError?.toString() },
+          { status: 500 }
+        );
+      }
+    }
+
     return NextResponse.json({ success: true, trip: updatedTrip });
   } catch (error) {
     return NextResponse.json(
@@ -28,3 +48,7 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+
+// TODO : Sending SMS TO driver after driver assigned
+//TODO : adding driver changed message to the previus driver

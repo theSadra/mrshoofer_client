@@ -1,4 +1,3 @@
-import { ResponseCacheBase } from './../../node_modules/next/dist/server/response-cache/types.d';
 import { Smsir } from 'sms-typescript/lib';
 import type { Trip, Passenger } from '@prisma/client'
 
