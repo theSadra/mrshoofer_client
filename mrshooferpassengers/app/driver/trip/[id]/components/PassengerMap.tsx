@@ -37,9 +37,6 @@ const PassengerMap: React.FC<PassengerMapProps> = ({ latitude, longitude }) => {
                         center: [longitude, latitude],
                         zoom: 15,
                         poi: false,
-                        mapTypeControllerStatus: {
-                            show: false,
-                        },
                         mapTypeControllerOptions: {
                             show: false,
                         },
