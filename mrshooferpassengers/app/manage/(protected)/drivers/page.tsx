@@ -52,3 +52,5 @@ export default function DriversPage() {
         </div>
     );
 }
+
+// This page should be protected, so move to (protected)/drivers/page.tsx

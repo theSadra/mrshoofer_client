@@ -3,7 +3,8 @@
 import React from "react";
 import Link from "next/link";
 
-function Page() {
+// Move this page to (protected) so it is protected by session check
+export default function Page() {
   return (
     <>
       <Link href="/manage/upcoming" prefetch={false}>
@@ -12,5 +13,3 @@ function Page() {
     </>
   );
 }
-
-export default Page;

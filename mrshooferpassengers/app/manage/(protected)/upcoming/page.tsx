@@ -239,4 +239,5 @@ function Page() {
   );
 }
 
+// This page should be protected, so move to (protected)/upcoming/page.tsx
 export default Page;

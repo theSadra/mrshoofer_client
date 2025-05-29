@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { sendPassengerSMS } from "@/lib/SmsService/PassengerSMSSender";
+import { requireORSAuth } from "@/lib/ors-auth-middleware";
 
 const prisma = new PrismaClient();
 
@@ -16,7 +17,9 @@ function generateSecureToken(length = 5) {
 
 // POST /ORS/api/trip
 export async function POST(req: NextRequest) {
-    // try {
+    const authResult = requireORSAuth(req);
+    if (authResult) return authResult;
+
     const body = await req.json();
     const { passenger, trip } = body;
     if (!passenger || !trip) {
@@ -59,7 +62,4 @@ export async function POST(req: NextRequest) {
 
     // Example: send SMS after trip creation
     return NextResponse.json({ trip: newTrip, passenger: upsertedPassenger }, { status: 201 });
-    // } catch (error) {
-    //     return NextResponse.json({ error: "خطا در ثبت سفر" }, { status: 500 });
-    // }
 }
