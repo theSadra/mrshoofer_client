@@ -1,6 +1,7 @@
 "use server";
 import { PrismaClient, TripStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { sendDriverSMS } from "@/lib/SmsService/DriverSMSSender";
 
 const prisma = new PrismaClient();
 
@@ -12,9 +13,10 @@ export async function UpdateLocation(formData: FormData) {
   const description = formData.get("description")?.toString() || null;
   const phoneNumber = formData.get("numberPhone")?.toString() || null;
 
+  // Include Driver in the trip fetch
   const trip = await prisma.trip.findUnique({
     where: { id: tripId },
-    include: { Location: true },
+    include: { Location: true, Driver: true },
   });
 
   if (!trip) {
@@ -54,6 +56,12 @@ export async function UpdateLocation(formData: FormData) {
       },
     });
   }
+
+  // If trip has a driver, send SMS
+  if (trip.Driver && trip.Driver.PhoneNumber) {
+    await sendDriverSMS(trip.Driver.PhoneNumber, trip);
+  }
+
   if (trip.status === TripStatus.wating_info) {
     await prisma.trip.update({
       where: { id: tripId },
