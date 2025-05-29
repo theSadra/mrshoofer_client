@@ -16,7 +16,11 @@ export const authOptions = {
       },
       async authorize(credentials: Record<string, string> | undefined) {
         if (!credentials?.username || !credentials?.password) return null;
-        const user = await prisma.user.findUnique({ where: { email: credentials.username } });
+        // Try username as email, fallback to name field
+        let user = await prisma.user.findUnique({ where: { email: credentials.username } });
+        if (!user && credentials.username) {
+          user = await prisma.user.findFirst({ where: { name: credentials.username } });
+        }
         if (!user || !user.password) return null;
         // Compare raw password (INSECURE, not recommended)
         if (credentials.password !== user.password) return null;
@@ -25,27 +29,36 @@ export const authOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" as const },
+  session: {
+    strategy: "jwt" as const,
+    maxAge: 60 * 60 * 24 * 365 * 10, // 10 years in seconds
+    updateAge: 60 * 60 * 24 * 365 * 10, // 10 years in seconds (optional, disables forced refresh)
+  },
   pages: {
     signIn: "/manage/login",
   },
   callbacks: {
-    async session({ session, token, user }) {
+    async session({ session, token, user }: { session: any; token: any; user: any }) {
       if (session.user) {
         session.user.id = token.sub;
         session.user.isAdmin = token.isAdmin;
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
         token.isAdmin = user.isAdmin;
       }
       return token;
     },
+    async signIn({ user }: { user: any }) {
+      // Add logging logic here if needed
+      console.log(`Admin login: ${user.email}`);
+      return true;
+    },
   },
   events: {
-    async signIn({ user }) {
+    async signIn({ user }: { user: any }) {
       // Add logging logic here if needed
       console.log(`Admin login: ${user.email}`);
     },

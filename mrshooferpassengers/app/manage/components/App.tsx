@@ -10,6 +10,11 @@ import {
   Tooltip,
   useDisclosure,
   AvatarIcon,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalContent,
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useMediaQuery } from "usehooks-ts";
@@ -49,7 +54,6 @@ import { items } from "./items";
  */
 export default function App({
   children,
-  pageTitle,
 }: {
   children: React.ReactNode;
 }) {
@@ -63,6 +67,8 @@ export default function App({
 
   const segment = useSelectedLayoutSegment();
   const currentKey = segment || "home";
+
+  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
 
   return (
     <div className="flex h-dvh w-full gap-4 border rounded-2xl">
@@ -214,7 +220,7 @@ export default function App({
             <Tooltip content="خروج" isDisabled={!isCollapsed} placement="right">
               <Button
                 className={cn(
-                  "justify-start text-default-500 data-[hover=true]:text-foreground",
+                  "justify-start text-danger-500 data-[hover=true]:text-danger-600",
                   {
                     "justify-center": isCollapsed,
                   }
@@ -229,11 +235,12 @@ export default function App({
                     />
                   )
                 }
+                onClick={() => setShowLogoutModal(true)}
                 variant="light"
               >
                 {isCollapsed ? (
                   <Icon
-                    className="rotate-180 text-default-500"
+                    className="rotate-180 text-danger-500"
                     icon="solar:minus-circle-line-duotone"
                     width={24}
                   />
@@ -242,6 +249,30 @@ export default function App({
                 )}
               </Button>
             </Tooltip>
+            <Modal isOpen={showLogoutModal} onOpenChange={setShowLogoutModal} hideCloseButton>
+              <ModalContent>
+                {(onClose) => (
+                  <>
+                    <ModalHeader>تایید خروج</ModalHeader>
+                    <ModalBody>
+                      <div className="text-center text-lg text-default-700 py-2">آیا مطمئن هستید که می‌خواهید خارج شوید؟</div>
+                    </ModalBody>
+                    <ModalFooter>
+                      <Button color="default" variant="light" onClick={onClose}>
+                        انصراف
+                      </Button>
+                      <Button color="danger" onClick={async () => {
+                        const { signOut } = await import("next-auth/react");
+                        signOut({ callbackUrl: "/manage/login" });
+                        onClose();
+                      }}>
+                        خروج
+                      </Button>
+                    </ModalFooter>
+                  </>
+                )}
+              </ModalContent>
+            </Modal>
           </div>
         </div>
       </SidebarDrawer>
