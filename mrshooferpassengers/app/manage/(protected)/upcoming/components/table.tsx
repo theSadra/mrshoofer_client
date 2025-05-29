@@ -22,6 +22,25 @@ import { useDisclosure } from "@heroui/react";
 
 const PersianDate = require("persian-date");
 
+// Add Trip type for strong typing
+interface Trip {
+  id: string | number;
+  status: string;
+  StartsAt: string | Date;
+  OriginCity: string;
+  DestinationCity: string;
+  CarName: string;
+  TicketCode: string;
+  Driver?: {
+    Firstname: string;
+    Lastname: string;
+    PhoneNumber: string;
+    CarName: string;
+  } | null;
+  Location?: any;
+  [key: string]: any;
+}
+
 export const columns = [
   { name: " ", uid: "Status", sortable: true },
   { name: "مسیر و حرکت", uid: "Direction", sortable: true },
@@ -45,8 +64,8 @@ const statustextmap = {
   done: "پایان یافته",
 };
 
-export default function TripsTable({ day, onTripsChanged, refreshKey }) {
-  const [trips, setTrips] = useState([]);
+export default function TripsTable({ day, onTripsChanged, refreshKey }: { day: string; onTripsChanged?: () => void; refreshKey?: number }) {
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal state for assigning driver
@@ -78,26 +97,26 @@ export default function TripsTable({ day, onTripsChanged, refreshKey }) {
   const tripsWithoutDriver = useMemo(
     () =>
       filteredItems
-        .filter((trip) => !trip.Driver)
+        .filter((trip: Trip) => !trip.Driver)
         .sort(
-          (a, b) =>
+          (a: Trip, b: Trip) =>
             new Date(a.StartsAt).getTime() - new Date(b.StartsAt).getTime()
-        ), // Closest StartAt first
+        ),
     [filteredItems]
   );
   const tripsWithDriver = useMemo(
     () =>
       filteredItems
-        .filter((trip) => !!trip.Driver)
+        .filter((trip: Trip) => !!trip.Driver)
         .sort(
-          (a, b) =>
+          (a: Trip, b: Trip) =>
             new Date(a.StartsAt).getTime() - new Date(b.StartsAt).getTime()
-        ), // Closest StartAt first
+        ),
     [filteredItems]
   );
 
   // Table cell rendering
-  const renderCell = useCallback((trip, columnKey) => {
+  const renderCell = useCallback((trip: Trip, columnKey: string) => {
     const cellValue = trip[columnKey];
     const hasLocation = trip.Location ? true : false;
     const hasDriver = trip.Driver ? true : false;
@@ -372,7 +391,17 @@ export default function TripsTable({ day, onTripsChanged, refreshKey }) {
               </div>
             )}
             {tripsWithoutDriver.map((item) => (
-              <div key={item.id} className="bg-white/80 hover:bg-yellow-50 transition rounded-xl shadow p-3 flex flex-col gap-2 border border-default-200">
+              <div key={item.id} className="bg-white/80 hover:bg-yellow-50 transition rounded-xl shadow p-3 flex flex-col gap-2 border border-default-200 relative">
+                {item.status === "canceled" && (
+                  <Chip
+                    size="sm"
+                    color="danger"
+                    className="absolute -top-3 -left-3 sm:-top-3 sm:-left-3 z-20 text-xs font-bold shadow-lg"
+                    variant="solid"
+                  >
+                    کنسل شده
+                  </Chip>
+                )}
                 <div className="flex items-center gap-2 flex-wrap">
                   {renderCell(item, "Status")}
                   <span className="flex-1 min-w-0 truncate">{renderCell(item, "Direction")}</span>
@@ -403,7 +432,17 @@ export default function TripsTable({ day, onTripsChanged, refreshKey }) {
               </div>
             )}
             {tripsWithDriver.map((item) => (
-              <div key={item.id} className="bg-white/80 hover:bg-green-50 transition rounded-xl shadow p-3 flex flex-col gap-2 border border-default-200">
+              <div key={item.id} className="bg-white/80 hover:bg-green-50 transition rounded-xl shadow p-3 flex flex-col gap-2 border border-default-200 relative">
+                {item.status === "canceled" && (
+                  <Chip
+                    size="sm"
+                    color="danger"
+                    className="absolute -top-3 -left-3 sm:-top-3 sm:-left-3 z-20 text-xs font-bold shadow-lg"
+                    variant="solid"
+                  >
+                    کنسل شده
+                  </Chip>
+                )}
                 <div className="flex items-center gap-2 flex-wrap">
                   {renderCell(item, "Status")}
                   <span className="flex-1 min-w-0 truncate">{renderCell(item, "Direction")}</span>
@@ -433,7 +472,7 @@ export default function TripsTable({ day, onTripsChanged, refreshKey }) {
             description:
               "راننده برای سفر انتخاب شده، تعیین شد. آدرس مبدا و اطلاعات مسافر به شماره همراه راننده ارسال خواهد شد",
             color: "success",
-            duration: 3000,
+            timeout: 3000, // changed from duration to timeout
             variant: "bordered",
           });
         }}
