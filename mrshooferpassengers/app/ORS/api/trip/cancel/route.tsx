@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     // Fetch trip with driver by SecureToken (ticketcode)
     const trip = await prisma.trip.findUnique({
-        where: { ticketcode: ticketcode },
+        where: { TicketCode: ticketcode },
         include: { Driver: true },
     });
     if (!trip) {
