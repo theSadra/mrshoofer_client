@@ -1,7 +1,7 @@
 "use server";
 import { PrismaClient, TripStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { sendDriverSMS } from "@/lib/SmsService/DriverSMSSender";
+import { sendDriverLocationAdded } from "@/lib/SmsService/DriverSMSSender";
 
 const prisma = new PrismaClient();
 
@@ -59,7 +59,7 @@ export async function UpdateLocation(formData: FormData) {
 
   // If trip has a driver, send SMS
   if (trip.Driver && trip.Driver.PhoneNumber) {
-    await sendDriverSMS(trip.Driver.PhoneNumber, trip);
+    await sendDriverLocationAdded(trip.Driver.PhoneNumber, trip);
   }
 
   if (trip.status === TripStatus.wating_info) {

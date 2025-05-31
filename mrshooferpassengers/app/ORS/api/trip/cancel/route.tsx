@@ -11,14 +11,14 @@ export async function POST(req: NextRequest) {
     if (authResult) return authResult;
 
     const body = await req.json();
-    const { tripId } = body;
-    if (!tripId) {
-        return NextResponse.json({ error: "Missing tripId" }, { status: 400 });
+    const { ticketcode } = body;
+    if (!ticketcode || typeof ticketcode !== "string" || !ticketcode.trim()) {
+        return NextResponse.json({ error: "Invalid or missing ticketcode" }, { status: 400 });
     }
 
-    // Fetch trip with driver
+    // Fetch trip with driver by SecureToken (ticketcode)
     const trip = await prisma.trip.findUnique({
-        where: { id: Number(tripId) },
+        where: { ticketcode: ticketcode },
         include: { Driver: true },
     });
     if (!trip) {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     // Set status to canceled
     await prisma.trip.update({
-        where: { id: Number(tripId) },
+        where: { id: trip.id },
         data: { status: TripStatus.canceled },
     });
 

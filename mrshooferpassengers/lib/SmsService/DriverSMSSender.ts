@@ -31,7 +31,7 @@ export async function sendDriverSMS(driverphone: string, tripInfo: Trip) {
 
 export async function sendDriverLocationAdded(driverphone: string, tripInfo: Trip) {
   // const link = `${APP_BASE_URL}/trip/info/${tripInfo.SecureToken}`;
-  const templteid = 993093; // TODO : set proper template id
+  const templteid = 809560;
 
   // Format Persian date and time from tripInfo.StartsAt
   let dateStr = "";
@@ -64,7 +64,7 @@ export async function sendDriverLocationAdded(driverphone: string, tripInfo: Tri
 
 export async function sendDriverTripCanceled(driverphone: string, tripInfo: Trip) {
   // const link = `${APP_BASE_URL}/trip/info/${tripInfo.SecureToken}`;
-  const templteid = 993093; // TODO : set proper template id
+  const templteid = 486412;
 
   // Format Persian date and time from tripInfo.StartsAt
   let dateStr = "";
