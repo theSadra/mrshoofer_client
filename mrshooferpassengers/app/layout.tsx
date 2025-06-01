@@ -46,14 +46,14 @@ export default function RootLayout({
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="relative flex flex-col h-screen">
             {/* <Navbar /> */}
-            <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
+            <main className="container mx-auto max-w-7xl pt-4 px-3.5 flex-grow">
               {children}
             </main>
-            <footer className="w-full flex items-center justify-center py-2">
+            <footer className="w-full flex items-center justify-center py-5 mt-5">
               <img
                 src="/mrshoofer_logo_full.png"
                 alt="mrshoofer"
-                className="h-12 w-auto object-contain mx-1"
+                className="h-5 w-auto object-contain mx-1"
               />
               <Link
                 isExternal

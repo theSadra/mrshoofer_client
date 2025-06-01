@@ -60,18 +60,15 @@ function TripInfo({ trip }: TripInfoProps) {
     case TripStatus.wating_start:
       status_content = "همه چیز آمادست!";
       status_color = "primary";
-
       break;
-    //     case TripStatus.intrip:
-    //         statusContent = (<>
-    //             <h1 className="mb-2 text-xl font-medium" id="getting-started">
-    //     همه چیز آمادست! ✅
-    //   </h1>
-    //   <p className="mb-5 text-small text-default-500">
-    //     همه چیز برای یک سفر آرام و به موقع، مهیاست
-    //   </p>
-    //     </>)
-    //         break;
+    case TripStatus.canceled:
+      status_content = "سفر شما لغو شده است";
+      status_color = "danger";
+      break;
+    case TripStatus.intrip:
+      status_content = "سفر خوبی داشته باشید";
+      status_color = "success";
+      break;
     default:
       status_content = "سفر خوبی داشته باشید";
       status_color = "success";
@@ -81,7 +78,7 @@ function TripInfo({ trip }: TripInfoProps) {
   return (
     <div>
       <div className="flex justify-between align-center">
-        <h1 className="text-3xl font-bold">اطلاعات سفر</h1>
+        <h1 className="text-2xl font-semibold">اطلاعات سفر</h1>
 
         <Chip variant="bordered" color="default">
           <span className="font-light text-sm self-center">
@@ -211,6 +208,23 @@ function TripInfo({ trip }: TripInfoProps) {
           </div>
         </div>
       </Card>
+
+      {trip.status == TripStatus.canceled && (
+        <div className="mt-4">
+          <h1
+            className="mb-2 font-md font-light text-center py-2 bg-default-100 border-solid border rounded-2xl"
+            id="getting-started"
+          >
+            سفر سواری شما لغو شده است
+          </h1>
+          <p className="mb-1 text-small text-center font-light text-default-500">
+            در صورت نیاز می‌توانید با تیم مسترشوفر در تماس باشید
+          </p>
+          <p className="mb-5 text-xs text-center font-light text-default-500">
+            به امید دیدار مجدد
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-center">
         <Steps

@@ -86,13 +86,13 @@ export default function StepItem({
   return (
     <li
       className={cn(
-        "group relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
+        "group shadow-md bg-white relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
         stepClassName
       )}
       data-status={
         trip.status == TripStatus.done ||
-        trip.status == TripStatus.intrip ||
-        trip.status == TripStatus.wating_start
+          trip.status == TripStatus.intrip ||
+          trip.status == TripStatus.wating_start
           ? "complete"
           : "active"
       }

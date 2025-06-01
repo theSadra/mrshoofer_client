@@ -131,7 +131,7 @@ export default function Component({
   // Example: console.log(trip);
 
   return (
-    <section className="max-w-sm mt-4 ">
+    <section className="max-w-sm mt-4 rounded-2xl">
       <TripInfoText trip={trip} />
 
       <Spacer className="py-2"></Spacer>

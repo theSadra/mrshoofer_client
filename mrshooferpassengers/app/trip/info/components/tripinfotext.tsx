@@ -40,6 +40,27 @@ function tripinfotext({ trip }: TripInfoProps) {
         </>
       );
       break;
+
+    case TripStatus.canceled:
+      statusContent = (
+        <div className="flex flex-col items-center justify-center text-center">
+          <h1
+            className="mb-2 font-md font-light py-2 bg-default-100 border-solid border rounded-2xl"
+            id="getting-started"
+          >
+            سفر سواری شما لغو شده است
+          </h1>
+          <p className="mb-1 text-small font-light text-default-500">
+            در صورت نیاز می‌توانید با تیم مسترشوفر در تماس باشید
+          </p>
+
+          <p className="mb-5 text-xs font-light text-default-500">
+            به امید دیدار مجدد
+          </p>
+        </div>
+      );
+      break;
+
     //     case TripStatus.intrip:
     //         statusContent = (<>
     //             <h1 className="mb-2 text-xl font-medium" id="getting-started">

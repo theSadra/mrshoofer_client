@@ -39,8 +39,6 @@ const DirectionSheet: React.FC<DirectionSheetProps> = ({ latitude, longitude }) 
 
     return (
         <>
-
-
         </>
     );
 };

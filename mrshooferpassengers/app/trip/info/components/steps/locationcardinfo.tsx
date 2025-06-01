@@ -139,7 +139,7 @@ export default function StepItem({
   return (
     <li
       className={cn(
-        "group relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
+        "group shadow-md bg-white  relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
         stepClassName
       )}
       data-status={status}
@@ -289,7 +289,7 @@ export default function StepItem({
         // Increased z-index to ensure drawer is on top of everything
         className="z-[100]"
         isDismissable={false}
-        // Remove key prop as it might cause remounting issues with focus
+      // Remove key prop as it might cause remounting issues with focus
       >
         <DrawerContent className="p-0 m-0">
           <DrawerHeader className="flex flex-col pb-1 font-normal">

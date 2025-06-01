@@ -73,10 +73,44 @@ function TripInfo({ trip }: TripInfoProps) {
             break;
     }
 
+    // Show canceled chip and message if trip is canceled
+    if (trip.status === TripStatus.canceled) {
+        return (
+            <div>
+                <div className="flex justify-between align-center">
+                    <h1 className="text-xl font-semibold">اطلاعات سفر</h1>
+                    <Chip variant="bordered" color="default">
+                        <span className="font-light text-sm self-center">
+                            رفرنس
+                            <span className="ps-1">{trip.TicketCode}</span>
+                        </span>
+                    </Chip>
+                </div>
+                <p className="font-light text-sm mt-1 ms-2">جزییات سفر شما</p>
+                <Chip className="mt-2" color="danger" variant="flat">
+                    <h1 className="font-lg text-center" id="getting-started">
+                        این سفر کنسل شده است.
+                    </h1>
+                </Chip>
+                <div className="mt-4">
+                    <h1 className="mb-2 font-md font-light text-center py-2 bg-default-100 border-solid border rounded-2xl" id="getting-started">
+                        این سفر سواری کنسل شده است
+                    </h1>
+                    <p className="mb-1 text-small text-center font-light text-default-500">
+                        در صورت نیاز می‌توانید با تیم مسترشوفر در تماس باشید
+                    </p>
+                    <p className="mb-5 text-xs text-center font-light text-default-500">
+                        به امید دیدار مجدد
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div>
             <div className="flex justify-between align-center">
-                <h1 className="text-3xl font-bold">اطلاعات سفر</h1>
+                <h1 className="text-2xl font-semibold">اطلاعات سفر</h1>
 
                 <Chip variant="bordered" color="default">
                     <span className="font-light text-sm self-center">
