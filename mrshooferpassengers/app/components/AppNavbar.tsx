@@ -9,9 +9,9 @@ import {
     NavbarMenu,
     NavbarMenuItem,
     NavbarMenuToggle,
-    Link,
     Button,
 } from "@heroui/react";
+import NextLink from "next/link";
 
 // Use your logo instead of AcmeIcon
 import Image from "next/image";
@@ -53,36 +53,43 @@ export default function AppNavbar(props) {
 
                 {/* Items */}
                 <NavbarItem className="hidden md:flex">
-                    <Link className="text-default-500" href="/" size="sm">
-                        خانه
-                    </Link>
+                    <NextLink href="/" passHref legacyBehavior>
+                        <a className="text-default-500" style={{ fontSize: "0.875rem" }}>
+                            خانه
+                        </a>
+                    </NextLink>
                 </NavbarItem>
                 <NavbarItem>
-                    <Link className="text-default-500" href="/trip/info" size="sm">
-                        سفرها
-                    </Link>
+                    <NextLink href="/trip/info" passHref legacyBehavior>
+                        <a className="text-default-500" style={{ fontSize: "0.875rem" }}>
+                            سفرها
+                        </a>
+                    </NextLink>
                 </NavbarItem>
                 <NavbarItem isActive>
-                    <Link aria-current="page" color="foreground" href="/driver/trip" size="sm">
-                        رانندگان
-                    </Link>
+                    <NextLink href="/driver/trip" passHref legacyBehavior>
+                        <a className="text-default-500" style={{ fontSize: "0.875rem" }} aria-current="page">
+                            رانندگان
+                        </a>
+                    </NextLink>
                 </NavbarItem>
                 <NavbarItem>
-                    <Link className="text-default-500" href="/about" size="sm">
-                        درباره ما
-                    </Link>
+                    <NextLink href="/about" passHref legacyBehavior>
+                        <a className="text-default-500" style={{ fontSize: "0.875rem" }}>
+                            درباره ما
+                        </a>
+                    </NextLink>
                 </NavbarItem>
                 <NavbarItem>
-                    <Link className="text-default-500" href="/pricing" size="sm">
-                        قیمت گذاری
-                    </Link>
+                    <NextLink href="/pricing" passHref legacyBehavior>
+                        <a className="text-default-500" style={{ fontSize: "0.875rem" }}>
+                            قیمت گذاری
+                        </a>
+                    </NextLink>
                 </NavbarItem>
-                <NavbarItem className="ml-2 !flex">
-
-                </NavbarItem>
+                <NavbarItem className="ml-2 !flex"></NavbarItem>
 
                 <NavbarMenuToggle className="ml-3 text-default-400 md:hidden" />
-
             </NavbarContent>
 
             {/* Menu */}
