@@ -53,7 +53,7 @@ function TripInfo({ trip }: TripInfoProps) {
     switch (trip.status) {
 
         case TripStatus.wating_start:
-            status_content = "در زمان و مکان مقرر، مسافر در انتظار شما خواهد بود";
+            status_content = "مسافر در زمان و مکان مقرر، منتظر شما‌ خواهد بود.";
             status_color = "primary";
 
             break;

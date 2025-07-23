@@ -99,7 +99,6 @@ function TripPage({ trip }: TripPageProps) {
                     {trip.Driver?.Firstname} {trip.Driver?.Lastname} {" "}
                     <span className="text-default-700 font-normal">
                         عزیز
-
                         خوش آمدید!
                     </span>
                 </p>
