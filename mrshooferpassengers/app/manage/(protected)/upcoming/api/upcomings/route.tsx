@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const dayParam = searchParams.get("day");
 
+    
   let trips: any[] = [];
   if (dayParam) {
     // Parse the input date

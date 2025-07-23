@@ -9,8 +9,8 @@ import {
     NavbarMenu,
     NavbarMenuItem,
     NavbarMenuToggle,
-    Button,
-} from "@heroui/react";
+} from "@heroui/navbar";
+import { Button } from "@heroui/button";
 import NextLink from "next/link";
 
 // Use your logo instead of AcmeIcon
@@ -27,7 +27,7 @@ const menuItems = [
     "تماس با ما",
 ];
 
-export default function AppNavbar(props) {
+export default function AppNavbar(props: React.ComponentProps<typeof Navbar>) {
     return (
         <Navbar
             {...props}
@@ -53,38 +53,28 @@ export default function AppNavbar(props) {
 
                 {/* Items */}
                 <NavbarItem className="hidden md:flex">
-                    <NextLink href="/" passHref legacyBehavior>
-                        <a className="text-default-500" style={{ fontSize: "0.875rem" }}>
-                            خانه
-                        </a>
+                    <NextLink href="/" className="text-default-500" style={{ fontSize: "0.875rem" }}>
+                        خانه
                     </NextLink>
                 </NavbarItem>
                 <NavbarItem>
-                    <NextLink href="/trip/info" passHref legacyBehavior>
-                        <a className="text-default-500" style={{ fontSize: "0.875rem" }}>
-                            سفرها
-                        </a>
+                    <NextLink href="/trip/info" className="text-default-500" style={{ fontSize: "0.875rem" }}>
+                        سفرها
                     </NextLink>
                 </NavbarItem>
                 <NavbarItem isActive>
-                    <NextLink href="/driver/trip" passHref legacyBehavior>
-                        <a className="text-default-500" style={{ fontSize: "0.875rem" }} aria-current="page">
-                            رانندگان
-                        </a>
+                    <NextLink href="/driver/trip" className="text-default-500" style={{ fontSize: "0.875rem" }} aria-current="page">
+                        رانندگان
                     </NextLink>
                 </NavbarItem>
                 <NavbarItem>
-                    <NextLink href="/about" passHref legacyBehavior>
-                        <a className="text-default-500" style={{ fontSize: "0.875rem" }}>
-                            درباره ما
-                        </a>
+                    <NextLink href="/about" className="text-default-500" style={{ fontSize: "0.875rem" }}>
+                        درباره ما
                     </NextLink>
                 </NavbarItem>
                 <NavbarItem>
-                    <NextLink href="/pricing" passHref legacyBehavior>
-                        <a className="text-default-500" style={{ fontSize: "0.875rem" }}>
-                            قیمت گذاری
-                        </a>
+                    <NextLink href="/pricing" className="text-default-500" style={{ fontSize: "0.875rem" }}>
+                        قیمت گذاری
                     </NextLink>
                 </NavbarItem>
                 <NavbarItem className="ml-2 !flex"></NavbarItem>
@@ -107,9 +97,9 @@ export default function AppNavbar(props) {
             >
                 {menuItems.map((item, index) => (
                     <NavbarMenuItem key={`${item}-${index}`}>
-                        <Link className="w-full text-default-500" href="#" size="md">
+                        <NextLink href="#" className="w-full text-default-500" style={{ fontSize: "1rem" }}>
                             {item}
-                        </Link>
+                        </NextLink>
                     </NavbarMenuItem>
                 ))}
             </NavbarMenu>

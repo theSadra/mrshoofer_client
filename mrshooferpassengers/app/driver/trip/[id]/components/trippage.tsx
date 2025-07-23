@@ -23,16 +23,19 @@ const PassengerMap = dynamic(() => import('./PassengerMap'), { ssr: false });
 const MAP_KEY = process.env.NEXT_PUBLIC_NESHAN_MAP_KEY || "web.629d398efe5a4b3d90b9d032569935a6";
 const API_KEY = process.env.NEXT_PUBLIC_NESHAN_API_KEY || "service.6f5734c50a9c43cba6f43a6254c1b668";
 
+
 interface TripPageProps {
     trip: Trip & {
         Passenger?: Passenger | null;
         Driver?: Driver | null;
         Location?: {
-            Latitude: number;
-            Longitude: number;
+            Latitude: number | null;
+            Longitude: number | null;
+            TextAddress?: string | null;
         } | null;
     };
 }
+
 
 function TripPage({ trip }: TripPageProps) {
 
@@ -89,7 +92,7 @@ function TripPage({ trip }: TripPageProps) {
     };
 
     return (
-        <>
+        <div dir="rtl">
             <div className="mt-2 flex justify-start gap-2 items-center mb-4 ">
                 <Icon icon="fluent-color:person-starburst-28" width={26} ></Icon>
                 <p className="text-lg font-semibold ">
@@ -145,7 +148,7 @@ function TripPage({ trip }: TripPageProps) {
             {/* Hide passenger info and location/map cards if trip is canceled */}
             {trip.status !== 'canceled' && (
                 <>
-                    <Card className="mx-2">
+                    <Card className="mx-2" dir="rtl">
                         <CardBody>
                             <div className="flex justify-between ">
                                 <Icon icon="fluent-color:person-20" className='self-center align-middle' width={32}></Icon>
@@ -177,12 +180,12 @@ function TripPage({ trip }: TripPageProps) {
                         </CardBody>
                     </Card>
 
-                    <Card className="mx-2 mt-4 p-1.5">
+                    <Card className="mx-2 mt-4 p-1.5" dir="rtl">
                         <CardHeader>
                             <span className="font-md text-default-700">موقعیت مبدا مسافر</span>
                         </CardHeader>
                         <CardBody className="gap-1" >
-                            <div className="flex flex-col gap-3">
+                            <div className="flex flex-col gap-3" dir="rtl">
                                 {trip.Location && typeof trip.Location.Latitude === 'number' && typeof trip.Location.Longitude === 'number' ? (
                                     <PassengerMap latitude={trip.Location.Latitude} longitude={trip.Location.Longitude} />
                                 ) : (
@@ -190,7 +193,7 @@ function TripPage({ trip }: TripPageProps) {
                                 )}
                             </div>
                             <div>
-                                <div className="flex justify-between mt-2">
+                                <div className="flex justify-between mt-2" dir="rtl">
                                     <textarea
                                         className="w-full mx-1 text-sm text-default-700 bg-default-100 rounded-lg border border-default-200 p-2 resize-none"
                                         rows={2}
@@ -214,7 +217,7 @@ function TripPage({ trip }: TripPageProps) {
                 </>
             )}
 
-            <Drawer isOpen={isOpen} placement={"buttom"} onOpenChange={onOpenChange}>
+            <Drawer isOpen={isOpen} placement={"buttom"} onOpenChange={onOpenChange} dir="rtl">
                 <DrawerContent>
                     {(onClose) => (
                         <>
@@ -250,7 +253,7 @@ function TripPage({ trip }: TripPageProps) {
                     )}
                 </DrawerContent>
             </Drawer>
-        </>
+        </div>
     );
 }
 

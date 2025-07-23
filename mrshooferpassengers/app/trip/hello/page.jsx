@@ -6,6 +6,7 @@ import { Button } from "@heroui/button"
 import { Card, CardBody } from "@heroui/card";
 
 import HorizontalSteps, {HrHorizontalSteps} from "./horizontal_steps"
+"use client";
 function page() {
   return (
     <>

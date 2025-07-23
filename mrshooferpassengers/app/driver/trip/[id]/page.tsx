@@ -16,10 +16,6 @@ export default async function DriverTripPage({ params }: { params: { id: string 
     }
 
     return (
-        <>
-            <TripPage trip={trip}>
-
-            </TripPage>
-        </>
+        <TripPage trip={trip} />
     );
 }

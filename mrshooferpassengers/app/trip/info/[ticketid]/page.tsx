@@ -6,6 +6,7 @@ var mocked_trip: Prisma.TripGetPayload<{
 }>;
 
 async function Upcoming({ params }: { params: { ticketid: string } }) {
+  "use client";
   const prisma = new PrismaClient();
   // Mocked trip object
 
