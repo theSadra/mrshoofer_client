@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: mrshoofer
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: mrshoofer_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mrshoofer-network
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Database
+      DATABASE_URL: "postgresql://mrshoofer:password123@postgres:5432/mrshoofer_db?schema=public"
+      
+      # NextAuth
+      NEXTAUTH_SECRET: "your-development-secret-32-characters-long"
+      NEXTAUTH_URL: "http://localhost:3000"
+      
+      # App Config
+      APP_BASE_URL: "http://localhost:3000"
+      ORS_API_SECRET: "your-development-ors-secret"
+      
+      # SMS & Maps (use your actual keys)
+      SMSIR_API_KEY: "your-sms-key"
+      NEXT_PUBLIC_NESHAN_MAP_KEY: "your-neshan-map-key"
+      NEXT_PUBLIC_NESHAN_API_KEY: "your-neshan-api-key"
+      
+      NODE_ENV: "production"
+    depends_on:
+      - postgres
+    networks:
+      - mrshoofer-network
+    command: >
+      sh -c "
+        npx prisma migrate deploy &&
+        node server.js
+      "
+
+volumes:
+  postgres_data:
+
+networks:
+  mrshoofer-network:
+    driver: bridge

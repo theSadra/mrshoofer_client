@@ -4,9 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix"
+    "lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix",
+    "postinstall": "prisma generate",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "docker:dev": "docker-compose up --build",
+    "docker:prod": "docker build -t mrshoofer-app .",
+    "docker:run": "docker run -p 3000:3000 mrshoofer-app",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker system prune -f",
+    "deploy:liara": "liara deploy"
   },
   "dependencies": {
     "@heroui/badge": "^2.2.10",
