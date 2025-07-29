@@ -24,6 +24,7 @@ This Next.js application is fully containerized and ready for PaaS deployment. I
 
 ### **✅ Perfect for PaaS Platforms:**
 
+- **Liara** 🇮🇷 (Automated CI/CD with GitHub Actions)
 - **Railway** ⭐ (Excellent Docker support)
 - **Render** ⭐ (Native Docker deployment)
 - **Google Cloud Run** ⭐ (Serverless containers)
@@ -58,7 +59,30 @@ The app will be available at: `http://localhost:3000`
 
 ## 🌐 **Production Deployment**
 
-### **Option 1: Railway (Recommended) 🚂**
+### **Option 1: Liara with Full CI/CD (Recommended) 🇮🇷**
+
+**Complete automation**: GitHub → Docker Hub → Liara
+
+1. **Setup GitHub Secrets:** (See `LIARA_CICD_SETUP.md`)
+   - `DOCKER_HUB_USERNAME` ✅
+   - `DOCKER_HUB_ACCESS_TOKEN` ✅  
+   - `LIARA_API_TOKEN` (Get from Liara Dashboard)
+   - `LIARA_PROJECT_ID` (Your project name)
+
+2. **Deploy by pushing to main:**
+   ```bash
+   git add .
+   git commit -m "Deploy to production"
+   git push origin main
+   ```
+
+3. **Automatic process:**
+   - GitHub Actions builds Docker image
+   - Pushes to Docker Hub
+   - Triggers Liara deployment
+   - Your app goes live! 🎉
+
+### **Option 2: Railway 🚂**
 
 1. **Install Railway CLI:**
    ```bash

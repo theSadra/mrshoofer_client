@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 env:
-  DOCKER_IMAGE: thesadra/mrshoofer-client
+  DOCKER_IMAGE: sadradorostkar/mrshoofer-client
   
 jobs:
   build-and-push:
@@ -57,3 +57,23 @@ jobs:
         echo "🎉 Docker image built and pushed successfully!"
         echo "📦 Image: ${{ env.DOCKER_IMAGE }}"
         echo "🏷️ Tags: ${{ steps.meta.outputs.tags }}"
+        
+    - name: 🚀 Deploy to Liara
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        echo "🚀 Triggering Liara deployment..."
+        curl -X POST "https://api.liara.ir/v1/projects/${{ secrets.LIARA_PROJECT_ID }}/actions/deploy" \
+          -H "Authorization: Bearer ${{ secrets.LIARA_API_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "type": "image",
+            "image": "sadradorostkar/mrshoofer-client:latest",
+            "port": 3000
+          }'
+        echo "✅ Liara deployment triggered!"
+        
+    - name: 🔍 Deployment Status
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        echo "🌐 Check your Liara dashboard for deployment progress"
+        echo "📱 Your app will be live at: https://${{ secrets.LIARA_PROJECT_ID }}.liara.run"
