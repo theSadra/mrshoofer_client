@@ -22,63 +22,39 @@ fi
 echo "⏳ Waiting for database to be ready..."
 sleep 30
 
-# Test database connection with retries
-echo "🔍 Testing database connection..."
+# Test database connection and setup schema
+echo "🔍 Testing database and setting up schema..."
 DB_RETRY=0
-DB_MAX_RETRIES=10
+DB_MAX_RETRIES=5
+
 while [ $DB_RETRY -lt $DB_MAX_RETRIES ]; do
-    if npx prisma db execute --stdin <<< "SELECT 1;" 2>/dev/null; then
-        echo "✅ Database connection successful!"
+    echo "📋 Attempt $((DB_RETRY + 1))/$DB_MAX_RETRIES: Running Prisma setup..."
+    
+    # Try to setup the database schema directly
+    if npx prisma db push --force-reset 2>/dev/null; then
+        echo "✅ Database schema setup successful!"
         break
     else
         DB_RETRY=$((DB_RETRY + 1))
-        echo "❌ Database connection failed (attempt $DB_RETRY/$DB_MAX_RETRIES)"
         if [ $DB_RETRY -lt $DB_MAX_RETRIES ]; then
-            echo "⏳ Retrying in 5 seconds..."
-            sleep 5
+            echo "⚠️ Database setup failed - retrying in 10 seconds..."
+            sleep 10
         else
-            echo "💥 Database connection failed after $DB_MAX_RETRIES attempts!"
+            echo "❌ Database setup failed after $DB_MAX_RETRIES attempts!"
             echo "🔧 DATABASE_URL: $DATABASE_URL"
-            exit 1
+            echo "� Trying alternative approach..."
+            
+            # Try migrate deploy as fallback
+            if npx prisma migrate deploy; then
+                echo "✅ Migration deploy successful!"
+                break
+            else
+                echo "� All database setup methods failed!"
+                exit 1
+            fi
         fi
     fi
 done
-
-# Check if tables exist
-echo "🔍 Checking if database tables exist..."
-echo "🔍 Running query: SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'Passenger');"
-TABLE_EXISTS=$(npx prisma db execute --stdin <<< "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'Passenger');" 2>/dev/null | grep -o 't\|f' || echo "f")
-echo "🔍 Table existence result: $TABLE_EXISTS"
-
-if [ "$TABLE_EXISTS" = "t" ]; then
-    echo "✅ Database tables already exist!"
-else
-    echo "🏗️ Database tables don't exist - creating schema..."
-    
-    # For PostgreSQL, prioritize db push over migrations (SQLite migrations won't work)
-    echo "🗄️ Pushing schema directly to PostgreSQL..."
-    if npx prisma db push --force-reset; then
-        echo "✅ Schema pushed successfully to PostgreSQL!"
-    else
-        echo "⚠️ Direct push failed - trying migrations..."
-        if npx prisma migrate deploy; then
-            echo "✅ Migrations completed successfully!"
-        else
-            echo "❌ All database operations failed!"
-            echo "🔧 Manual schema creation required"
-            exit 1
-        fi
-    fi
-fi
-
-# Verify tables were created
-echo "🔍 Verifying database schema..."
-if npx prisma db execute --stdin <<< "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;" | grep -q "Passenger\|Trip\|Driver"; then
-    echo "✅ Database schema verified - tables exist!"
-else
-    echo "❌ Database schema verification failed!"
-    exit 1
-fi
 
 # Generate Prisma client (ensure it's available)
 echo "📦 Ensuring Prisma client is ready..."
@@ -86,19 +62,32 @@ npx prisma generate || echo "⚠️ Prisma generate failed, using pre-built clie
 
 # Start the Next.js application
 echo "🚀 Starting Next.js application..."
+echo "📁 Current directory: $(pwd)"
+echo "📂 Directory contents:"
+ls -la
 
 # Set hostname to bind to all interfaces (required for Docker)
 export HOSTNAME=0.0.0.0
 export PORT=3000
 
+echo "🌐 Starting on $HOSTNAME:$PORT"
+
 if [ -f "server.js" ]; then
     echo "📄 Using server.js - binding to $HOSTNAME:$PORT"
+    echo "🔍 server.js contents preview:"
+    head -10 server.js
+    echo "▶️ Executing: node server.js"
     exec node server.js
 elif [ -f "index.js" ]; then
     echo "📄 Using index.js - binding to $HOSTNAME:$PORT"
+    echo "🔍 index.js contents preview:"
+    head -10 index.js
+    echo "▶️ Executing: node index.js"
     exec node index.js
 else
     echo "❌ No server file found! Available files:"
     ls -la
+    echo "🔍 Checking for Next.js files:"
+    find . -name "*.js" -o -name "package.json" | head -10
     exit 1
 fi
