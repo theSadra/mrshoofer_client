@@ -1,17 +1,10 @@
 {
   "platform": "docker",
-  "app": "mrshoofer-client",
+  "app": "mrshoofer-client", 
   "port": 3000,
+  "image": "thesadra/mrshoofer-client:latest",
   "healthCheck": {
     "command": "curl -f http://localhost:3000/api/health || exit 1"
-  },
-  "build": {
-    "dockerfile": "Dockerfile.optimized",
-    "buildArgs": {
-      "NODE_ENV": "production"
-    },
-    "memory": "2GB",
-    "cpu": 2
   },
   "env": {
     "NODE_ENV": "production",
