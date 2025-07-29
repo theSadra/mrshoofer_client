@@ -8,7 +8,9 @@ echo "🔍 Database type: $(echo $DATABASE_URL | cut -d':' -f1)"
 # Validate DATABASE_URL
 if [ -z "$DATABASE_URL" ]; then
     echo "❌ DATABASE_URL is not set!"
-    exit 1
+    echo "🔧 Using fallback DATABASE_URL from liara.json configuration..."
+    export DATABASE_URL="postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres"
+    echo "📍 Fallback Database URL: $DATABASE_URL"
 fi
 
 # Check if it's PostgreSQL
