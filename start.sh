@@ -3,15 +3,29 @@ set -e
 
 echo "🔄 Starting MrShoofer Client..."
 echo "📍 Database URL: $DATABASE_URL"
+echo "🔍 Database type: $(echo $DATABASE_URL | cut -d':' -f1)"
+
+# Validate DATABASE_URL
+if [ -z "$DATABASE_URL" ]; then
+    echo "❌ DATABASE_URL is not set!"
+    exit 1
+fi
+
+# Check if it's PostgreSQL
+if echo "$DATABASE_URL" | grep -q "postgresql://"; then
+    echo "✅ Using PostgreSQL database"
+else
+    echo "⚠️ Warning: DATABASE_URL doesn't appear to be PostgreSQL"
+fi
 
 # Wait for database to be ready
 echo "⏳ Waiting for database to be ready..."
-sleep 15
+sleep 30
 
 # Test database connection with retries
 echo "🔍 Testing database connection..."
 DB_RETRY=0
-DB_MAX_RETRIES=5
+DB_MAX_RETRIES=10
 while [ $DB_RETRY -lt $DB_MAX_RETRIES ]; do
     if npx prisma db execute --stdin <<< "SELECT 1;" 2>/dev/null; then
         echo "✅ Database connection successful!"
@@ -32,24 +46,26 @@ done
 
 # Check if tables exist
 echo "🔍 Checking if database tables exist..."
+echo "🔍 Running query: SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'Passenger');"
 TABLE_EXISTS=$(npx prisma db execute --stdin <<< "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'Passenger');" 2>/dev/null | grep -o 't\|f' || echo "f")
+echo "🔍 Table existence result: $TABLE_EXISTS"
 
 if [ "$TABLE_EXISTS" = "t" ]; then
     echo "✅ Database tables already exist!"
 else
     echo "🏗️ Database tables don't exist - creating schema..."
     
-    # Try migrations first
-    echo "🗄️ Running database migrations..."
-    if npx prisma migrate deploy; then
-        echo "✅ Migrations completed successfully!"
+    # For PostgreSQL, prioritize db push over migrations (SQLite migrations won't work)
+    echo "🗄️ Pushing schema directly to PostgreSQL..."
+    if npx prisma db push --force-reset; then
+        echo "✅ Schema pushed successfully to PostgreSQL!"
     else
-        echo "⚠️ Migration failed - trying direct schema push..."
-        if npx prisma db push --force-reset; then
-            echo "✅ Schema pushed successfully!"
+        echo "⚠️ Direct push failed - trying migrations..."
+        if npx prisma migrate deploy; then
+            echo "✅ Migrations completed successfully!"
         else
             echo "❌ All database operations failed!"
-            echo "� Manual schema creation required"
+            echo "🔧 Manual schema creation required"
             exit 1
         fi
     fi
