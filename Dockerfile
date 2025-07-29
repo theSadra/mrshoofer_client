@@ -9,10 +9,7 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
-RUN \
-  if [ -f package-lock.json ]; then npm ci --only=production --ignore-scripts; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+RUN npm ci --only=production --ignore-scripts --legacy-peer-deps --no-audit --no-fund --prefer-offline
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -20,8 +17,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Install dev dependencies for build
-RUN npm ci --ignore-scripts
+# Install all dependencies (including dev) for build
+RUN npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund --prefer-offline
 
 # Generate Prisma Client
 RUN npx prisma generate

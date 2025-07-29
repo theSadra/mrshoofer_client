@@ -1,6 +1,7 @@
+"use client";
+
 import { title } from "@/components/primitives";
 
-"use client";
 export default function AboutPage() {
   return (
     <div>

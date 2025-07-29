@@ -1,0 +1,16 @@
+[build]
+builder = "dockerfile"
+buildCommand = "docker build --target runner -t $RAILWAY_APP_NAME ."
+
+[deploy]
+startCommand = "sh -c 'npx prisma migrate deploy && node server.js'"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 100
+restartPolicyType = "always"
+# Increase memory limit for build process
+memoryLimit = "2GB"
+# Set CPU limit for optimal performance
+numReplicas = 1
+
+[build.args]
+NODE_ENV = "production"
