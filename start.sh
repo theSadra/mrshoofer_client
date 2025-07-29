@@ -70,11 +70,16 @@ npx prisma generate || echo "⚠️ Prisma generate failed, using pre-built clie
 
 # Start the Next.js application
 echo "🚀 Starting Next.js application..."
+
+# Set hostname to bind to all interfaces (required for Docker)
+export HOSTNAME=0.0.0.0
+export PORT=3000
+
 if [ -f "server.js" ]; then
-    echo "📄 Using server.js"
+    echo "📄 Using server.js - binding to $HOSTNAME:$PORT"
     exec node server.js
 elif [ -f "index.js" ]; then
-    echo "📄 Using index.js"
+    echo "📄 Using index.js - binding to $HOSTNAME:$PORT"
     exec node index.js
 else
     echo "❌ No server file found! Available files:"
