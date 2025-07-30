@@ -13,17 +13,71 @@ export const authOptions = {
         password: { label: "رمز عبور", type: "password" },
       },
       async authorize(credentials: Record<string, string> | undefined) {
-        if (!credentials?.username || !credentials?.password) return null;
-        // Try username as email, fallback to name field
-        let user = await prisma.user.findUnique({ where: { email: credentials.username } });
-        if (!user && credentials.username) {
-          user = await prisma.user.findFirst({ where: { name: credentials.username } });
+        try {
+          console.log("🔐 Login attempt for:", credentials?.username);
+          
+          // Validate that both username and password are provided
+          if (!credentials?.username || !credentials?.password) {
+            console.log("❌ Missing username or password");
+            return null;
+          }
+
+          // Trim whitespace
+          const username = credentials.username.trim();
+          const password = credentials.password.trim();
+
+          if (!username || !password) {
+            console.log("❌ Empty username or password after trimming");
+            return null;
+          }
+
+          // Try to find user by email first
+          let user = await prisma.user.findUnique({ 
+            where: { email: username } 
+          });
+          
+          // If not found by email, try by name
+          if (!user) {
+            user = await prisma.user.findFirst({ 
+              where: { name: username } 
+            });
+          }
+
+          if (!user) {
+            console.log("❌ User not found in database:", username);
+            return null;
+          }
+
+          if (!user.password) {
+            console.log("❌ User has no password set");
+            return null;
+          }
+
+          // Check if user is admin
+          if (!user.isAdmin) {
+            console.log("❌ User is not admin:", username);
+            return null;
+          }
+
+          // Simple raw password comparison (no hashing)
+          if (password !== user.password) {
+            console.log("❌ Invalid password for:", username);
+            console.log("🔍 Expected:", user.password);
+            console.log("🔍 Received:", password);
+            return null;
+          }
+
+          console.log("✅ Login successful for admin:", user.email);
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+          };
+        } catch (error) {
+          console.error("🚨 Authentication error:", error);
+          return null;
         }
-        if (!user || !user.password) return null;
-        // Compare raw password (INSECURE, not recommended)
-        if (credentials.password !== user.password) return null;
-        if (!user.isAdmin) return null;
-        return user;
       },
     }),
   ],
@@ -37,7 +91,7 @@ export const authOptions = {
   },
   callbacks: {
     async session({ session, token, user }: { session: any; token: any; user: any }) {
-      if (session.user) {
+      if (session.user && token) {
         session.user.id = token.sub;
         session.user.isAdmin = token.isAdmin;
       }
@@ -50,8 +104,18 @@ export const authOptions = {
       return token;
     },
     async signIn({ user }: { user: any }) {
-      // Add logging logic here if needed
-      console.log(`Admin login: ${user.email}`);
+      // Only allow sign in if user exists and is admin
+      if (!user) {
+        console.log("❌ SignIn callback: No user");
+        return false;
+      }
+      
+      if (!user.isAdmin) {
+        console.log("❌ SignIn callback: User is not admin");
+        return false;
+      }
+      
+      console.log("✅ SignIn callback: Allowing admin login for", user.email);
       return true;
     },
   },

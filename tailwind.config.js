@@ -15,7 +15,7 @@ const config = {
       },
     },
   },
-  darkMode: "class",
+  darkMode: ["class", '[data-theme="dark"]'],
   plugins: [heroui({
       addCommonColors: true,
     })],

@@ -1,16 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button, Input, Checkbox, Image } from "@heroui/react";
+import React, { useState, useEffect } from "react";
+import { Button, Input, Checkbox, Image, Card, CardBody } from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
-  const [username, setUsername] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [error, setError] = React.useState("");
-  const [loading, setLoading] = React.useState(false);
-  const [isVisible, setIsVisible] = React.useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const router = useRouter();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await getSession();
+      if (session?.user) {
+        console.log("User already logged in, redirecting to manage");
+        router.push("/manage");
+      }
+    };
+    checkSession();
+  }, [router]);
 
   const toggleVisibility = () => setIsVisible(!isVisible);
 
@@ -18,83 +32,150 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const res = await signIn("credentials", {
-      username,
-      password,
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.error) setError("ورود ناموفق. اطلاعات وارد شده صحیح نیست.");
-    else window.location.href = "/manage";
+
+    // Basic validation
+    if (!username.trim() || !password.trim()) {
+      setError("لطفاً نام کاربری و رمز عبور را وارد کنید");
+      setLoading(false);
+      return;
+    }
+
+    console.log("🔐 Attempting login with:", { username: username.trim() });
+
+    try {
+      const result = await signIn("credentials", {
+        username: username.trim(),
+        password: password.trim(),
+        redirect: false,
+      });
+
+      console.log("🔍 Login result:", result);
+
+      if (result?.error) {
+        console.log("❌ Login failed:", result.error);
+        setError("نام کاربری یا رمز عبور اشتباه است");
+        setLoading(false);
+      } else if (result?.ok) {
+        console.log("✅ Login successful, redirecting...");
+        setError("");
+        // Wait a moment for session to be established
+        setTimeout(() => {
+          router.push("/manage");
+        }, 1000);
+      } else {
+        console.log("❌ Unexpected login result:", result);
+        setError("خطایی در ورود رخ داد. دوباره تلاش کنید");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("🚨 Login exception:", err);
+      setError("خطای شبکه. لطفاً اتصال اینترنت خود را بررسی کنید");
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center">
-      <div className="flex flex-col items-center pb-2">
-
-
-        <div className="flex align-baseline">
-          <Image
-            height={95}
-            width={180}
-            src="/mrshoofer_logo_full.png"
-            className="object-contain"
-          />
-        </div>
-      </div>
-      <div className="mt-1 flex w-full max-w-sm flex-col gap-1 rounded-large bg-background/80 px-8 py-6 shadow-small">
-
-        <p className="text-center font-semibold text-lg text-default-800">خوش آمدید</p>
-        <p className="text-small text-default-500 mb-4 text-center">برای ادامه وارد حساب مدیریت شوید</p>
-
-        <form className="flex flex-col gap-3" onSubmit={(e: React.FormEvent<HTMLFormElement>) => handleSubmit(e)}>
-          <Input
-            label="نام کاربری"
-            name="username"
-            placeholder="نام کاربری خود را وارد کنید"
-            type="text"
-            variant="bordered"
-            value={username}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
-            required
-          />
-          <Input
-            endContent={
-              <button type="button" onClick={toggleVisibility} tabIndex={-1}>
-                {isVisible ? (
-                  <Icon
-                    className="pointer-events-none text-2xl text-default-400"
-                    icon="solar:eye-closed-linear"
-                  />
-                ) : (
-                  <Icon
-                    className="pointer-events-none text-2xl text-default-400"
-                    icon="solar:eye-bold"
-                  />
-                )}
-              </button>
-            }
-            label="رمز عبور"
-            name="password"
-            placeholder="رمز عبور خود را وارد کنید"
-            type={isVisible ? "text" : "password"}
-            variant="bordered"
-            value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-            required
-          />
-          <div className="flex items-center justify-between px-1 py-2">
-            <Checkbox name="remember" size="sm" disabled>
-              مرا به خاطر بسپار
-            </Checkbox>
-            <span className="text-default-500 text-sm">رمز عبور را فراموش کرده‌اید؟</span>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardBody className="p-8">
+          {/* Logo */}
+          <div className="flex justify-center mb-2">
+            <Image
+              height={80}
+              width={150}
+              src="/mrshoofer_logo_full.png"
+              alt="MrShoofer Logo"
+              className="object-contain"
+            />
           </div>
-          {error && <div className="text-red-600 text-sm text-center">{error}</div>}
-          <Button color="primary" type="submit" isLoading={loading}>
-            {loading ? "در حال ورود..." : "ورود"}
-          </Button>
-        </form>
-      </div>
+
+          {/* Welcome Text */}
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">خوش آمدید
+              👋
+            </h1>
+            <p className="text-gray-600">برای ادامه وارد حساب مدیریت شوید</p>
+          </div>
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="نام کاربری یا ایمیل"
+              placeholder="نام کاربری خود را وارد کنید"
+              type="text"
+              variant="bordered"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              isRequired
+              className="mb-4"
+              startContent={
+                <Icon
+                  icon="solar:user-linear"
+                  className="text-xl text-default-400 pointer-events-none flex-shrink-0"
+                />
+              }
+            />
+
+            <Input
+              label="رمز عبور"
+              placeholder="رمز عبور خود را وارد کنید"
+              type={isVisible ? "text" : "password"}
+              variant="bordered"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              isRequired
+              className="mb-4"
+              startContent={
+                <Icon
+                  icon="solar:lock-linear"
+                  className="text-xl text-default-400 pointer-events-none flex-shrink-0"
+                />
+              }
+              endContent={
+                <button
+                  type="button"
+                  onClick={toggleVisibility}
+                  className="focus:outline-none"
+                  tabIndex={-1}
+                >
+                  <Icon
+                    icon={isVisible ? "solar:eye-closed-linear" : "solar:eye-linear"}
+                    className="text-xl text-default-400 pointer-events-none"
+                  />
+                </button>
+              }
+            />
+
+            {/* Remember Me */}
+            <div className="flex items-center justify-between py-2">
+              <Checkbox size="sm" disabled>
+                مرا به خاطر بسپار
+              </Checkbox>
+              <span className="text-sm text-gray-500 cursor-pointer hover:text-blue-600">
+                رمز عبور را فراموش کرده‌اید؟
+              </span>
+            </div>
+
+            {/* Error Message - Positioned above submit button */}
+            {error && (
+              <p className="text-danger text-sm text-center mb-2 ">
+                {error}
+              </p>
+            )}
+
+            {/* Submit Button */}
+            <Button
+              color="primary"
+              type="submit"
+              isLoading={loading}
+              className="w-full py-3 text-md font-md"
+              size="lg"
+            >
+              {loading ? "در حال ورود..." : "ورود به پنل مدیریت"}
+            </Button>
+          </form>
+        </CardBody>
+      </Card>
     </div>
   );
 }

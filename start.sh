@@ -32,9 +32,10 @@ DB_MAX_RETRIES=5
 while [ $DB_RETRY -lt $DB_MAX_RETRIES ]; do
     echo "📋 Attempt $((DB_RETRY + 1))/$DB_MAX_RETRIES: Running Prisma setup..."
     
-    # Try to setup the database schema directly
-    if npx prisma db push --force-reset 2>/dev/null; then
-        echo "✅ Database schema setup successful!"
+    # Try to setup the database schema safely (preserves data)
+    echo "🔧 Running: npx prisma db push"
+    if npx prisma db push 2>/dev/null; then
+        echo "✅ Database schema setup successful! Data preserved."
         break
     else
         DB_RETRY=$((DB_RETRY + 1))
@@ -44,14 +45,19 @@ while [ $DB_RETRY -lt $DB_MAX_RETRIES ]; do
         else
             echo "❌ Database setup failed after $DB_MAX_RETRIES attempts!"
             echo "🔧 DATABASE_URL: $DATABASE_URL"
-            echo "� Trying alternative approach..."
+            echo "🔧 Trying alternative approach..."
             
             # Try migrate deploy as fallback
+            echo "🔧 Running: npx prisma migrate deploy"
             if npx prisma migrate deploy; then
-                echo "✅ Migration deploy successful!"
+                echo "✅ Migration deploy successful! Data preserved."
                 break
             else
-                echo "� All database setup methods failed!"
+                echo "❌ All database setup methods failed!"
+                echo "🔧 Checking Prisma schema file..."
+                ls -la prisma/ || echo "No prisma directory found"
+                echo "🔧 Prisma version:"
+                npx prisma --version || echo "Prisma not found"
                 exit 1
             fi
         fi
