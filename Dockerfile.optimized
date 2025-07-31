@@ -21,6 +21,7 @@ WORKDIR /app
 ARG NODE_ENV=production
 ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
+ARG ORS_API_SECRET
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY package*.json ./
@@ -48,6 +49,7 @@ ENV SKIP_ENV_VALIDATION=1
 # Set NextAuth environment variables from build args
 ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 ENV NEXTAUTH_URL=${NEXTAUTH_URL}
+ENV ORS_API_SECRET=${ORS_API_SECRET}
 
 # Generate Prisma client
 RUN npx prisma generate --schema=./prisma/schema.prisma
@@ -65,10 +67,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Accept build arguments for runtime
 ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
+ARG ORS_API_SECRET
 
 # Set NextAuth environment variables
 ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 ENV NEXTAUTH_URL=${NEXTAUTH_URL}
+ENV ORS_API_SECRET=${ORS_API_SECRET}
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
