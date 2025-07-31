@@ -70,7 +70,20 @@ jobs:
           -d '{
             "type": "image",
             "image": "sadradorostkar/mrshoofer-client:latest",
-            "port": 3000
+            "port": 3000,
+            "env": {
+              "NODE_ENV": "production",
+              "NEXTAUTH_SECRET": "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w",
+              "NEXTAUTH_URL": "https://mrshoofer-client.liara.run",
+              "NEXT_TELEMETRY_DISABLED": "1",
+              "SKIP_ENV_VALIDATION": "1",
+              "CI": "true",
+              "DATABASE_URL": "postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres",
+              "SMSIR_API_KEY": "YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6",
+              "NEXT_PUBLIC_NESHAN_MAP_KEY": "web.629d398efe5a4b3d90b9d032569935a6",
+              "NEXT_PUBLIC_NESHAN_API_KEY": "service.6f5734c50a9c43cba6f43a6254c1b668",
+              "ORS_API_SECRET": "YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6"
+            }
           }'
         echo "✅ Liara deployment triggered!"
         
