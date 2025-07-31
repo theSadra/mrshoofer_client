@@ -13,6 +13,21 @@ if [ -z "$DATABASE_URL" ]; then
     echo "📍 Fallback Database URL: $DATABASE_URL"
 fi
 
+# Validate NEXTAUTH_SECRET
+if [ -z "$NEXTAUTH_SECRET" ]; then
+    echo "❌ NEXTAUTH_SECRET is not set!"
+    echo "🔧 Using fallback NEXTAUTH_SECRET..."
+    export NEXTAUTH_SECRET="vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w"
+    echo "✅ NEXTAUTH_SECRET configured"
+fi
+
+# Validate NEXTAUTH_URL
+if [ -z "$NEXTAUTH_URL" ]; then
+    echo "🔧 Setting NEXTAUTH_URL..."
+    export NEXTAUTH_URL="https://mrshoofer-client.liara.run"
+    echo "✅ NEXTAUTH_URL configured"
+fi
+
 # Check if it's PostgreSQL
 if echo "$DATABASE_URL" | grep -q "postgresql://"; then
     echo "✅ Using PostgreSQL database"
