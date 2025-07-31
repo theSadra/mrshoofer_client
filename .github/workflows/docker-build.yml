@@ -51,6 +51,8 @@ jobs:
         platforms: linux/amd64
         build-args: |
           NODE_ENV=production
+          NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w
+          NEXTAUTH_URL=https://mrshoofer-client.liara.run
           
     - name: ✅ Build completed
       run: |
