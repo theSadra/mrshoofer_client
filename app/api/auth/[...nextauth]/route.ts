@@ -125,7 +125,7 @@ export const authOptions = {
       console.log(`Admin login: ${user.email}`);
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w",
   // Add this for production
   ...(process.env.NODE_ENV === 'production' && {
     useSecureCookies: true,

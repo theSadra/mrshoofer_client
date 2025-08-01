@@ -2,16 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function requireORSAuth(req: NextRequest) {
   const auth = req.headers.get("authorization");
-  // Hardcoded API key as fallback since env vars aren't working in production
-  const apiKey = process.env.ORS_API_SECRET || "YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6";
+  // Hardcoded API key - guaranteed to work regardless of environment variables
+  const apiKey = "YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6";
   
-  if (!auth || !apiKey) {
+  if (!auth) {
     return NextResponse.json({ 
-      error: "Missing or invalid token",
+      error: "Missing authorization header",
       debug: {
-        hasAuth: !!auth,
-        hasApiKey: !!apiKey,
-        authValue: auth
+        hasAuth: false,
+        receivedHeaders: Object.fromEntries(req.headers.entries())
       }
     }, { status: 401 });
   }
@@ -25,7 +24,9 @@ export function requireORSAuth(req: NextRequest) {
       debug: {
         expectedLength: apiKey.length,
         receivedLength: token.length,
-        tokensMatch: token === apiKey
+        tokensMatch: token === apiKey,
+        receivedToken: token.substring(0, 10) + "...", // Only show first 10 chars for security
+        expectedToken: apiKey.substring(0, 10) + "..."
       }
     }, { status: 401 });
   }
