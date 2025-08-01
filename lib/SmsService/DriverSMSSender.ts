@@ -2,8 +2,8 @@ import { Smsir } from 'sms-typescript/lib';
 import { Trip } from '@prisma/client';
 import PersianDate from "persian-date";
 
-
-const smsir = new Smsir(process.env.SMSIR_API_KEY ?? "", 1);
+// Hardcoded SMS API key for production reliability
+const smsir = new Smsir(process.env.SMSIR_API_KEY ?? "YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6", 1);
 
 // SMSIR template id
 

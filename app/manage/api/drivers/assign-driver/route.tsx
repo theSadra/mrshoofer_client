@@ -21,26 +21,35 @@ export async function POST(req: NextRequest) {
       include: { Driver: true },
     });
 
-    // Send SMS to the assigned driver
+    // Send SMS to the assigned driver (optional - don't fail the assignment if SMS fails)
+    let smsStatus = "not_sent";
+    let smsError = null;
+    
     if (updatedTrip.Driver?.PhoneNumber) {
       try {
         const smsResult = await sendDriverSMS(updatedTrip.Driver.PhoneNumber, updatedTrip);
-        if (!smsResult) {
-          return NextResponse.json(
-            { error: "Failed to send SMS to driver" },
-            { status: 500 }
-          );
+        if (smsResult) {
+          smsStatus = "sent";
+        } else {
+          smsStatus = "failed";
+          console.error('SMS sending returned false for driver:', updatedTrip.Driver.PhoneNumber);
         }
-      } catch (smsError) {
-        console.error('Failed to send SMS to driver:', smsError);
-        return NextResponse.json(
-          { error: "Failed to send SMS to driver", details: smsError?.toString() },
-          { status: 500 }
-        );
+      } catch (error) {
+        smsStatus = "failed";
+        smsError = error?.toString();
+        console.error('Failed to send SMS to driver:', error);
       }
     }
 
-    return NextResponse.json({ success: true, trip: updatedTrip });
+    return NextResponse.json({ 
+      success: true, 
+      trip: updatedTrip,
+      sms: {
+        status: smsStatus,
+        error: smsError,
+        phoneNumber: updatedTrip.Driver?.PhoneNumber
+      }
+    });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to assign driver", details: error?.toString() },
