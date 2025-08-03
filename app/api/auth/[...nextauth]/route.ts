@@ -3,13 +3,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 
-// THIS IS THE SECRET - HARDCODED DIRECTLY HERE
-const HARDCODED_SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
+// Fallback secret if environment variable is not available
+const SECRET = process.env.NEXTAUTH_SECRET || "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
 
-// Export simple authOptions with the hardcoded secret
 export const authOptions = {
-  secret: HARDCODED_SECRET,
   adapter: PrismaAdapter(prisma),
+  secret: SECRET,
   providers: [
     CredentialsProvider({
       name: "Credentials",
