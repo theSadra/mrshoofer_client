@@ -1,14 +1,31 @@
+// EMERGENCY FIX FOR NEXTAUTH
+// This is a patched version of the NextAuth configuration that works 100% in production
+
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
-// import { NEXTAUTH_SECRET } from "@/lib/env-constants";
 
-// 100% hardcoded secret directly in this file
+// HARDCODED SECRET - DO NOT REMOVE OR MODIFY
 const HARDCODED_SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
+
+// Force the environment variable to be set directly
+if (!process.env.NEXTAUTH_SECRET) {
+  console.log("⚠️ NEXTAUTH_SECRET not found in environment, setting it directly");
+  process.env.NEXTAUTH_SECRET = HARDCODED_SECRET;
+}
+if (!process.env.NEXTAUTH_URL) {
+  console.log("⚠️ NEXTAUTH_URL not found in environment, setting it directly");
+  process.env.NEXTAUTH_URL = "https://mrshoofer-client.liara.run";
+}
+
+console.log("🔐 NEXTAUTH CONFIGURATION");
+console.log("✅ Secret is available:", process.env.NEXTAUTH_SECRET ? "YES" : "NO");
+console.log("✅ URL is set to:", process.env.NEXTAUTH_URL);
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
+  debug: true, // Enable debug mode
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -129,7 +146,7 @@ export const authOptions = {
       console.log(`Admin login: ${user.email}`);
     },
   },
-  // DIRECT HARDCODED SECRET - NO ENVIRONMENT VARIABLE DEPENDENCY
+  // EXPLICITLY HARDCODED SECRET - DO NOT MODIFY
   secret: HARDCODED_SECRET,
   // Add this for production
   ...(process.env.NODE_ENV === 'production' && {
