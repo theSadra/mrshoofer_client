@@ -1,0 +1,41 @@
+# NUCLEAR OPTION DOCKERFILE
+# This patches NextAuth's source code to FORCE the secret
+
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm ci --legacy-peer-deps
+
+# Copy all source files
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# CRITICAL STEP: Run our patcher to modify NextAuth's source code
+RUN node patch-nextauth.js
+
+# Create environment files with our secret
+RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env && \
+    echo "NEXTAUTH_URL=https://mrshoofer-client.liara.run" >> .env && \
+    cp .env .env.local && \
+    cp .env .env.production
+
+# Set production environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Build the application
+RUN npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "start"]
