@@ -93,10 +93,39 @@ ls -la
 export HOSTNAME=0.0.0.0
 export PORT=3000
 
+# Directly set critical environment variables again before starting
+export NEXTAUTH_SECRET="vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w"
+export NEXTAUTH_URL="https://mrshoofer-client.liara.run"
+export ORS_API_SECRET="YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6"
+export SMSIR_API_KEY="YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6"
+
 echo "🌐 Starting on $HOSTNAME:$PORT"
 
 if [ -f "server.js" ]; then
-    echo "📄 Using server.js - binding to $HOSTNAME:$PORT"
+    # Patch server.js to inject environment variables directly into the code
+    echo "� Patching server.js with hardcoded environment variables..."
+    
+    # Create temporary patching file
+    cat > patch.js << 'EOL'
+// Hardcoded environment variables for NextAuth
+process.env.NEXTAUTH_SECRET = 'vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w';
+process.env.NEXTAUTH_URL = 'https://mrshoofer-client.liara.run';
+process.env.ORS_API_SECRET = 'YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6';
+process.env.SMSIR_API_KEY = 'YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6';
+console.log('🔐 NextAuth secret and other environment variables injected directly into server.js');
+
+EOL
+
+    # Backup original server.js
+    cp server.js server.original.js
+    
+    # Combine patch with original server.js
+    cat patch.js server.original.js > server.js
+    
+    # Clean up
+    rm patch.js server.original.js
+    
+    echo "✅ server.js successfully patched"
     echo "🔍 server.js contents preview:"
     head -10 server.js
     echo "▶️ Executing: node server.js"

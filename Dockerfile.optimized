@@ -98,6 +98,7 @@ RUN npm ci --ignore-scripts --legacy-peer-deps && npm cache clean --force
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/server-env.js ./server-env.js
 
 # Create .env.production file with hardcoded values for Next.js
 RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env.production && \
@@ -106,6 +107,14 @@ RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8
     echo "SMSIR_API_KEY=YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env.production && \
     echo "APP_BASE_URL=https://webapp.mrshoofer.ir" >> .env.production && \
     echo "DATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres" >> .env.production
+
+# Patch server.js to prepend our environment variables setup
+RUN if [ -f "server.js" ]; then \
+      echo "Patching server.js with environment variables..."; \
+      mv server.js server.original.js && \
+      cat server-env.js server.original.js > server.js && \
+      rm server-env.js server.original.js; \
+    fi
 
 # Copy Prisma files for runtime
 COPY --from=builder /app/prisma ./prisma

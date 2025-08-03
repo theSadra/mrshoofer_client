@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { NEXTAUTH_SECRET } from "@/lib/env-constants";
 
+// Force hardcoded secret directly in this file as a fallback
+const HARDCODED_SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
+
 export async function middleware(request: NextRequest) {
     console.log("🔒 Middleware checking:", request.nextUrl.pathname);
 
@@ -15,7 +18,7 @@ export async function middleware(request: NextRequest) {
     // Check authentication for protected routes
     const token = await getToken({
         req: request,
-        secret: NEXTAUTH_SECRET // Use centralized env constant
+        secret: HARDCODED_SECRET // Use direct hardcoded secret
     });
 
     if (!token) {
