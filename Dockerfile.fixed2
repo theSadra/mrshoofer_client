@@ -1,4 +1,20 @@
-# Simple Docker image with environment variables directly injected
+# Simple Docker# First, copy only package files and modify them to remove postinstall script
+COPY package.json package-lock.json ./
+
+# Temporarily remove the postinstall script before installing
+RUN npm pkg delete scripts.postinstall
+
+# Install dependencies including Prisma
+RUN npm ci --legacy-peer-deps
+
+# Install Prisma globally to ensure CLI is available
+RUN npm install -g prisma
+
+# Copy prisma schema files
+COPY prisma ./prisma/
+
+# Generate Prisma client explicitly
+RUN npx prisma generatevironment variables directly injected
 FROM node:20-alpine
 
 # Set environment variables directly in the Dockerfile
