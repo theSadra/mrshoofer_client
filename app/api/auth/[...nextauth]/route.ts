@@ -15,7 +15,7 @@ export const authOptions = {
       async authorize(credentials: Record<string, string> | undefined) {
         try {
           console.log("🔐 Login attempt for:", credentials?.username);
-          
+
           // Validate that both username and password are provided
           if (!credentials?.username || !credentials?.password) {
             console.log("❌ Missing username or password");
@@ -32,14 +32,14 @@ export const authOptions = {
           }
 
           // Try to find user by email first
-          let user = await prisma.user.findUnique({ 
-            where: { email: username } 
+          let user = await prisma.user.findUnique({
+            where: { email: username }
           });
-          
+
           // If not found by email, try by name
           if (!user) {
-            user = await prisma.user.findFirst({ 
-              where: { name: username } 
+            user = await prisma.user.findFirst({
+              where: { name: username }
             });
           }
 
@@ -109,12 +109,12 @@ export const authOptions = {
         console.log("❌ SignIn callback: No user");
         return false;
       }
-      
+
       if (!user.isAdmin) {
         console.log("❌ SignIn callback: User is not admin");
         return false;
       }
-      
+
       console.log("✅ SignIn callback: Allowing admin login for", user.email);
       return true;
     },

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
     const apiSecret = process.env.ORS_API_SECRET;
     const auth = req.headers.get("authorization");
-    
+
     return NextResponse.json({
         message: "ORS API Test Endpoint",
         hasOrsSecret: !!apiSecret,
@@ -19,19 +19,19 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     const apiSecret = process.env.ORS_API_SECRET;
     const auth = req.headers.get("authorization");
-    
+
     if (!auth || !apiSecret) {
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: "Missing or invalid token",
             hasOrsSecret: !!apiSecret,
             receivedAuth: !!auth,
             authValue: auth
         }, { status: 401 });
     }
-    
+
     const token = auth.startsWith("Bearer ") ? auth.replace("Bearer ", "") : auth;
     const isValid = token === apiSecret;
-    
+
     return NextResponse.json({
         message: "Authentication test",
         isValid,

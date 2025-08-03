@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     // Send SMS to the assigned driver (optional - don't fail the assignment if SMS fails)
     let smsStatus = "not_sent";
     let smsError = null;
-    
+
     if (updatedTrip.Driver?.PhoneNumber) {
       try {
         const smsResult = await sendDriverSMS(updatedTrip.Driver.PhoneNumber, updatedTrip);
@@ -41,8 +41,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       trip: updatedTrip,
       sms: {
         status: smsStatus,

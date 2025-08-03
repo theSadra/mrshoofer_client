@@ -17,12 +17,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         "min-h-screen bg-background font-sans antialiased",
         fontSans.variable
       )}>
-        <Providers themeProps={{ 
-          attribute: "class", 
-          defaultTheme: "light", 
+        <Providers themeProps={{
+          attribute: "class",
+          defaultTheme: "light",
           forcedTheme: "light",
           enableSystem: false,
-          enableColorScheme: false 
+          enableColorScheme: false
         }}>
           <div className="relative flex flex-col h-screen">
             {/* <ClientNavbarWrapper /> */}
