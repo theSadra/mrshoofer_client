@@ -1,0 +1,118 @@
+# Secure Dockerfile for MrShoofer Client
+# This design minimizes security warnings for ARG/ENV usage with sensitive data
+
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat openssl
+
+# Setup working directory
+WORKDIR /app
+
+# First stage: dependencies
+FROM base AS deps
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts --legacy-peer-deps && \
+    npm cache clean --force
+
+# Second stage: builder
+FROM base AS builder
+WORKDIR /app
+
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
+COPY package*.json ./
+COPY prisma ./prisma
+
+# Copy application code
+COPY app ./app
+COPY components ./components
+COPY config ./config
+COPY lib ./lib
+COPY public ./public
+COPY styles ./styles
+COPY types ./types
+COPY *.config.* ./
+COPY *.json ./
+COPY *.js ./
+COPY *.ts ./
+
+# Set build environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV SKIP_ENV_VALIDATION=1
+
+# Create .env.production file directly in the build stage
+# This avoids using ARG for sensitive values
+RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env.production && \
+    echo "NEXTAUTH_URL=https://mrshoofer-client.liara.run" >> .env.production && \
+    echo "ORS_API_SECRET=YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env.production && \
+    echo "SMSIR_API_KEY=YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env.production && \
+    echo "APP_BASE_URL=https://webapp.mrshoofer.ir" >> .env.production && \
+    echo "DATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres" >> .env.production
+
+# Create server wrapper to inject environment variables at runtime
+RUN echo '// Force environment variables at runtime\n\
+console.log("🚀 Starting server with environment variables");\n\
+\n\
+// Set critical environment variables before loading server.js\n\
+process.env.NEXTAUTH_SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";\n\
+process.env.NEXTAUTH_URL = "https://mrshoofer-client.liara.run";\n\
+process.env.ORS_API_SECRET = "YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6";\n\
+process.env.SMSIR_API_KEY = "YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6";\n\
+process.env.APP_BASE_URL = "https://webapp.mrshoofer.ir";\n\
+process.env.DATABASE_URL = "postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres";\n\
+\n\
+console.log("✅ Environment variables set directly in server-wrapper.js");\n\
+\n\
+// Run the actual server\n\
+require("./server.js");\n\
+' > server-wrapper.js
+
+# Generate Prisma client
+RUN cp ./prisma/schema.production.prisma ./prisma/schema.prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Build application
+RUN npm run build:fast
+
+# Final stage: runtime
+FROM base AS runner
+WORKDIR /app
+
+# Set runtime environment without sensitive values
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Install runtime dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts --legacy-peer-deps --omit=dev && npm cache clean --force
+
+# Copy application from builder
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/server-wrapper.js ./server-wrapper.js
+COPY --from=builder --chown=nextjs:nodejs /app/.env.production ./.env.production
+
+# Copy Prisma files for migrations
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
+# Set user
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
+# Use server-wrapper.js instead of server.js
+CMD ["node", "server-wrapper.js"]

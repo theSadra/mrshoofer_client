@@ -134,11 +134,5 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# Create a custom start command that runs both startup script and server
-RUN echo '#!/bin/sh' > ./start-server.sh && \
-    echo 'echo "🚀 Starting MrShoofer client with server-wrapper.js"' >> ./start-server.sh && \
-    echo 'node server-wrapper.js' >> ./start-server.sh && \
-    chmod +x ./start-server.sh
-
-# Use the custom start command
-CMD ["./start-server.sh"]
+# Directly use server-wrapper.js without creating additional shell script
+CMD ["node", "server-wrapper.js"]
