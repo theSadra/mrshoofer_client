@@ -3,8 +3,20 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 
+// Log environment variables for debugging purposes
+console.log("🔐 Auth Configuration");
+console.log("NEXTAUTH_SECRET exists:", !!process.env.NEXTAUTH_SECRET);
+console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
+
 // Fallback secret if environment variable is not available
 const SECRET = process.env.NEXTAUTH_SECRET || "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
+
+// Force the secret to be available
+if (!process.env.NEXTAUTH_SECRET) {
+  console.warn("⚠️ Using fallback NEXTAUTH_SECRET - this is not recommended for production!");
+  // Set it for future references in the same process
+  process.env.NEXTAUTH_SECRET = SECRET;
+}
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
