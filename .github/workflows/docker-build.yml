@@ -43,7 +43,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: ./Dockerfile.secure
+        file: ./Dockerfile.forcesecret
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -51,9 +51,6 @@ jobs:
         cache-to: type=gha,mode=max
         platforms: linux/amd64
         no-cache: true # Disable cache to ensure fresh build
-        build-args: |
-          NODE_ENV=production
-          NEXTAUTH_DEBUG=true
           
     - name: Build completed
       run: |

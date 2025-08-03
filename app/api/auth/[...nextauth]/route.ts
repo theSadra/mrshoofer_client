@@ -2,9 +2,9 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
-import { NEXTAUTH_SECRET } from "@/lib/env-constants";
+// import { NEXTAUTH_SECRET } from "@/lib/env-constants";
 
-// Force hardcoded secret directly in this file as a fallback
+// 100% hardcoded secret directly in this file
 const HARDCODED_SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
 
 export const authOptions = {
@@ -129,7 +129,8 @@ export const authOptions = {
       console.log(`Admin login: ${user.email}`);
     },
   },
-  secret: HARDCODED_SECRET, // Use direct hardcoded secret
+  // DIRECT HARDCODED SECRET - NO ENVIRONMENT VARIABLE DEPENDENCY
+  secret: HARDCODED_SECRET,
   // Add this for production
   ...(process.env.NODE_ENV === 'production' && {
     useSecureCookies: true,
