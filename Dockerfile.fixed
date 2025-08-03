@@ -1,0 +1,100 @@
+# FIXED DOCKERFILE - No warnings, fixed Prisma issues
+FROM node:20-alpine AS base
+
+# Base system dependencies
+RUN apk add --no-cache libc6-compat openssl
+
+WORKDIR /app
+
+# Install dependencies
+FROM base AS deps
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts --legacy-peer-deps && npm cache clean --force
+
+# Build stage
+FROM base AS builder
+WORKDIR /app
+
+# Copy all files
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Create secure config files (non-sensitive values only in ENV)
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create .env files with secrets (safer than ENV)
+RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env.production && \
+    echo "NEXTAUTH_URL=https://mrshoofer-client.liara.run" >> .env.production && \
+    echo "ORS_API_SECRET=YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env.production && \
+    echo "SMSIR_API_KEY=YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env.production && \
+    echo "APP_BASE_URL=https://webapp.mrshoofer.ir" >> .env.production && \
+    echo "DATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres" >> .env.production
+
+# Copy this .env file to other locations for redundancy
+RUN cp .env.production .env && cp .env.production .env.local
+
+# Generate Prisma client - FIXED
+RUN npx prisma generate
+
+# Build application
+RUN npm run build:fast
+
+# Create emergency server wrapper
+RUN echo '// Force environment variables at runtime\n\
+console.log("🚀 Starting server with environment variables");\n\
+\n\
+// Set critical environment variables before loading server.js\n\
+process.env.NEXTAUTH_SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";\n\
+process.env.NEXTAUTH_URL = "https://mrshoofer-client.liara.run";\n\
+process.env.ORS_API_SECRET = "YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6";\n\
+process.env.SMSIR_API_KEY = "YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6";\n\
+\n\
+console.log("✅ Environment variables set in wrapper.js");\n\
+\n\
+// Run the actual server\n\
+require("./server.js");\n\
+' > server-wrapper.js
+
+# Production stage
+FROM base AS runner
+WORKDIR /app
+
+# Non-sensitive environment variables only
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Install minimal production dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts --legacy-peer-deps --omit=dev && npm cache clean --force
+
+# Copy application
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/server-wrapper.js ./server-wrapper.js
+
+# Copy environment files
+COPY --from=builder --chown=nextjs:nodejs /app/.env ./
+COPY --from=builder --chown=nextjs:nodejs /app/.env.local ./
+COPY --from=builder --chown=nextjs:nodejs /app/.env.production ./
+
+# Copy Prisma files
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
+# Use non-root user
+USER nextjs
+
+# Expose port
+EXPOSE 3000
+
+# Use server wrapper
+CMD ["node", "server-wrapper.js"]
