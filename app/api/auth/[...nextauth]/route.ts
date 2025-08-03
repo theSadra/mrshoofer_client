@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
+import { NEXTAUTH_SECRET } from "@/lib/env-constants";
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
@@ -125,7 +126,7 @@ export const authOptions = {
       console.log(`Admin login: ${user.email}`);
     },
   },
-  secret: "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w",
+  secret: NEXTAUTH_SECRET, // Use our hardcoded secret
   // Add this for production
   ...(process.env.NODE_ENV === 'production' && {
     useSecureCookies: true,

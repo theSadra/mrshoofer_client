@@ -1,9 +1,9 @@
 import { Smsir } from 'sms-typescript/lib';
 import type { Trip, Passenger } from '@prisma/client'
+import { SMSIR_API_KEY, APP_BASE_URL } from '@/lib/env-constants';
 
-// Hardcoded SMS API key for production reliability
-const smsir = new Smsir(process.env.SMSIR_API_KEY ?? "YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6", 1);
-// const APP_BASE_URL = process.env.APP_BASE_URL || "https://webapp.mrshoofer.ir";
+// Use centralized env constants
+const smsir = new Smsir(SMSIR_API_KEY, 1);
 
 
 export async function sendPassengerSMS(phone: string, tripInfo: any, passenger: Passenger) {

@@ -1,6 +1,7 @@
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NEXTAUTH_SECRET } from "@/lib/env-constants";
 
 export async function middleware(request: NextRequest) {
     console.log("🔒 Middleware checking:", request.nextUrl.pathname);
@@ -14,7 +15,7 @@ export async function middleware(request: NextRequest) {
     // Check authentication for protected routes
     const token = await getToken({
         req: request,
-        secret: process.env.NEXTAUTH_SECRET
+        secret: NEXTAUTH_SECRET // Use centralized env constant
     });
 
     if (!token) {

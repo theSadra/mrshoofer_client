@@ -22,6 +22,9 @@ ARG NODE_ENV=production
 ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
 ARG ORS_API_SECRET
+ARG SMSIR_API_KEY
+ARG APP_BASE_URL
+ARG DATABASE_URL
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY package*.json ./
@@ -50,6 +53,9 @@ ENV SKIP_ENV_VALIDATION=1
 ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 ENV NEXTAUTH_URL=${NEXTAUTH_URL}
 ENV ORS_API_SECRET=${ORS_API_SECRET}
+ENV SMSIR_API_KEY=${SMSIR_API_KEY}
+ENV APP_BASE_URL=${APP_BASE_URL}
+ENV DATABASE_URL=${DATABASE_URL}
 
 # Generate Prisma client with production schema
 RUN cp ./prisma/schema.production.prisma ./prisma/schema.prisma
@@ -70,12 +76,16 @@ ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
 ARG ORS_API_SECRET
 ARG SMSIR_API_KEY
+ARG APP_BASE_URL
+ARG DATABASE_URL
 
 # Set NextAuth environment variables
 ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 ENV NEXTAUTH_URL=${NEXTAUTH_URL}
 ENV ORS_API_SECRET=${ORS_API_SECRET}
 ENV SMSIR_API_KEY=${SMSIR_API_KEY}
+ENV APP_BASE_URL=${APP_BASE_URL}
+ENV DATABASE_URL=${DATABASE_URL}
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -88,6 +98,14 @@ RUN npm ci --ignore-scripts --legacy-peer-deps && npm cache clean --force
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+
+# Create .env.production file with hardcoded values for Next.js
+RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env.production && \
+    echo "NEXTAUTH_URL=https://mrshoofer-client.liara.run" >> .env.production && \
+    echo "ORS_API_SECRET=YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env.production && \
+    echo "SMSIR_API_KEY=YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env.production && \
+    echo "APP_BASE_URL=https://webapp.mrshoofer.ir" >> .env.production && \
+    echo "DATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres" >> .env.production
 
 # Copy Prisma files for runtime
 COPY --from=builder /app/prisma ./prisma
