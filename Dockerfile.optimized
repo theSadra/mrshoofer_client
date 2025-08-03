@@ -109,9 +109,6 @@ RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8
     echo "APP_BASE_URL=https://webapp.mrshoofer.ir" >> .env.production && \
     echo "DATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres" >> .env.production
 
-# Patch start.sh to use server-wrapper.js instead of server.js
-RUN sed -i 's/exec node server.js/exec node server-wrapper.js/g' start.sh
-
 # Copy Prisma files for runtime
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -119,6 +116,9 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 # Copy startup script
 COPY --from=builder --chown=nextjs:nodejs /app/start.sh ./start.sh
+
+# Patch start.sh to use server-wrapper.js instead of server.js
+RUN sed -i 's/exec node server.js/exec node server-wrapper.js/g' start.sh
 
 # Make startup script executable
 RUN chmod +x ./start.sh
@@ -134,4 +134,11 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-CMD ["./start.sh"]
+# Create a custom start command that runs both startup script and server
+RUN echo '#!/bin/sh' > ./start-server.sh && \
+    echo 'echo "🚀 Starting MrShoofer client with server-wrapper.js"' >> ./start-server.sh && \
+    echo 'node server-wrapper.js' >> ./start-server.sh && \
+    chmod +x ./start-server.sh
+
+# Use the custom start command
+CMD ["./start-server.sh"]
