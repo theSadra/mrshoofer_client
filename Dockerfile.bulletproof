@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Remove postinstall script to prevent early Prisma issues
-RUN npm pkg delete scripts.postinstall
+RUN sed -i '/postinstall/d' package.json
 
 # Install dependencies with legacy peer deps (fixes React 19 + framer-motion conflict)
 RUN npm install --legacy-peer-deps
@@ -15,17 +15,24 @@ RUN npm install --legacy-peer-deps
 # Copy all source files
 COPY . .
 
-# Create .env file with all required secrets
-RUN printf "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w\nNEXTAUTH_URL=https://mrshoofer-client.liara.run\nNODE_ENV=production\nDATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres\n" > .env
+# Create .env file with ALL required variables
+RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env && \
+    echo "NEXTAUTH_URL=https://mrshoofer-client.liara.run" >> .env && \
+    echo "NODE_ENV=production" >> .env && \
+    echo "DATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres" >> .env && \
+    echo "ORS_API_SECRET=YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env && \
+    echo "SMSIR_API_KEY=YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env && \
+    echo "APP_BASE_URL=https://webapp.mrshoofer.ir" >> .env
 
 # Generate Prisma client (now that schema.prisma is available)
 RUN npx prisma generate
 
-# Build the Next.js application (skip migration)
+# Build the Next.js application without migrations
 RUN npm run build:fast
 
 # Expose port 3000
 EXPOSE 3000
 
 # Start the application
+CMD ["npm", "start"]
 CMD ["npm", "start"]
