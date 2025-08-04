@@ -15,23 +15,25 @@ RUN sed -i '/postinstall/d' package.json
 # Install dependencies WITH the legacy-peer-deps flag to fix React 19 compatibility
 RUN npm install --legacy-peer-deps
 
-# Copy the application
+# Copy the application (including prisma schema)
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
-
-# Build the application
+# Build the application (without generating Prisma client)
 RUN npm run build
+
+# Create startup script that generates Prisma client and starts the app
+RUN echo '#!/bin/sh\n\
+echo "🔧 Generating Prisma client for production..."\n\
+npx prisma generate\n\
+echo "🚀 Starting MrShoofer application..."\n\
+exec npm start\n\
+' > start.sh && chmod +x start.sh
 
 # Expose port
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
-
-# Build the application
-RUN npm run build
+# Start the application with Prisma generation
+CMD ["./start.sh"]
 
 # Create startup script that just starts the app (secrets are in .env files)
 RUN echo '#!/bin/sh\n\

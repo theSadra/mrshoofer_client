@@ -19,13 +19,13 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-    - name: Build Docker Image
-      run: |
-        docker build -f Dockerfile -t sadradorostkar/mrshoofer-client:latest .
-
-    - name: Push Docker Image to Docker Hub
-      run: |
-        docker push sadradorostkar/mrshoofer-client:latest
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: sadradorostkar/mrshoofer-client:latest
 
     - name: Install Liara CLI
       run: |
