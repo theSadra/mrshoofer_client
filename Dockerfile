@@ -46,17 +46,14 @@ RUN echo 'import NextAuth from "next-auth";\n\
     \n\
     console.log("🔐 Production Auth Config - Secret available:", !!SECRET);\n\
     console.log("🔐 NEXTAUTH_URL:", process.env.NEXTAUTH_URL);\n\
+    # Environment variables should be provided at runtime by your deployment platform (Liara, Docker Compose, etc.)
+    # If you need to bake a non-secret .env file, use COPY .env.production .env.production
+
     \n\
-    export const authOptions = {\n\
-    adapter: PrismaAdapter(prisma),\n\
-    secret: SECRET,\n\
-    providers: [\n\
-    CredentialsProvider({\n\
-    name: "Credentials",\n\
-    credentials: {\n\
-    username: { label: "ایمیل", type: "text", placeholder: "admin@example.com" },\n\
-    password: { label: "رمز عبور", type: "password" },\n\
-    },\n\
+    RUN echo "NODE_ENV=production" > .env.production && \
+    cp .env.production .env && \
+    cp .env.production .env.local
+},\n\
     async authorize(credentials) {\n\
     try {\n\
     if (!credentials?.username || !credentials?.password) return null;\n\
