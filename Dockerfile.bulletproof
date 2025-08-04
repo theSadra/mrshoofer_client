@@ -24,11 +24,23 @@ RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8
     echo "SMSIR_API_KEY=YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env && \
     echo "APP_BASE_URL=https://webapp.mrshoofer.ir" >> .env
 
+# Ensure .env file is loaded explicitly
+RUN export $(cat .env | xargs) && npm run build
+
 # Generate Prisma client (now that schema.prisma is available)
 RUN npx prisma generate
 
 # Build the Next.js application without migrations
 RUN npm run build:fast
+
+# Set environment variables for runtime
+ENV NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w
+ENV NEXTAUTH_URL=https://mrshoofer-client.liara.run
+ENV NODE_ENV=production
+ENV DATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres
+ENV ORS_API_SECRET=YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6
+ENV SMSIR_API_KEY=YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6
+ENV APP_BASE_URL=https://webapp.mrshoofer.ir
 
 # Expose port 3000
 EXPOSE 3000
