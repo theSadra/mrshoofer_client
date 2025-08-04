@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build, Push Docker Image and Deploy to Liara
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main # Trigger on pushes to the main branch
 
 jobs:
-  build-and-push:
+  build-push-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,8 +21,17 @@ jobs:
 
     - name: Build Docker Image
       run: |
-        docker build -t sadradorostkar/mrshoofer-client:latest .
+        docker build -f Dockerfile -t sadradorostkar/mrshoofer-client:latest .
 
-    - name: Push Docker Image
+    - name: Push Docker Image to Docker Hub
       run: |
         docker push sadradorostkar/mrshoofer-client:latest
+
+    - name: Install Liara CLI
+      run: |
+        curl -s https://liara.ir/install.sh | bash
+
+    - name: Deploy to Liara
+      run: |
+        liara login --email ${{ secrets.LIARA_EMAIL }} --password ${{ secrets.LIARA_PASSWORD }}
+        liara deploy --app mrshoofer-client --image sadradorostkar/mrshoofer-client:latest
