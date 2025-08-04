@@ -1,0 +1,26 @@
+# Absolute minimal Dockerfile
+FROM node:20-alpine
+
+# Set environment variables
+ENV NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w
+ENV NEXTAUTH_URL=https://mrshoofer-client.liara.run
+
+WORKDIR /app
+
+# Copy everything
+COPY . .
+
+# Create .env file 
+RUN echo "NEXTAUTH_SECRET=${NEXTAUTH_SECRET}" > .env && \
+    echo "NEXTAUTH_URL=${NEXTAUTH_URL}" >> .env
+
+# Edit package.json to remove postinstall
+RUN sed -i '/postinstall/d' package.json
+
+# Install dependencies, generate Prisma and build
+RUN npm install && \
+    npx prisma generate && \
+    npm run build
+
+# Start application
+CMD ["npm", "start"]

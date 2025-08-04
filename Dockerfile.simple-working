@@ -1,0 +1,60 @@
+# Simple Dockerfile without multi-stage builds
+FROM node:20-alpine
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w
+ENV NEXTAUTH_URL=https://mrshoofer-client.liara.run
+ENV ORS_API_SECRET=YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6
+ENV SMSIR_API_KEY=YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6
+ENV APP_BASE_URL=https://webapp.mrshoofer.ir
+ENV DATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres
+
+WORKDIR /app
+
+# Copy package files first
+COPY package.json package-lock.json ./
+
+# Remove postinstall script temporarily
+RUN npm pkg delete scripts.postinstall
+
+# Install dependencies
+RUN npm ci --legacy-peer-deps
+
+# Copy entire application
+COPY . .
+
+# Create environment files
+RUN echo "NEXTAUTH_SECRET=${NEXTAUTH_SECRET}" > .env && \
+    echo "NEXTAUTH_URL=${NEXTAUTH_URL}" >> .env && \
+    echo "ORS_API_SECRET=${ORS_API_SECRET}" >> .env && \
+    echo "SMSIR_API_KEY=${SMSIR_API_KEY}" >> .env && \
+    echo "APP_BASE_URL=${APP_BASE_URL}" >> .env && \
+    echo "DATABASE_URL=${DATABASE_URL}" >> .env && \
+    cp .env .env.local && cp .env .env.production
+
+# Generate Prisma client and build
+RUN npx prisma generate
+RUN npm run build:fast
+
+# Create startup script
+RUN echo '#!/bin/sh\n\
+export NEXTAUTH_SECRET="vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w"\n\
+export NEXTAUTH_URL="https://mrshoofer-client.liara.run"\n\
+export ORS_API_SECRET="YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6"\n\
+export SMSIR_API_KEY="YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6"\n\
+export APP_BASE_URL="https://webapp.mrshoofer.ir"\n\
+export DATABASE_URL="postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres"\n\
+\n\
+echo "Starting application with environment variables set"\n\
+exec npm start\n\
+' > start.sh
+
+# Make the startup script executable
+RUN chmod +x start.sh
+
+# Expose port
+EXPOSE 3000
+
+# Start the application using the startup script
+CMD ["./start.sh"]
