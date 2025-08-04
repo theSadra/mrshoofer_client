@@ -19,15 +19,14 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set build-time environment variables for Prisma schema
-ENV DATABASE_PROVIDER="postgresql"
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+# Set placeholder DATABASE_URL for Prisma client generation (no actual DB connection)
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
-# Generate Prisma client for build
+# Generate Prisma client during build (no database access needed)
 RUN npx prisma generate
 
-# Build Next.js application (skip prisma:deploy, just build)
-RUN npm run build:fast
+# Build Next.js application
+RUN npx next build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -49,20 +48,18 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma schema for runtime generation
+# Copy Prisma schema and generated client for runtime migrations
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
-# Create startup script for Prisma + Next.js
+# Create startup script for migrations + Next.js (Prisma client already generated)
 RUN echo '#!/bin/sh\n\
-    echo "🔧 Generating Prisma client with production database..."\n\
-    npx prisma generate\n\
-    echo "� Running database migrations..."\n\
-    npx prisma migrate deploy || echo "⚠️ Migration failed or no migrations to run"\n\
-    echo "🚀 Starting Next.js application..."\n\
-    exec node server.js\n\
-    ' > start.sh && chmod +x start.sh && chown nextjs:nodejs start.sh
+echo "🔄 Running database migrations..."\n\
+npx prisma migrate deploy || echo "⚠️ Migration failed or no migrations to run"\n\
+echo "🚀 Starting Next.js application..."\n\
+exec node server.js\n\
+' > start.sh && chmod +x start.sh && chown nextjs:nodejs start.sh
 
 USER nextjs
 
