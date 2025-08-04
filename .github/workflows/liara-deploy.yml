@@ -1,0 +1,26 @@
+name: Deploy to Liara
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Install Liara CLI
+      run: |
+        curl -s https://liara.ir/install.sh | bash
+
+    - name: Log in to Liara
+      run: |
+        liara login --email ${{ secrets.LIARA_EMAIL }} --password ${{ secrets.LIARA_PASSWORD }}
+
+    - name: Deploy Latest Docker Image to Liara
+      run: |
+        liara deploy --platform docker --app mrshoofer-client --port 3000 --image sadradorostkar/mrshoofer-client:latest

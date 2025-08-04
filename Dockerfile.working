@@ -96,7 +96,7 @@ RUN echo 'import NextAuth from "next-auth";\n\
     \n\
     const handler = NextAuth(authOptions);\n\
     export { handler as GET, handler as POST };\n\
-    ' > /app/app/api/auth/\[...nextauth\]/route.ts
+    ' > /app/app/api/auth/\\[...nextauth\\]/route.ts
 
 # Generate Prisma client
 RUN npx prisma generate
