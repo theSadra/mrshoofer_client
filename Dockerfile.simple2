@@ -1,0 +1,30 @@
+# ULTRA SIMPLE DOCKERFILE THAT ACTUALLY WORKS
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files first
+COPY package.json package-lock.json ./
+
+# Remove postinstall to avoid Prisma issues
+RUN sed -i '/postinstall/d' package.json
+
+# Install with legacy peer deps to handle React 19
+RUN npm install --legacy-peer-deps
+
+# Copy everything else
+COPY . .
+
+# Create simple .env file
+RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env
+RUN echo "NEXTAUTH_URL=https://mrshoofer-client.liara.run" >> .env
+RUN echo "NODE_ENV=production" >> .env
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build the app
+RUN npm run build
+
+EXPOSE 3000
+CMD ["npm", "start"]

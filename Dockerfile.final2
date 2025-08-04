@@ -1,0 +1,31 @@
+# ULTIMATE SIMPLE DOCKERFILE
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Remove postinstall
+RUN sed -i '/postinstall/d' package.json
+
+# Install with legacy peer deps
+RUN npm install --legacy-peer-deps
+
+# Copy all files
+COPY . .
+
+# Replace NextAuth route with Docker version
+COPY route-docker.ts ./app/api/auth/\[...nextauth\]/route.ts
+
+# Create .env file
+RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env
+
+# Generate Prisma
+RUN npx prisma generate
+
+# Build
+RUN npm run build
+
+EXPOSE 3000
+CMD ["npm", "start"]
