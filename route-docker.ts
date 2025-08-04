@@ -3,11 +3,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 
-// HARDCODED SECRET FOR DOCKER
-const SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
+// Securely load secrets based on environment
+const SECRET = process.env.NEXTAUTH_SECRET || "default_secret_for_dev";
 process.env.NEXTAUTH_SECRET = SECRET;
 
-console.log("🔐 Docker NextAuth - Secret set:", !!SECRET);
+console.log("🔐 NextAuth - Secret set:", !!SECRET);
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
