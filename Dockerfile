@@ -19,8 +19,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client for build (using placeholder DATABASE_URL)
+# Set build-time environment variables for Prisma schema
+ENV DATABASE_PROVIDER="postgresql"
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+
+# Generate Prisma client for build
 RUN npx prisma generate
 
 # Build Next.js application (skip prisma:deploy, just build)
@@ -68,7 +71,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["./start.sh"]
-
-# Start the application
 CMD ["./start.sh"]
