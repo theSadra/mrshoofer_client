@@ -2,10 +2,10 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
-
+I 
 // Securely load secrets based on environment
-const SECRET = process.env.NEXTAUTH_SECRET || "default_secret_for_dev";
-process.env.NEXTAUTH_SECRET = SECRET;
+const SECRET = process.env.NEXTAUTH_SECRET;
+// Removed default fallback for production security
 
 console.log("🔐 NextAuth - Secret set:", !!SECRET);
 
@@ -50,8 +50,8 @@ export const authOptions = {
       },
     }),
   ],
-  session: { 
-    strategy: "jwt",
+  session: {
+    strategy: "jwt" as const, // Explicitly cast to 'const' for type compatibility
     maxAge: 60 * 60 * 24 * 365 * 10
   },
   pages: { 
