@@ -1,0 +1,50 @@
+# Fixed Dockerfile that properly handles all dependency conflicts
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Set only NODE_ENV, no secrets in ENV instructions
+ENV NODE_ENV=production
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Remove the problematic postinstall script
+RUN sed -i '/postinstall/d' package.json
+
+# Install ALL dependencies with legacy-peer-deps (this includes Prisma)
+# Do NOT install Prisma separately - it causes conflicts
+RUN npm install --legacy-peer-deps
+
+# Copy the entire application
+COPY . .
+
+# Create production environment files with all secrets directly in the files
+RUN echo "NODE_ENV=production" > .env.production && \
+    echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" >> .env.production && \
+    echo "NEXTAUTH_URL=https://mrshoofer-client.liara.run" >> .env.production && \
+    echo "ORS_API_SECRET=YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env.production && \
+    echo "SMSIR_API_KEY=YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6" >> .env.production && \
+    echo "APP_BASE_URL=https://webapp.mrshoofer.ir" >> .env.production && \
+    echo "DATABASE_URL=postgresql://root:X7pGrkczSStKTxuyw1dH9WxE@mrshoofer-client-db:5432/postgres" >> .env.production && \
+    cp .env.production .env && \
+    cp .env.production .env.local
+
+# Replace NextAuth route with hardcoded version
+COPY ./app/api/auth/\[...nextauth\]/route.docker.ts ./app/api/auth/\[...nextauth\]/route.ts
+
+# Generate Prisma client (now that schema is available)
+RUN npx prisma generate
+
+# Build the application
+RUN npm run build
+
+# Create startup script that just starts the app (secrets are in .env files)
+RUN echo '#!/bin/sh\n\
+echo "🚀 Starting MrShoofer application..."\n\
+echo "Production environment files loaded with secrets"\n\
+exec npm start\n\
+' > start.sh && chmod +x start.sh
+
+EXPOSE 3000
+CMD ["./start.sh"]

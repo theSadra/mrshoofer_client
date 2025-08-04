@@ -1,0 +1,30 @@
+# SIMPLE DOCKERFILE THAT JUST WORKS - NO BULLSHIT
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy everything
+COPY . .
+
+# Remove the damn postinstall
+RUN sed -i '/postinstall/d' package.json
+
+# Install everything with legacy deps
+RUN npm install --legacy-peer-deps
+
+# Just hardcode the fucking env vars
+RUN echo 'NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w' > .env && \
+    echo 'NEXTAUTH_URL=https://mrshoofer-client.liara.run' >> .env && \
+    echo 'NODE_ENV=production' >> .env
+
+# Replace the auth route with hardcoded shit
+RUN printf 'import NextAuth from "next-auth";\nimport CredentialsProvider from "next-auth/providers/credentials";\nimport { PrismaAdapter } from "@next-auth/prisma-adapter";\nimport prisma from "@/lib/prisma";\n\nconst SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";\nprocess.env.NEXTAUTH_SECRET = SECRET;\n\nexport const authOptions = {\n  adapter: PrismaAdapter(prisma),\n  secret: SECRET,\n  providers: [\n    CredentialsProvider({\n      name: "Credentials",\n      credentials: {\n        username: { label: "Email", type: "text" },\n        password: { label: "Password", type: "password" },\n      },\n      async authorize(credentials) {\n        if (!credentials?.username || !credentials?.password) return null;\n        const user = await prisma.user.findFirst({\n          where: {\n            OR: [\n              { email: credentials.username.trim() },\n              { name: credentials.username.trim() }\n            ]\n          }\n        });\n        if (!user || !user.isAdmin || user.password !== credentials.password.trim()) return null;\n        return { id: user.id, name: user.name, email: user.email, isAdmin: true };\n      },\n    }),\n  ],\n  session: { strategy: "jwt" },\n  pages: { signIn: "/manage/login" },\n  callbacks: {\n    async jwt({ token, user }) {\n      if (user) token.isAdmin = user.isAdmin;\n      return token;\n    },\n    async session({ session, token }) {\n      session.user.isAdmin = token.isAdmin;\n      return session;\n    },\n  },\n};\n\nconst handler = NextAuth(authOptions);\nexport { handler as GET, handler as POST };\n' > ./app/api/auth/\\[...nextauth\\]/route.ts
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build the damn thing
+RUN npm run build
+
+EXPOSE 3000
+CMD ["npm", "start"]

@@ -1,0 +1,85 @@
+# Dockerfile that focuses on precise dependency handling
+FROM node:20-alpine AS deps
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Remove postinstall script
+RUN sed -i '/postinstall/d' package.json
+
+# Install production dependencies only, with legacy-peer-deps
+RUN npm install --legacy-peer-deps --only=production
+
+# Development dependencies for build phase
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files and modify
+COPY package.json package-lock.json ./
+RUN sed -i '/postinstall/d' package.json
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Set environment variables needed for build
+ENV NODE_ENV=production
+ENV NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w
+ENV NEXTAUTH_URL=https://mrshoofer-client.liara.run
+
+# Copy application code
+COPY . .
+
+# Create .env files with secrets
+RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env && \
+    echo "NEXTAUTH_URL=https://mrshoofer-client.liara.run" >> .env && \
+    cp .env .env.local && \
+    cp .env .env.production
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build the application
+RUN npm run build
+
+# Final production image
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w
+ENV NEXTAUTH_URL=https://mrshoofer-client.liara.run
+
+# Copy only necessary files from builder
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/prisma ./prisma
+
+# Create .env files again for runtime
+RUN echo "NEXTAUTH_SECRET=vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w" > .env && \
+    echo "NEXTAUTH_URL=https://mrshoofer-client.liara.run" >> .env && \
+    cp .env .env.local && \
+    cp .env .env.production
+
+# Ensure environment variables are available at runtime
+RUN echo '#!/bin/sh\n\
+export NEXTAUTH_SECRET="vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w"\n\
+export NEXTAUTH_URL="https://mrshoofer-client.liara.run"\n\
+exec npm start\n\
+' > start.sh
+
+# Make executable
+RUN chmod +x start.sh
+
+# Expose port
+EXPOSE 3000
+
+# Start the application
+CMD ["./start.sh"]
