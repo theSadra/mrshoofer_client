@@ -95,16 +95,31 @@ export default function AssignDriverModal({
     setAssigningDriverId(driverId);
     setError("");
     try {
+      console.log('Assigning driver:', { driverId, tripId });
+      
       const res = await fetch(`/manage/api/drivers/assign-driver`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ driverId, tripId }),
       });
-      if (!res.ok) throw new Error();
-      if (onAssigned) onAssigned(driverId);
-      onClose();
-    } catch {
-      setError("خطا در انتساب راننده");
+      
+      const data = await res.json();
+      console.log('API Response:', { status: res.status, ok: res.ok, data });
+      
+      if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}: خطا در انتساب راننده`);
+      }
+      
+      if (data.success) {
+        console.log('Driver assigned successfully');
+        if (onAssigned) onAssigned(driverId);
+        onClose();
+      } else {
+        throw new Error(data.error || "خطا در انتساب راننده");
+      }
+    } catch (error) {
+      console.error('Error assigning driver:', error);
+      setError(error instanceof Error ? error.message : "خطا در انتساب راننده");
     }
     setAssigningDriverId(null);
   };
