@@ -1,4 +1,4 @@
-name: Build, Push Docker Image and Deploy to Liara
+name: Build and Push Docker Image to Docker Hub
 
 on:
   push:
@@ -6,12 +6,26 @@ on:
       - main # Trigger on pushes to the main branch
 
 jobs:
-  build-push-deploy:
+  build-push:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
+
+    - name: Generate Tags
+      id: meta
+      run: |
+        # Get short commit hash
+        COMMIT_HASH=$(git rev-parse --short HEAD)
+        # Get current timestamp
+        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+        # Get branch name
+        BRANCH_NAME=${GITHUB_REF#refs/heads/}
+        
+        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+        echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+        echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
@@ -25,13 +39,18 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: sadradorostkar/mrshoofer-client:latest
+        tags: |
+          sadradorostkar/mrshoofer-client:latest
+          sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.commit_hash }}
+          sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.timestamp }}
+          sadradorostkar/mrshoofer-client:v1.0-${{ steps.meta.outputs.commit_hash }}
 
-    - name: Install Liara CLI
+    - name: Docker Push Success
       run: |
-        curl -s https://liara.ir/install.sh | bash
-
-    - name: Deploy to Liara
-      run: |
-        liara login --email ${{ secrets.LIARA_EMAIL }} --password ${{ secrets.LIARA_PASSWORD }}
-        liara deploy --app mrshoofer-client --image sadradorostkar/mrshoofer-client:latest
+        echo "✅ Docker image successfully built and pushed to Docker Hub"
+        echo "🐳 Images created with the following tags:"
+        echo "  📌 sadradorostkar/mrshoofer-client:latest"
+        echo "  📌 sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.commit_hash }}"
+        echo "  📌 sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.timestamp }}"
+        echo "  📌 sadradorostkar/mrshoofer-client:v1.0-${{ steps.meta.outputs.commit_hash }}"
+        echo "🔗 You can now manually deploy any of these images to Liara"
