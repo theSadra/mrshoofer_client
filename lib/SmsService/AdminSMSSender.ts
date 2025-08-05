@@ -6,4 +6,6 @@ export async function sendAdminSMS(phone: string, adminInfo: { event: string }) 
   const message = `مدیر گرامی، رویداد جدید: ${adminInfo.event}`;
   // Example: await fetch('https://sms-provider.com/api/send', { ... });
   return true;
+
+  // test commnet 
 }
