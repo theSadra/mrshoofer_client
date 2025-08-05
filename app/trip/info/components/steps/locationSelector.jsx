@@ -512,16 +512,22 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
   // Handle mobile keyboard visibility
   useEffect(() => {
     const handleResize = () => {
-      // iOS Safari address bar handling
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
+      // Only handle viewport height if not inside drawer
+      const isInDrawer = document.querySelector('[data-slot="drawer-content"]');
+      if (!isInDrawer) {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      }
     };
 
     const handleFocusIn = (e) => {
       // Prevent zoom on input focus for mobile
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        // Add mobile keyboard class to body
-        document.body.classList.add('mobile-keyboard-active');
+        // Don't manipulate body scroll if inside drawer
+        const isInDrawer = e.target.closest('[data-slot="drawer-content"]');
+        if (!isInDrawer) {
+          document.body.classList.add('mobile-keyboard-active');
+        }
         
         // For iOS, scroll into view after keyboard appears
         if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
@@ -536,8 +542,9 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
       // Remove mobile keyboard class from body
       document.body.classList.remove('mobile-keyboard-active');
       
-      // Reset viewport on iOS
-      if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+      // Don't reset scroll if inside drawer
+      const isInDrawer = document.querySelector('[data-slot="drawer-content"]');
+      if (!isInDrawer && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
         setTimeout(() => {
           window.scrollTo(0, 0);
         }, 300);
@@ -562,11 +569,11 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
 
   return (
     <div
-      className="flex flex-col mobile-keyboard-fix w-full h-full"
+      className="flex flex-col w-full h-full"
       style={{ 
         position: "relative",
-        minHeight: "100vh",
-        minHeight: "calc(var(--vh, 1vh) * 100)"
+        height: "100%",
+        minHeight: "100%"
       }}
     >
       {/* Map area */}
@@ -577,6 +584,8 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
           position: "relative",
           overflow: "hidden",
           paddingBottom: "110px", // Add padding so map content isn't hidden by the fixed button
+          height: "100%",
+          width: "100%",
         }}
       >
         {loading && (
@@ -640,9 +649,8 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
             style={{
               position: "absolute",
               left: "50%",
-              top: "calc(50% - 55px)", // shift up by half the bottom bar height
-              // Remove vertical animation: always keep at center
-              transform: "translate(-50%, -92%)",
+              top: "50%", // Center vertically
+              transform: "translate(-50%, -50%)", // Center both horizontally and vertically
               transition: "none",
               zIndex: 10,
               pointerEvents: "none",

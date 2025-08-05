@@ -289,6 +289,29 @@ export default function StepItem({
         // Increased z-index to ensure drawer is on top of everything
         className="z-[100]"
         isDismissable={false}
+        classNames={{
+          base: "fixed top-0 left-0 right-0 bottom-0",
+          backdrop: "fixed top-0 left-0 right-0 bottom-0 z-[99]",
+          wrapper: "fixed top-0 left-0 right-0 bottom-0 z-[100]",
+        }}
+        motionProps={{
+          variants: {
+            enter: {
+              y: 0,
+              transition: {
+                duration: 0.3,
+                ease: "easeOut"
+              }
+            },
+            exit: {
+              y: "100%",
+              transition: {
+                duration: 0.2,
+                ease: "easeIn"
+              }
+            }
+          }
+        }}
       // Remove key prop as it might cause remounting issues with focus
       >
         <DrawerContent className="p-0 m-0">

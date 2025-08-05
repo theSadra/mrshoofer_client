@@ -93,6 +93,36 @@ input, textarea, select {
   .keyboard-safe-area {
     padding-bottom: env(keyboard-inset-height, 0px);
   }
+  
+  /* Fix for HeroUI Drawer positioning issues */
+  [data-slot="drawer-wrapper"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 100 !important;
+  }
+  
+  [data-slot="drawer-content"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    max-height: 100vh !important;
+    height: 100vh !important;
+    transform: none !important;
+  }
+  
+  /* Fix for drawer backdrop */
+  [data-slot="drawer-backdrop"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+  }
 }
 
 /* iOS Safari specific fixes */
