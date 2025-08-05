@@ -509,10 +509,65 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
     }
   }, [isOpen]);
 
+  // Handle mobile keyboard visibility
+  useEffect(() => {
+    const handleResize = () => {
+      // iOS Safari address bar handling
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    const handleFocusIn = (e) => {
+      // Prevent zoom on input focus for mobile
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        // Add mobile keyboard class to body
+        document.body.classList.add('mobile-keyboard-active');
+        
+        // For iOS, scroll into view after keyboard appears
+        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+          setTimeout(() => {
+            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 300);
+        }
+      }
+    };
+
+    const handleFocusOut = () => {
+      // Remove mobile keyboard class from body
+      document.body.classList.remove('mobile-keyboard-active');
+      
+      // Reset viewport on iOS
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+        }, 300);
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    
+    // Initial call
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+      document.body.classList.remove('mobile-keyboard-active');
+    };
+  }, []);
+
   return (
     <div
-      className="flex flex-col min-h-screen w-full h-full"
-      style={{ position: "relative" }}
+      className="flex flex-col mobile-keyboard-fix w-full h-full"
+      style={{ 
+        position: "relative",
+        minHeight: "100vh",
+        minHeight: "calc(var(--vh, 1vh) * 100)"
+      }}
     >
       {/* Map area */}
       <div
@@ -797,6 +852,7 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
               label: "text-black/50 dark:text-white/90",
               input: [
                 // Remove "bg-transparent" to use default background
+                "text-base", // Prevent zoom on iOS by setting font-size to 16px minimum
                 "text-black/90 dark:text-white/90",
                 "placeholder:text-default-700/50 dark:placeholder:text-white/60",
               ],
@@ -820,6 +876,11 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
             startContent={
               <SearchIcon className="text-black/50 mb-0.5 dark:text-white/90 text-slate-400 pointer-events-none flex-shrink-0" />
             }
+            style={{
+              fontSize: '16px', // Prevent zoom on mobile
+              WebkitAppearance: 'none',
+              appearance: 'none'
+            }}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -827,6 +888,18 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
             }}
             onClick={() => {
               if (!showDropdown && search == null) setShowDropdown(true);
+            }}
+            onFocus={() => {
+              // Prevent body scroll when input is focused on mobile
+              if (window.innerWidth <= 768) {
+                document.body.style.overflow = 'hidden';
+              }
+            }}
+            onBlur={() => {
+              // Restore body scroll
+              setTimeout(() => {
+                document.body.style.overflow = '';
+              }, 300);
             }}
           />
           {showDropdown && search && (
@@ -939,6 +1012,33 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
         isOpen={sheetIsOpen}
         onOpenChange={(open) => {
           onOpenChange(open);
+          // Handle mobile keyboard when drawer opens/closes
+          if (open) {
+            document.body.classList.add('drawer-open');
+            // Prevent zoom on mobile when drawer has inputs
+            if (window.innerWidth <= 768) {
+              const viewport = document.querySelector('meta[name="viewport"]');
+              if (viewport) {
+                viewport.setAttribute(
+                  'content', 
+                  'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0'
+                );
+              }
+            }
+          } else {
+            document.body.classList.remove('drawer-open');
+            // Restore viewport settings
+            if (window.innerWidth <= 768) {
+              const viewport = document.querySelector('meta[name="viewport"]');
+              if (viewport) {
+                viewport.setAttribute(
+                  'content', 
+                  'width=device-width, initial-scale=1.0'
+                );
+              }
+            }
+          }
+          
           if (!open && lastMarkerRef.current) {
             lastMarkerRef.current.remove();
             lastMarkerRef.current = null;
@@ -948,6 +1048,7 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
             window.neshanMapInstance.zoomIn();
           }
         }}
+        className="mobile-drawer-fix"
         placement="bottom"
       >
         <DrawerContent>
@@ -999,6 +1100,24 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
                     variant={"faded"}
                     maxRows={2}
                     disableAutosize
+                    style={{
+                      fontSize: '16px', // Prevent zoom on mobile
+                    }}
+                    onFocus={() => {
+                      // Handle mobile keyboard focus
+                      if (window.innerWidth <= 768) {
+                        setTimeout(() => {
+                          const element = document.activeElement;
+                          if (element) {
+                            element.scrollIntoView({ 
+                              behavior: 'smooth', 
+                              block: 'center',
+                              inline: 'nearest'
+                            });
+                          }
+                        }, 300);
+                      }
+                    }}
                   />
 
                   <p className="text-sm font-light mt-1">شماره تلفن</p>
@@ -1008,6 +1127,24 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
                     variant="faded"
                     value={numberPhone}
                     onChange={(e) => setNumberPhone(e.target.value)}
+                    style={{
+                      fontSize: '16px', // Prevent zoom on mobile
+                    }}
+                    onFocus={() => {
+                      // Handle mobile keyboard focus
+                      if (window.innerWidth <= 768) {
+                        setTimeout(() => {
+                          const element = document.activeElement;
+                          if (element) {
+                            element.scrollIntoView({ 
+                              behavior: 'smooth', 
+                              block: 'center',
+                              inline: 'nearest'
+                            });
+                          }
+                        }, 300);
+                      }
+                    }}
                   />
 
                   <p className="text-sm font-light mt-1">
@@ -1021,6 +1158,24 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
                     variant="faded"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    style={{
+                      fontSize: '16px', // Prevent zoom on mobile
+                    }}
+                    onFocus={() => {
+                      // Handle mobile keyboard focus
+                      if (window.innerWidth <= 768) {
+                        setTimeout(() => {
+                          const element = document.activeElement;
+                          if (element) {
+                            element.scrollIntoView({ 
+                              behavior: 'smooth', 
+                              block: 'center',
+                              inline: 'nearest'
+                            });
+                          }
+                        }, 300);
+                      }
+                    }}
                   />
                   <Button
                     variant={isSubmitting ? "faded" : "solid"}
