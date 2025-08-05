@@ -53,14 +53,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
-# Create startup script for migrations + Next.js (Prisma client already generated)
-RUN echo '#!/bin/sh\n\
-echo "🔄 Running database migrations..."\n\
-npx prisma migrate deploy || echo "⚠️ Migration failed or no migrations to run"\n\
-echo "🚀 Starting Next.js application..."\n\
-exec node server.js\n\
-' > start.sh && chmod +x start.sh && chown nextjs:nodejs start.sh
-
 USER nextjs
 
 EXPOSE 3000
@@ -68,4 +60,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["./start.sh"]
+# Start with migrations and then the app
+CMD ["sh", "-c", "echo '🔄 Running database migrations...' && npx prisma migrate deploy || echo '⚠️ Migration failed or no migrations to run' && echo '🚀 Starting Next.js application...' && exec node server.js"]
