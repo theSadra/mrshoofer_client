@@ -96,20 +96,20 @@ export default function AssignDriverModal({
     setError("");
     try {
       console.log('Assigning driver:', { driverId, tripId });
-      
+
       const res = await fetch(`/manage/api/drivers/assign-driver`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ driverId, tripId }),
       });
-      
+
       const data = await res.json();
       console.log('API Response:', { status: res.status, ok: res.ok, data });
-      
+
       if (!res.ok) {
         throw new Error(data.error || `HTTP ${res.status}: خطا در انتساب راننده`);
       }
-      
+
       if (data.success) {
         console.log('Driver assigned successfully');
         if (onAssigned) onAssigned(driverId);
