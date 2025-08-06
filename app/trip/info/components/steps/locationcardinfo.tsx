@@ -286,39 +286,20 @@ export default function StepItem({
         isOpen={isOpen}
         size={"full"}
         onClose={onClose}
-        // Increased z-index to ensure drawer is on top of everything
         className="z-[100]"
         isDismissable={false}
-        classNames={{
-          base: "fixed top-0 left-0 right-0 bottom-0",
-          backdrop: "fixed top-0 left-0 right-0 bottom-0 z-[99]",
-          wrapper: "fixed top-0 left-0 right-0 bottom-0 z-[100]",
-        }}
-        motionProps={{
-          variants: {
-            enter: {
-              y: 0,
-              transition: {
-                duration: 0.3,
-                ease: "easeOut"
-              }
-            },
-            exit: {
-              y: "100%",
-              transition: {
-                duration: 0.2,
-                ease: "easeIn"
-              }
-            }
-          }
-        }}
+        placement="bottom"
       // Remove key prop as it might cause remounting issues with focus
       >
         <DrawerContent className="p-0 m-0">
           <DrawerHeader className="flex flex-col pb-1 font-normal">
             📍 انتخاب مبدأ
           </DrawerHeader>
-          <DrawerBody className="p-0 m-0" style={{ overflow: "hidden" }}>
+          <DrawerBody className="p-0 m-0" style={{ 
+            overflow: "hidden",
+            flex: 1,
+            height: '100%'
+          }}>
             <LocationSelector
               key={isOpen ? "open" : "closed"}
               isOpen={isOpen}

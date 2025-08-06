@@ -573,7 +573,7 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
       style={{ 
         position: "relative",
         height: "100%",
-        minHeight: "100%"
+        width: "100%"
       }}
     >
       {/* Map area */}
@@ -583,9 +583,7 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
           minHeight: 0,
           position: "relative",
           overflow: "hidden",
-          paddingBottom: "110px", // Add padding so map content isn't hidden by the fixed button
-          height: "100%",
-          width: "100%",
+          paddingBottom: "110px", // Leave space for bottom button
         }}
       >
         {loading && (
@@ -991,17 +989,19 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
 
         <div
           style={{
-            position: "fixed",
+            position: "absolute",
             left: 0,
+            right: 0,
             bottom: 0,
-            width: "100vw",
+            height: "110px",
             zIndex: 4000,
             background: "rgba(255,255,255,0.96)",
             boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
-            padding: "16px 16px 12px 16px",
+            padding: "16px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <Button
@@ -1056,8 +1056,8 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
             window.neshanMapInstance.zoomIn();
           }
         }}
-        className="mobile-drawer-fix"
         placement="bottom"
+        size="lg"
       >
         <DrawerContent>
           {(onClose) => (
