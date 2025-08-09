@@ -12,7 +12,6 @@ export default withAuth(
 
             // For other manage routes, check if user is admin
             if (!req.nextauth.token?.isAdmin) {
-                console.log("❌ Unauthorized access attempt to:", req.nextUrl.pathname);
                 return NextResponse.redirect(new URL("/manage/login", req.url));
             }
         }

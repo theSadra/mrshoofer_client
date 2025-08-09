@@ -7,11 +7,8 @@ import { NEXTAUTH_SECRET } from "@/lib/env-constants";
 const HARDCODED_SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
 
 export async function middleware(request: NextRequest) {
-    console.log("🔒 Middleware checking:", request.nextUrl.pathname);
-
     // Allow access to login page
     if (request.nextUrl.pathname === "/manage/login") {
-        console.log("✅ Allowing access to login page");
         return NextResponse.next();
     }
 
@@ -22,17 +19,14 @@ export async function middleware(request: NextRequest) {
     });
 
     if (!token) {
-        console.log("❌ No token found, redirecting to login");
         return NextResponse.redirect(new URL("/manage/login", request.url));
     }
 
     // Check if user is admin
     if (!token.isAdmin) {
-        console.log("❌ User is not admin, redirecting to login");
         return NextResponse.redirect(new URL("/manage/login", request.url));
     }
 
-    console.log("✅ Admin access granted for:", token.email);
     return NextResponse.next();
 }
 

@@ -11,10 +11,6 @@ if (!process.env.NEXTAUTH_SECRET) {
   process.env.NEXTAUTH_SECRET = SECRET;
 }
 
-console.log("🔐 Auth Configuration (Docker-ready)");
-console.log("NEXTAUTH_SECRET exists:", !!SECRET);
-console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
-
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
   secret: SECRET,
@@ -27,11 +23,8 @@ export const authOptions = {
       },
       async authorize(credentials: Record<string, string> | undefined) {
         try {
-          console.log("🔐 Login attempt for:", credentials?.username);
-
           // Validate that both username and password are provided
           if (!credentials?.username || !credentials?.password) {
-            console.log("❌ Missing username or password");
             return null;
           }
 
@@ -40,7 +33,6 @@ export const authOptions = {
           const password = credentials.password.trim();
 
           if (!username || !password) {
-            console.log("❌ Empty username or password after trimming");
             return null;
           }
 
@@ -57,30 +49,23 @@ export const authOptions = {
           }
 
           if (!user) {
-            console.log("❌ User not found in database:", username);
             return null;
           }
 
           if (!user.password) {
-            console.log("❌ User has no password set");
             return null;
           }
 
           // Check if user is admin
           if (!user.isAdmin) {
-            console.log("❌ User is not admin:", username);
             return null;
           }
 
           // Simple raw password comparison (no hashing)
           if (password !== user.password) {
-            console.log("❌ Invalid password for:", username);
-            console.log("🔍 Expected:", user.password);
-            console.log("🔍 Received:", password);
             return null;
           }
 
-          console.log("✅ Login successful for admin:", user.email);
           return {
             id: user.id,
             name: user.name,
@@ -88,7 +73,7 @@ export const authOptions = {
             isAdmin: user.isAdmin,
           };
         } catch (error) {
-          console.error("🚨 Authentication error:", error);
+          console.error("Authentication error:", error);
           return null;
         }
       },

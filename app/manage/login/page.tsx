@@ -40,8 +40,6 @@ export default function AdminLoginPage() {
       return;
     }
 
-    console.log("🔐 Attempting login with:", { username: username.trim() });
-
     try {
       const result = await signIn("credentials", {
         username: username.trim(),
@@ -49,14 +47,10 @@ export default function AdminLoginPage() {
         redirect: false,
       });
 
-      console.log("🔍 Login result:", result);
-
       if (result?.error) {
-        console.log("❌ Login failed:", result.error);
         setError("نام کاربری یا رمز عبور اشتباه است");
         setLoading(false);
       } else if (result?.ok) {
-        console.log("✅ Login successful, redirecting...");
         setError("");
         // Wait a moment for session to be established
         setTimeout(() => {
