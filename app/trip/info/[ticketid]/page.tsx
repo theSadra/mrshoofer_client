@@ -1,25 +1,24 @@
 import React from "react";
 import TripInfo from "../components/tripinfo";
 import { Prisma, PrismaClient, TripStatus } from "@prisma/client";
-var mocked_trip: Prisma.TripGetPayload<{
-  include: { Location: true; Passenger: true };
-}>;
 
 async function Upcoming({ params }: { params: { ticketid: string } }) {
-  "use client";
   const prisma = new PrismaClient();
-  // Mocked trip object
 
-  const trip = await prisma.trip.findUnique({
-    where: { SecureToken: params.ticketid },
-    include: { Passenger: true, Location: true },
-  });
+  try {
+    const trip = await prisma.trip.findUnique({
+      where: { SecureToken: params.ticketid },
+      include: { Passenger: true, Location: true },
+    });
 
-  return (
-    <div>
-      <TripInfo trip={trip ?? mocked_trip} />
-    </div>
-  );
+    return (
+      <div>
+        <TripInfo trip={trip} />
+      </div>
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 export default Upcoming;

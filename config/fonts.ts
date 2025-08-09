@@ -1,4 +1,4 @@
-import { Fira_Code as FontMono, Vazirmatn as FontSans } from "next/font/google";
+import { Vazirmatn as FontSans } from "next/font/google";
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -7,7 +7,10 @@ export const fontSans = FontSans({
   display: "swap",
 });
 
-export const fontMono = FontMono({
-  subsets: ["latin"],
+// Use a system font fallback instead of Fira Code to avoid Turbopack issues
+export const fontMono = {
   variable: "--font-mono",
-});
+  style: {
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace"
+  }
+};

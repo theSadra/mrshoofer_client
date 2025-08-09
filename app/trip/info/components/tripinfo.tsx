@@ -22,11 +22,24 @@ import { Badge } from "@heroui/badge";
 import Steps from "./steps";
 
 type TripInfoProps = {
-  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }>;
+  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }> | null;
 };
 
 function TripInfo({ trip }: TripInfoProps) {
   const [currentStep, setCurrentStep] = React.useState(-1);
+
+  // Handle case where trip is null or undefined
+  if (!trip) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+          <span className="mt-2 block">در حال بارگذاری اطلاعات سفر...</span>
+        </div>
+      </div>
+    );
+  }
+
   const persianStartDate = new PersianDate(trip.StartsAt);
 
   React.useEffect(() => {
@@ -54,7 +67,7 @@ function TripInfo({ trip }: TripInfoProps) {
     | undefined;
   switch (trip.status) {
     case TripStatus.wating_info:
-      status_content = "هنوز موقعیت مبدا را از شما دریافت نکردیم";
+      status_content = "موقعیت مبدا را وارد کنید";
       status_color = "warning";
       break;
     case TripStatus.wating_start:
@@ -175,7 +188,7 @@ function TripInfo({ trip }: TripInfoProps) {
 
                     <label className="font-left text-sm text-start align-middle ">
                       <span className="ms-1 font-light text-xs">
-                        {format(trip.StartsAt, "HH:mm")}
+                        {format(trip.StartsAt, "HH:mm").replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[parseInt(d)])}
                       </span>
                       <span className="ms-1 font-light text-xs">
                         {(() => {
@@ -201,7 +214,7 @@ function TripInfo({ trip }: TripInfoProps) {
             </Chip>
 
             <Chip color="warning" className="text-gray-700" variant="bordered">
-              <span className="pe-1 text-lg">🚖</span>
+              {/* <span className="pe-1 text-lg">🚖</span> */}
 
               {trip.CarName}
             </Chip>

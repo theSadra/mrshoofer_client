@@ -5,20 +5,13 @@ import { LazyMotion, m, domAnimation } from "framer-motion";
 import { Button, Card, Spacer } from "@heroui/react";
 import { cn } from "@heroui/react";
 import type { ComponentProps } from "react";
-import dynamic from "next/dynamic";
-import { Drawer, DrawerContent, DrawerHeader, DrawerBody } from "@heroui/react";
+import { useRouter } from 'next/navigation';
 import { Prisma } from "@prisma/client";
-import { Sheet } from "react-modal-sheet";
-import TripInfo from "../tripinfo";
-
-// Properly dynamically import Sheet with SSR disabled
-const LocationSelector = dynamic(() => import("./locationSelector"), {
-  ssr: false,
-});
 
 const TripStatus = {
   wating_info: "wating_info",
 };
+
 export default function StepItem({
   currentStep,
   setCurrentStep,
@@ -34,6 +27,13 @@ export default function StepItem({
   ref?: React.Ref<HTMLButtonElement>;
   [key: string]: any;
 }) {
+  const router = useRouter();
+
+  const handleLocationSelection = () => {
+    // Navigate to the location selector page
+    router.push(`/trip/location/${trip.id}`);
+  };
+
   const content = {
     title: (
       <>
@@ -111,30 +111,8 @@ export default function StepItem({
     ],
   };
 
-  const [isOpen, setIsOpen] = useState(false);
-
-  const onOpen = useCallback(() => {
-    setIsOpen(true);
-  }, []);
-
-  const onClose = useCallback(() => setIsOpen(false), []);
-
-  const [sheetIsOpen, setSheetIsOpen] = useState(false);
-  const openSheet = useCallback(() => {
-    console.log("Opening sheet...");
-    setSheetIsOpen(true);
-  }, []);
-
-  const closeSheet = useCallback(() => setSheetIsOpen(false), []);
-
   const status: "active" | "inactive" | "complete" =
     trip.status === TripStatus.wating_info ? "active" : "complete";
-
-  // Only render Sheet on client to avoid hydration errors
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <li
@@ -184,63 +162,49 @@ export default function StepItem({
                     "bg-green-500": status === "complete",
                   },
                   {
-                    "border-yellow-600": status === "active",
+                    "border-primary-300 bg-primary-100 text-primary-700 shadow-lg":
+                      status === "active",
                   }
                 )}
               >
-                <div className="flex items-center justify-center">
-                  {status === "active" ? (
-                    <>!</>
-                  ) : (
-                    <svg
-                      className="h-6 w-6 text-[var(--active-fg-color)]"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M5 13l4 4L19 7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        pathLength={1}
-                        strokeDashoffset="0px"
-                        strokeDasharray="1px 1px"
-                      />
-                    </svg>
-                  )}
-                </div>
+                {status === "complete" && (
+                  <svg
+                    className="h-[18px] w-[18px] text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+                {status === "active" && (
+                  <span className="text-primary-700 ">2</span>
+                )}
               </div>
             </div>
           </div>
         </button>
       </div>
+
       <LazyMotion features={domAnimation}>
         <m.div
-          key={0}
-          animate={currentStep == 2 ? "open" : "closed"}
-          className="flex"
-          exit="complete"
-          initial={false}
-          transition={{
-            opacity: { duration: 0.25 },
-            height: { type: "spring", stiffness: 300, damping: 30 },
+          animate={{
+            height: currentStep >= 2 ? "auto" : 0,
+            opacity: currentStep >= 2 ? 1 : 0,
           }}
-          variants={{
-            open: { opacity: 1, height: "auto" },
-            closed: { opacity: 0, height: 0 },
-          }}
+          exit={{ height: 0, opacity: 0 }}
+          initial={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          style={{ overflow: "hidden" }}
         >
-          <Spacer x={1} />
-
-          <Card className="p-3 mx-3 mb-3 w-full">
+          <Card className="m-4 mt-0 pt-2">
             <Button
-              color="primary"
-              variant={trip.Location == null ? "faded" : "ghost"}
-              className="border-dashed text-gray-600 mx-5 my-1 border-secondary"
-              onClick={onOpen}
-              // Adding data-open attribute to help with debugging
-              data-open="location-drawer"
+              className="mx-4 my-4 text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:focus:ring-cyan-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+              onClick={handleLocationSelection}
             >
               {trip.Location == null ? (
                 <svg
@@ -279,37 +243,6 @@ export default function StepItem({
           </Card>
         </m.div>
       </LazyMotion>
-
-      {/* Fixed Drawer implementation */}
-
-      <Drawer
-        isOpen={isOpen}
-        size={"full"}
-        onClose={onClose}
-        className="z-[100]"
-        isDismissable={false}
-        placement="bottom"
-      // Remove key prop as it might cause remounting issues with focus
-      >
-        <DrawerContent className="p-0 m-0">
-          <DrawerHeader className="flex flex-col pb-1 font-normal">
-            📍 انتخاب مبدأ
-          </DrawerHeader>
-          <DrawerBody className="p-0 m-0" style={{ 
-            overflow: "hidden",
-            flex: 1,
-            height: '100%'
-          }}>
-            <LocationSelector
-              key={isOpen ? "open" : "closed"}
-              isOpen={isOpen}
-              setIsOpen={setIsOpen}
-              trip={trip}
-            />
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
-      {/* Sheet is only rendered on client side with correct dynamic import */}
     </li>
   );
 }

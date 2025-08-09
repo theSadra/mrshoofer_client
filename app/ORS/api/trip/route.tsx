@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const { passenger, trip } = body;
-        
+
         if (!passenger || !trip) {
             return NextResponse.json({ error: "Missing passenger or trip object" }, { status: 400 });
         }
@@ -61,10 +61,10 @@ export async function POST(req: NextRequest) {
                 NaCode: passenger.NaCode ?? undefined,
             },
         });
-        
+
         // Generate unique TicketCode
         const uniqueTicketCode = await generateUniqueTicketCode(prisma);
-        
+
         // Create trip and relate to passenger
         const newTrip = await prisma.trip.create({
             data: {
@@ -78,23 +78,23 @@ export async function POST(req: NextRequest) {
                 SecureToken: generateSecureToken(),
             },
         });
-        
+
         // Sending sms to client asynchronously
         sendPassengerSMS(upsertedPassenger.NumberPhone, newTrip, upsertedPassenger);
 
         return NextResponse.json({ trip: newTrip, passenger: upsertedPassenger }, { status: 201 });
-        
+
     } catch (error: any) {
         console.error('❌ ORS Trip Creation Error:', error);
-        
+
         if (error?.code === 'P2002') {
-            return NextResponse.json({ 
-                error: "Duplicate entry detected. Please try again.", 
-                code: 'DUPLICATE_ENTRY' 
+            return NextResponse.json({
+                error: "Duplicate entry detected. Please try again.",
+                code: 'DUPLICATE_ENTRY'
             }, { status: 409 });
         }
-        
-        return NextResponse.json({ 
+
+        return NextResponse.json({
             error: "Internal server error while creating trip",
             details: error?.message || 'Unknown error'
         }, { status: 500 });

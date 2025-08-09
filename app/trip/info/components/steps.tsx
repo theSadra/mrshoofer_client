@@ -9,7 +9,7 @@ import { Prisma } from "@prisma/client";
 import TripInfoText from "./tripinfotext";
 
 type StepsProps = {
-  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }>;
+  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }> | null;
   currentStep?: number;
   setCurrentStep?: (step: number) => void;
 };
@@ -19,6 +19,10 @@ export default function Component({
   currentStep,
   setCurrentStep,
 }: StepsProps) {
+  // Handle case where trip is null or undefined
+  if (!trip) {
+    return null;
+  }
   // const steps = [
   //   // {
   //   //   title:

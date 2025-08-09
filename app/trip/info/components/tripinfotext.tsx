@@ -4,10 +4,15 @@ import { Prisma, TripStatus } from "@prisma/client";
 import React from "react";
 
 type TripInfoProps = {
-  trip: Prisma.TripGetPayload<{ include: { Location: true } }>;
+  trip: Prisma.TripGetPayload<{ include: { Location: true } }> | null;
 };
 
 function tripinfotext({ trip }: TripInfoProps) {
+  // Handle case where trip is null or undefined
+  if (!trip) {
+    return null;
+  }
+
   let statusContent;
   switch (trip.status) {
     case TripStatus.wating_info:

@@ -47,7 +47,13 @@ export default function AppNavbar(props: React.ComponentProps<typeof Navbar>) {
                 {/* Logo */}
                 <NavbarBrand className="mr-2 w-[40vw] md:w-auto md:max-w-fit">
                     <div className="rounded-fullp-1">
-                        <Image src="/mrshoofer_logo_full.png" alt="MrShoofer Logo" width={120} height={70} />
+                        <Image
+                            src="/mrshoofer_logo_full.png"
+                            alt="MrShoofer Logo"
+                            width={120}
+                            height={70}
+                            unoptimized={true}
+                        />
                     </div>
                 </NavbarBrand>
 

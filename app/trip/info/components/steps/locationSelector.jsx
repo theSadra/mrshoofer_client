@@ -325,11 +325,20 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
       setIsMoving(true);
       setTimeout(() => setIsMoving(false), 350);
 
-      const center = window.neshanMapInstance.getCenter();
+      // Get the exact coordinates from the visual picker position
+      const mapContainer = window.neshanMapInstance.getContainer();
+      const containerRect = mapContainer.getBoundingClientRect();
+      
+      // Calculate the center point of the map container (where the picker is positioned)
+      const centerX = containerRect.width / 2;
+      const centerY = containerRect.height / 2;
+      
+      // Convert pixel coordinates to geographic coordinates
+      const pickerCoordinates = window.neshanMapInstance.unproject([centerX, centerY]);
 
       // نمایش مختصات به صورت alert
       console.log(
-        `مختصات انتخاب شده:\nLatitude: ${center.lat}\nLongitude: ${center.lng}`
+        `مختصات انتخاب شده:\nLatitude: ${pickerCoordinates.lat}\nLongitude: ${pickerCoordinates.lng}`
       );
 
       // // ساخت دایره سیاه (مثل خط 625، اما بدون انیمیشن)
@@ -442,19 +451,19 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
       lineSvg.innerHTML = `<line x1="1" y1="0" x2="1" y2="24" stroke="black" stroke-width="1" stroke-linecap="round"/>`;
       el.appendChild(lineSvg);
 
-      // Add marker to map
+      // Add marker to map using the exact picker coordinates
       const marker = new nmp_mapboxgl.Marker(el, { anchor: "bottom" })
-        .setLngLat([center.lng, center.lat])
+        .setLngLat([pickerCoordinates.lng, pickerCoordinates.lat])
         .addTo(window.neshanMapInstance);
 
       lastMarkerRef.current = marker;
 
       window.neshanMapInstance.easeTo({ zoom: 16.2, duration: 1200 });
 
-      const address = await getAddressFromNeshan(center.lat, center.lng);
+      const address = await getAddressFromNeshan(pickerCoordinates.lat, pickerCoordinates.lng);
       setSelectedAddress(address);
 
-      selectedCordinates.current = { lat: center.lat, lng: center.lng };
+      selectedCordinates.current = { lat: pickerCoordinates.lat, lng: pickerCoordinates.lng };
 
       console.log(trip);
       console.log(trip.Passenger);

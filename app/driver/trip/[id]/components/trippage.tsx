@@ -114,9 +114,13 @@ function TripPage({ trip }: TripPageProps) {
                     ساعت شروع سفر :
                 </p>
                 <Chip variant='bordered' size='lg' className='text-2xl font-bold mb-6' color='primary'>
-                    {trip.StartsAt instanceof Date
-                        ? trip.StartsAt.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
-                        : new Date(trip.StartsAt).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
+                    {trip && trip.StartsAt ? (
+                        trip.StartsAt instanceof Date
+                            ? trip.StartsAt.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
+                            : new Date(trip.StartsAt).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
+                    ) : (
+                        "نامشخص"
+                    )}
                 </Chip>
             </div >
 

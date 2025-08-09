@@ -6,7 +6,7 @@ import clsx from "clsx";
 
 import { Providers } from "./providers";
 
-import { fontSans } from "@/config/fonts";
+import { fontSans, fontMono } from "@/config/fonts";
 import ClientNavbarWrapper from "@/components/ClientNavbarWrapper";
 
 
@@ -15,7 +15,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <body className={clsx(
         "min-h-screen bg-background font-sans antialiased",
-        fontSans.variable
+        fontSans.variable,
+        fontMono.variable
       )}>
         <Providers themeProps={{
           attribute: "class",

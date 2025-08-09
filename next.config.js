@@ -41,11 +41,9 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: false,
   
-  // Fix images with custom loader
+  // Fix images with unoptimized setting
   images: {
     unoptimized: true,
-    loader: 'custom',
-    loaderFile: './config/image-loader.js'
   },
   
   // Minimize experimental features
