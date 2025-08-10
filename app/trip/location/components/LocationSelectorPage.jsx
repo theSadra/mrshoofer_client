@@ -12,43 +12,42 @@ import { Textarea } from "@heroui/react";
 
 import { UpdateLocation } from "@/app/trip/actions";
 
-export const SearchIcon = (props) => {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      focusable="false"
-      height="1em"
-      role="presentation"
-      viewBox="0 0 24 24"
-      width="1em"
-      {...props}
-    >
-      <path
-        d="M11.5 21C16.7467 21 21 16.7467 21 11.5C21 6.25329 16.7467 2 11.5 2C6.25329 2 2 6.25329 2 11.5C2 16.7467 6.25329 21 11.5 21Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M22 22L20 20"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-};
+export const SearchIcon = (props) => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    focusable="false"
+    height="1em"
+    role="presentation"
+    viewBox="0 0 24 24"
+    width="1em"
+    {...props}
+  >
+    <path
+      d="M11.5 21C16.7467 21 21 16.7467 21 11.5C21 6.25329 16.7467 2 11.5 2C6.25329 2 2 6.25329 2 11.5C2 16.7467 6.25329 21 11.5 21Z"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+    />
+    <path
+      d="M22 22L20 20"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+    />
+  </svg>
+);
 const MAP_KEY =
   process.env.NEXT_PUBLIC_NESHAN_MAP_KEY ||
   "web.629d398efe5a4b3d90b9d032569935a6";
 const API_KEY =
+
   process.env.NEXT_PUBLIC_NESHAN_API_KEY ||
   "service.6f5734c50a9c43cba6f43a6254c1b668";
 
-function LocationSelectorPage({ tripId, onSuccess, onCancel }) {
+function LocationSelectorPage({ tripId }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [trip, setTrip] = useState(null);
@@ -70,11 +69,38 @@ function LocationSelectorPage({ tripId, onSuccess, onCancel }) {
   const selectedMarkerRef = useRef(null);
   const lastMarkerRef = useRef(null);
   const selectedCordinates = useRef({ lat: 0, lng: 0 });
+  const searchTimeoutRef = useRef(null);
 
   // Ensure component only renders on client-side
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Debounce search input to avoid excessive API calls
+  useEffect(() => {
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set new timeout
+    if (search.trim()) {
+      searchTimeoutRef.current = setTimeout(() => {
+        searchNeshan(search);
+      }, 400); // Wait 400ms after user stops typing
+    } else {
+      // Clear results immediately if search is empty
+      setResults([]);
+      setShowDropdown(false);
+    }
+
+    // Cleanup function
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [search]);
 
   // Get user location on mount
   useEffect(() => {
@@ -109,10 +135,10 @@ function LocationSelectorPage({ tripId, onSuccess, onCancel }) {
         };
         setTrip(mockTrip);
         setNumberPhone(mockTrip.Passenger?.NumberPhone || "");
-        setLoading(false);
+        // Do NOT setLoading(false) here; wait for map load
       } catch (error) {
         console.error('Error fetching trip:', error);
-        setLoading(false);
+        // Do NOT setLoading(false) here; wait for map load
       }
     };
 
@@ -146,8 +172,34 @@ function LocationSelectorPage({ tripId, onSuccess, onCancel }) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center">
+          <Image
+            className="mb-4"
+            src="/mrshoofer_logo_full.png"
+            width={190}
+            height={40}
+            alt="mrshoofer"
+          />
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           <span className="mt-2">در حال بارگذاری...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if trip data is not loaded yet
+  if (!trip) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center">
+          <Image
+            className="mb-4"
+            src="/mrshoofer_logo_full.png"
+            width={190}
+            height={40}
+            alt="mrshoofer"
+          />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="mt-2">در حال بارگذاری اطلاعات سفر...</span>
         </div>
       </div>
     );
@@ -396,22 +448,8 @@ function LocationSelectorPage({ tripId, onSuccess, onCancel }) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center">
-          <Image
-            className="mb-4"
-            src="/mrshoofer_logo_full.png"
-            width={190}
-            height={40}
-            alt="mrshoofer"
-          />
-          <span>در حال بارگذاری...</span>
-        </div>
-      </div>
-    );
-  }
+
+  // Always render the map, but show a loading overlay until the map is ready
 
   return (
     <div className="flex flex-col w-full h-screen" style={{ height: '100vh', maxHeight: '100vh', overflow: 'hidden', position: 'relative' }}>
@@ -797,7 +835,6 @@ function LocationSelectorPage({ tripId, onSuccess, onCancel }) {
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                searchNeshan(e.target.value);
               }}
             />
             {showDropdown && search && (
@@ -842,12 +879,19 @@ function LocationSelectorPage({ tripId, onSuccess, onCancel }) {
                         setSearch(item.title);
                         setResults([]);
                         if (typeof window !== 'undefined' && window.neshanMapInstance) {
-                          window.neshanMapInstance.setCenter([
-                            item.location.x,
-                            item.location.y,
-                          ]);
-                          // Zoom in when a search result is selected
-                          window.neshanMapInstance.easeTo({ 
+                          const map = window.neshanMapInstance;
+                          // Get the pixel position of the searched location
+                          const targetLngLat = [item.location.x, item.location.y];
+                          const targetPixel = map.project(targetLngLat);
+                          // Offset downward by the pointer tip offset (same as in handleSelectLocation)
+                          const pointerTipOffset = 38.5; // px, must match the visual pointer offset
+                          const mapCenterWithOffset = [
+                            targetPixel.x,
+                            targetPixel.y - pointerTipOffset
+                          ];
+                          const newCenter = map.unproject(mapCenterWithOffset);
+                          map.setCenter([newCenter.lng, newCenter.lat]);
+                          map.easeTo({ 
                             zoom: 16, 
                             duration: 1000 
                           });

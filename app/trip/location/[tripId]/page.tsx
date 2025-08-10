@@ -1,9 +1,9 @@
 "use client";
 
-import { useParams, useRouter } from 'next/navigation';
+import React from 'react';
 import dynamic from 'next/dynamic';
+import { useParams } from 'next/navigation';
 
-// Dynamically import LocationSelectorPage to prevent SSR issues with maps
 const LocationSelectorPage = dynamic(() => import('../components/LocationSelectorPage'), {
     ssr: false,
     loading: () => (
@@ -18,24 +18,5 @@ const LocationSelectorPage = dynamic(() => import('../components/LocationSelecto
 
 export default function LocationSelectionPage() {
     const params = useParams();
-    const router = useRouter();
-    const tripId = params.tripId as string;
-
-    const handleSuccess = () => {
-        // Navigate back to the trip info page after successful submission
-        router.push(`/trip/info/${tripId}`);
-    };
-
-    const handleCancel = () => {
-        // Navigate back to the trip info page if user cancels
-        router.push(`/trip/info/${tripId}`);
-    };
-
-    return (
-        <LocationSelectorPage
-            tripId={tripId}
-            onSuccess={handleSuccess}
-            onCancel={handleCancel}
-        />
-    );
+    return <LocationSelectorPage tripId={params.tripId} />;
 }
