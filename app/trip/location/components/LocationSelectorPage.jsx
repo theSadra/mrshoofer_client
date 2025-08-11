@@ -470,6 +470,7 @@ function LocationSelectorPage({ tripId }) {
       {showForm ? (
         // Bottom Sheet Form View
         <div
+        
           style={{
             position: "fixed",
             left: 0,
@@ -554,7 +555,7 @@ function LocationSelectorPage({ tripId }) {
       ) : (
         // Map View
         // Map settings
-        <div className="flex-1 flex flex-col relative" style={{ minHeight: 0, marginTop: 49, marginBottom: 72, overflow: 'hidden' }}>
+        <div className="flex-1 flex flex-col relative rounded-xl" style={{ minHeight: 0, marginTop: 49, marginBottom: 72, overflow: 'hidden' }}>
           <MapComponent
             options={{
               mapKey: MAP_KEY,
