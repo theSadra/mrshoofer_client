@@ -1,11 +1,10 @@
-import { Vazirmatn as FontSans } from "next/font/google";
-
-export const fontSans = FontSans({
-  subsets: ["latin"],
+// Use Vazir font instead of Vazirmatn
+export const fontSans = {
   variable: "--font-sans",
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  display: "swap",
-});
+  style: {
+    fontFamily: "'Vazir', sans-serif"
+  }
+};
 
 // Use a system font fallback instead of Fira Code to avoid Turbopack issues
 export const fontMono = {

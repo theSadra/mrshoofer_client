@@ -305,19 +305,8 @@ function LocationSelectorPage({ tripId }) {
       setIsMoving(true);
       setTimeout(() => setIsMoving(false), 350);
 
-      const mapContainer = window.neshanMapInstance.getContainer();
-      const containerRect = mapContainer.getBoundingClientRect();
-      
-      const centerX = containerRect.width / 2;
-      const centerY = containerRect.height / 2;
-
-      // Calculate the pixel offset from center to the tip of the pointer (end of black line)
-      // Pin SVG is 33px tall, line is 22px, so offset is about (33/2 + 22) = 38.5px from center downward
-      const pointerTipOffset = 38.5; // px, adjust if needed for perfect alignment
-      const tipY = centerY + pointerTipOffset;
-
-      // Get the coordinates at the tip of the pointer
-      const tipCoordinates = window.neshanMapInstance.unproject([centerX, tipY]);
+      // Get the map center coordinates directly (where the red dot is)
+      const centerCoordinates = window.neshanMapInstance.getCenter();
 
       // Marker rendering (unchanged)
       const el = document.createElement("div");
@@ -395,15 +384,15 @@ function LocationSelectorPage({ tripId }) {
       el.appendChild(lineSvg);
 
       const marker = new nmp_mapboxgl.Marker(el, { anchor: "bottom" })
-        .setLngLat([tipCoordinates.lng, tipCoordinates.lat])
+        .setLngLat([centerCoordinates.lng, centerCoordinates.lat])
         .addTo(window.neshanMapInstance);
 
       lastMarkerRef.current = marker;
       window.neshanMapInstance.easeTo({ zoom: 16.2, duration: 1200 });
 
-      const address = await getAddressFromNeshan(tipCoordinates.lat, tipCoordinates.lng);
+      const address = await getAddressFromNeshan(centerCoordinates.lat, centerCoordinates.lng);
       setSelectedAddress(address);
-      selectedCordinates.current = { lat: tipCoordinates.lat, lng: tipCoordinates.lng };
+      selectedCordinates.current = { lat: centerCoordinates.lat, lng: centerCoordinates.lng };
 
       setShowPicker(false);
       setShowForm(true);
@@ -593,8 +582,8 @@ function LocationSelectorPage({ tripId }) {
             style={{
               position: "absolute",
               left: "50%",
-              top: "50%", // Center vertically
-              transform: "translate(-50%, -50%)", // Center both horizontally and vertically
+              top: "45%", // Just slightly above the red dot center
+              transform: "translate(-50%, -50%)",
               transition: "none",
               zIndex: 10,
               pointerEvents: "none",
@@ -880,17 +869,11 @@ function LocationSelectorPage({ tripId }) {
                         setResults([]);
                         if (typeof window !== 'undefined' && window.neshanMapInstance) {
                           const map = window.neshanMapInstance;
-                          // Get the pixel position of the searched location
+                          // Center the map directly on the searched location (where the red dot will indicate selection)
+                          // Note: Neshan API returns {x: longitude, y: latitude}
                           const targetLngLat = [item.location.x, item.location.y];
-                          const targetPixel = map.project(targetLngLat);
-                          // Offset downward by the pointer tip offset (same as in handleSelectLocation)
-                          const pointerTipOffset = 38.5; // px, must match the visual pointer offset
-                          const mapCenterWithOffset = [
-                            targetPixel.x,
-                            targetPixel.y - pointerTipOffset
-                          ];
-                          const newCenter = map.unproject(mapCenterWithOffset);
-                          map.setCenter([newCenter.lng, newCenter.lat]);
+                          console.log('Search result coordinates:', item.location, 'Setting center to:', targetLngLat);
+                          map.setCenter(targetLngLat);
                           map.easeTo({ 
                             zoom: 16, 
                             duration: 1000 
