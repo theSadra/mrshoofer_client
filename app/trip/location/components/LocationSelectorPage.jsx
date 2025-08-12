@@ -71,6 +71,7 @@ function LocationSelectorPage({ tripId }) {
   const lastMarkerRef = useRef(null);
   const selectedCordinates = useRef({ lat: 0, lng: 0 });
   const searchTimeoutRef = useRef(null);
+  const isProgrammaticSearch = useRef(false); // Flag to prevent auto-search when setting programmatically
 
   // Ensure component only renders on client-side
   useEffect(() => {
@@ -82,6 +83,12 @@ function LocationSelectorPage({ tripId }) {
     // Clear previous timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Skip search if it was set programmatically (from selecting a search result)
+    if (isProgrammaticSearch.current) {
+      isProgrammaticSearch.current = false;
+      return;
     }
 
     // Set new timeout
@@ -1031,34 +1038,42 @@ function LocationSelectorPage({ tripId }) {
                         borderBottom: "1px solid #f0f0f0",
                       }}
                       onClick={() => {
+                        // Immediately hide dropdown and clear results
                         setShowDropdown(false);
-                        setSearch(item.title);
                         setResults([]);
-                        if (typeof window !== 'undefined' && window.neshanMapInstance) {
-                          const map = window.neshanMapInstance;
-                          
-                          // IMPORTANT: We need to offset the map center UP by the pointer offset
-                          // so that when the pointer points DOWN 45px, it points to the exact searched location
-                          const searchedCoords = [item.location.x, item.location.y];
-                          
-                          // Convert searched location to pixels
-                          const searchPixel = map.project(searchedCoords);
-                          
-                          // Offset UP by the pointer offset (so pointer will point to exact location)
-                          const offsetMapCenter = map.unproject([
-                            searchPixel.x,
-                            searchPixel.y - 45  // Move UP by 45px
-                          ]);
-                          
-                          console.log('Search result coordinates:', item.location);
-                          console.log('Offsetting map center to:', offsetMapCenter);
-                          
-                          map.setCenter([offsetMapCenter.lng, offsetMapCenter.lat]);
-                          map.easeTo({ 
-                            zoom: 16, 
-                            duration: 1000 
-                          });
-                        }
+                        
+                        // Set flag to prevent auto-search when we set the search text
+                        isProgrammaticSearch.current = true;
+                        setSearch(item.title);
+                        
+                        // Small delay to ensure state updates
+                        setTimeout(() => {
+                          if (typeof window !== 'undefined' && window.neshanMapInstance) {
+                            const map = window.neshanMapInstance;
+                            
+                            // IMPORTANT: We need to offset the map center UP by the pointer offset
+                            // so that when the pointer points DOWN 45px, it points to the exact searched location
+                            const searchedCoords = [item.location.x, item.location.y];
+                            
+                            // Convert searched location to pixels
+                            const searchPixel = map.project(searchedCoords);
+                            
+                            // Offset UP by the pointer offset (so pointer will point to exact location)
+                            const offsetMapCenter = map.unproject([
+                              searchPixel.x,
+                              searchPixel.y - 45  // Move UP by 45px
+                            ]);
+                            
+                            console.log('Search result coordinates:', item.location);
+                            console.log('Offsetting map center to:', offsetMapCenter);
+                            
+                            map.setCenter([offsetMapCenter.lng, offsetMapCenter.lat]);
+                            map.easeTo({ 
+                              zoom: 16, 
+                              duration: 1000 
+                            });
+                          }
+                        }, 50); // Small delay to ensure UI updates
                       }}
                     >
                       <div className="flex justify-normal">
