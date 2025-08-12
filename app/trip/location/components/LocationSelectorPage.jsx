@@ -9,6 +9,7 @@ import Image from "next/image";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/react";
 import { Textarea } from "@heroui/react";
+import { Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from "@heroui/react";
 
 import { UpdateLocation } from "@/app/trip/actions";
 
@@ -302,100 +303,162 @@ function LocationSelectorPage({ tripId }) {
 
   const handleSelectLocation = async () => {
     if (typeof window !== 'undefined' && window.neshanMapInstance && nmp_mapboxgl && nmp_mapboxgl.Marker) {
-      setIsMoving(true);
-      setTimeout(() => setIsMoving(false), 350);
+      try {
+        // Step 1: Hide the picker immediately for visual feedback
+        setIsMoving(true);
+        await new Promise(resolve => setTimeout(resolve, 470));
 
-      // Get the map center coordinates directly (where the red dot is)
-      const centerCoordinates = window.neshanMapInstance.getCenter();
+        setIsMoving(false);
 
-      // Marker rendering (unchanged)
-      const el = document.createElement("div");
-      el.style.display = "flex";
-      el.style.flexDirection = "column";
-      el.style.alignItems = "center";
-      el.style.pointerEvents = "none";
-      el.style.background = "transparent";
-      el.style.justifyContent = "center";
+        // Brief pause to let user see the picker disappear
 
-      const labelDiv = document.createElement("div");
-      labelDiv.innerText = "مبدا";
-      labelDiv.style.background = "white";
-      labelDiv.style.fontFamily = "Vazir, sans-serif";
-      labelDiv.style.padding = "1px 8px";
-      labelDiv.style.borderRadius = "9px";
-      labelDiv.style.marginBottom = "8px";
-      labelDiv.style.fontWeight = "bold";
-      labelDiv.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
-      labelDiv.style.fontSize = "14px";
-      labelDiv.style.pointerEvents = "none";
-      labelDiv.style.border = "2px solid perpule"; // Change to your desired color
-      labelDiv.style.userSelect = "none";
-      el.appendChild(labelDiv);
+        await new Promise(resolve => setTimeout(resolve, 200));
 
-      const pinSpan = document.createElement("span");
-      pinSpan.style.width = "33px";
-      pinSpan.style.height = "33px";
-      pinSpan.style.userSelect = "none";
-      pinSpan.style.pointerEvents = "none";
-      pinSpan.style.zIndex = "19";
-      pinSpan.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 375 375" style="display:block">
-        <defs>
-          <clipPath id="b3c8e86a90">
-            <path d="M 187.5 0 C 83.945312 0 0 83.945312 0 187.5 C 0 291.054688 83.945312 375 187.5 375 C291.054688 375 375 291.054688 375 187.5 C375 83.945312 291.054688 0 187.5 0 Z" clip-rule="nonzero"/>
-          </clipPath>
-          <clipPath id="d1aebc7008">
-            <path d="M 25.109375 25.109375 L 349.890625 25.109375 L 349.890625 349.890625 L 25.109375 349.890625 Z" clip-rule="nonzero"/>
-          </clipPath>
-          <clipPath id="afb7a861b6">
-            <path d="M 187.5 25.109375 C 97.8125 25.109375 25.109375 97.8125 25.109375 187.5 C 25.109375 277.1875 97.8125 349.890625 187.5 349.890625 C277.1875 349.890625 349.890625 277.1875 349.890625 187.5 C349.890625 97.8125 277.1875 25.109375 187.5 25.109375 Z" clip-rule="nonzero"/>
-          </clipPath>
-          <clipPath id="66f3aec7f3">
-            <path d="M 118.664062 118.664062 L 256.335938 118.664062 L 256.335938 256.335938 L 118.664062 256.335938 Z" clip-rule="nonzero"/>
-          </clipPath>
-          <clipPath id="70d46462f1">
-            <path d="M 187.5 118.664062 C 149.480469 118.664062 118.664062 149.480469 118.664062 187.5 C 118.664062 225.519531 149.480469 256.335938 187.5 256.335938 C225.519531 256.335938 256.335938 225.519531 256.335938 187.5 C256.335938 149.480469 225.519531 118.664062 187.5 118.664062 Z" clip-rule="nonzero"/>
-          </clipPath>
-        </defs>
-        <g clip-path="url(#b3c8e86a90)">
-          <rect x="-37.5" width="450" fill="#ffffff" y="-37.5" height="450" fill-opacity="1"/>
-        </g>
-        <g clip-path="url(#d1aebc7008)">
-          <g clip-path="url(#afb7a861b6)">
-            <path fill="#004aad" d="M 25.109375 25.109375 L 349.890625 25.109375 L 349.890625 349.890625 L 25.109375 349.890625 Z" fill-opacity="1" fill-rule="nonzero"/>
+        setShowPicker(false); 
+
+        
+
+        // Remove any existing marker before adding a new one
+        if (lastMarkerRef.current) {
+          lastMarkerRef.current.remove();
+          lastMarkerRef.current = null;
+        }
+
+        // Get the Neshan map instance
+        const map = window.neshanMapInstance;
+        
+        // ROBUST SOLUTION: Use the map's internal projection to calculate the offset.
+        // This avoids issues with screen coordinates, viewports, and CSS.
+
+        // 1. Get the pixel coordinates of the map's geographical center.
+        const centerPixel = map.project(map.getCenter());
+
+        // 2. Apply the visual offset in pixels.
+        // Fine-tuned to match the exact visual pointer tip position
+        const pointerTipOffsetY = 39; // Adjusted to match exact tip location
+        const finalPixel = {
+            x: centerPixel.x,
+            y: centerPixel.y + pointerTipOffsetY
+        };
+
+        // 3. Convert the final pixel coordinates back to geographical coordinates.
+        const pointerTipCoords = map.unproject(finalPixel);
+        
+        console.log('Calculated final coordinates:', pointerTipCoords);
+
+        // Create marker element using Neshan's standard approach
+        const markerEl = document.createElement("div");
+        markerEl.style.display = "flex";
+        markerEl.style.flexDirection = "column";
+        markerEl.style.alignItems = "center";
+        markerEl.style.pointerEvents = "none";
+        markerEl.style.background = "transparent";
+        markerEl.style.justifyContent = "center";
+
+        // Add label
+        const labelDiv = document.createElement("div");
+        labelDiv.innerText = "مبدا";
+        labelDiv.style.background = "white";
+        labelDiv.style.fontFamily = "Vazir, sans-serif";
+        labelDiv.style.padding = "1px 8px";
+        labelDiv.style.borderRadius = "9px";
+        labelDiv.style.marginBottom = "8px";
+        labelDiv.style.fontWeight= "bold";
+        labelDiv.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)";
+        labelDiv.style.fontSize = "13px";
+        labelDiv.style.pointerEvents = "none";
+        labelDiv.style.opacity = 0.9;
+        labelDiv.style.userSelect = "none";
+        markerEl.appendChild(labelDiv);
+
+        // Add pin icon
+        const pinSpan = document.createElement("span");
+        pinSpan.style.width = "33px";
+        pinSpan.style.height = "33px";
+        pinSpan.style.userSelect = "none";
+        pinSpan.style.pointerEvents = "none";
+        pinSpan.style.zIndex = "19";
+        pinSpan.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 375 375" style="display:block">
+          <defs>
+            <clipPath id="b3c8e86a90">
+              <path d="M 187.5 0 C 83.945312 0 0 83.945312 0 187.5 C 0 291.054688 83.945312 375 187.5 375 C291.054688 375 375 291.054688 375 187.5 C375 83.945312 291.054688 0 187.5 0 Z" clip-rule="nonzero"/>
+            </clipPath>
+            <clipPath id="d1aebc7008">
+              <path d="M 25.109375 25.109375 L 349.890625 25.109375 L 349.890625 349.890625 L 25.109375 349.890625 Z" clip-rule="nonzero"/>
+            </clipPath>
+            <clipPath id="afb7a861b6">
+              <path d="M 187.5 25.109375 C 97.8125 25.109375 25.109375 97.8125 25.109375 187.5 C 25.109375 277.1875 97.8125 349.890625 187.5 349.890625 C277.1875 349.890625 349.890625 277.1875 349.890625 187.5 C349.890625 97.8125 277.1875 25.109375 187.5 25.109375 Z" clip-rule="nonzero"/>
+            </clipPath>
+            <clipPath id="66f3aec7f3">
+              <path d="M 118.664062 118.664062 L 256.335938 118.664062 L 256.335938 256.335938 L 118.664062 256.335938 Z" clip-rule="nonzero"/>
+            </clipPath>
+            <clipPath id="70d46462f1">
+              <path d="M 187.5 118.664062 C 149.480469 118.664062 118.664062 149.480469 118.664062 187.5 C 118.664062 225.519531 149.480469 256.335938 187.5 256.335938 C225.519531 256.335938 256.335938 225.519531 256.335938 187.5 C256.335938 149.480469 225.519531 118.664062 187.5 118.664062 Z" clip-rule="nonzero"/>
+            </clipPath>
+          </defs>
+          <g clip-path="url(#b3c8e86a90)">
+            <rect x="-37.5" width="450" fill="#ffffff" y="-37.5" height="450" fill-opacity="1"/>
           </g>
-        </g>
-        <g clip-path="url(#66f3aec7f3)">
-          <g clip-path="url(#70d46462f1)">
-            <path fill="#ffffff" d="M 118.664062 118.664062 L 256.335938 118.664062 L 256.335938 256.335938 L 118.664062 256.335938 Z" fill-opacity="1" fill-rule="nonzero"/>
+          <g clip-path="url(#d1aebc7008)">
+            <g clip-path="url(#afb7a861b6)">
+              <path fill="#004aad" d="M 25.109375 25.109375 L 349.890625 25.109375 L 349.890625 349.890625 L 25.109375 349.890625 Z" fill-opacity="1" fill-rule="nonzero"/>
+            </g>
           </g>
-        </g>
-      </svg>`;
+          <g clip-path="url(#66f3aec7f3)">
+            <g clip-path="url(#70d46462f1)">
+              <path fill="#ffffff" d="M 118.664062 118.664062 L 256.335938 118.664062 L 256.335938 256.335938 L 118.664062 256.335938 Z" fill-opacity="1" fill-rule="nonzero"/>
+            </g>
+          </g>
+        </svg>`;
+        markerEl.appendChild(pinSpan);
 
-      el.appendChild(pinSpan);
+        // Add line
+        const lineSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        lineSvg.setAttribute("width", "2");
+        lineSvg.setAttribute("height", "22");
+        lineSvg.setAttribute("viewBox", "0 0 2 24");
+        lineSvg.style.zIndex = "15";
+        lineSvg.style.pointerEvents = "none";
+        lineSvg.innerHTML = `<line x1="1" y1="0" x2="1" y2="24" stroke="black" stroke-width="1" stroke-linecap="round"/>`;
+        markerEl.appendChild(lineSvg);
 
-      const lineSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      lineSvg.setAttribute("width", "2");
-      lineSvg.setAttribute("height", "22");
-      lineSvg.setAttribute("viewBox", "0 0 2 24");
-      lineSvg.style.zIndex = "15";
-      lineSvg.style.pointerEvents = "none";
-      lineSvg.innerHTML = `<line x1="1" y1="0" x2="1" y2="24" stroke="black" stroke-width="1" stroke-linecap="round"/>`;
-      el.appendChild(lineSvg);
+        // Initial scale for animation
+        markerEl.style.transform = "scale(0)";
+        
 
-      const marker = new nmp_mapboxgl.Marker(el, { anchor: "bottom" })
-        .setLngLat([centerCoordinates.lng, centerCoordinates.lat])
-        .addTo(window.neshanMapInstance);
+        // Create marker using Neshan Map's official approach
+        const marker = new nmp_mapboxgl.Marker(markerEl, { 
+          anchor: "bottom"  // Bottom anchor aligns with the line tip
+        })
+        .setLngLat([pointerTipCoords.lng, pointerTipCoords.lat])
+        .addTo(map);
 
-      lastMarkerRef.current = marker;
-      window.neshanMapInstance.easeTo({ zoom: 16.2, duration: 1200 });
+        // Animate marker appearance
+        // setTimeout(() => {
+        //   markerEl.style.transform = "scale(1)";
+        // }, 100);
 
-      const address = await getAddressFromNeshan(centerCoordinates.lat, centerCoordinates.lng);
-      setSelectedAddress(address);
-      selectedCordinates.current = { lat: centerCoordinates.lat, lng: centerCoordinates.lng };
+        lastMarkerRef.current = marker;
 
-      setShowPicker(false);
-      setShowForm(true);
+        // Get address for the exact center coordinates
+        const address = await getAddressFromNeshan(pointerTipCoords.lat, pointerTipCoords.lng);
+        setSelectedAddress(address);
+        selectedCordinates.current = { lat: pointerTipCoords.lat, lng: pointerTipCoords.lng };
+
+        console.log('Marker placed at:', pointerTipCoords);
+        console.log('Address:', address);
+
+        // Wait before showing form
+        await new Promise(resolve => setTimeout(resolve, 450));
+
+        // Show form
+        setIsMoving(false);
+        setShowForm(true);
+      } catch (error) {
+        console.error('Error in handleSelectLocation:', error);
+        setIsMoving(false);
+      }
     }
   };
 
@@ -425,15 +488,73 @@ function LocationSelectorPage({ tripId }) {
   const handleBack = () => {
     if (showForm) {
       // If form is showing, go back to map selection
-      if (lastMarkerRef.current) {
-        lastMarkerRef.current.remove();
-        lastMarkerRef.current = null;
-      }
-      setShowForm(false);
-      setShowPicker(true);
+      handleCloseDrawer();
     } else {
       // If on map selection, go back to trip info
       onCancel();
+    }
+  };
+
+  // Enhanced function to handle drawer closing and cleanup
+  const handleCloseDrawer = () => {
+    // Step 1: Remove the previous marker with animation
+    if (lastMarkerRef.current) {
+      const markerElement = lastMarkerRef.current.getElement();
+      if (markerElement) {
+        // Animate marker disappearing
+        markerElement.style.transition = "transform 0.3s ease-out, opacity 0.3s ease-out";
+        markerElement.style.transform = "scale(0)";
+        markerElement.style.opacity = "0";
+        
+        // Remove marker after animation
+        setTimeout(() => {
+          if (lastMarkerRef.current) {
+            lastMarkerRef.current.remove();
+            lastMarkerRef.current = null;
+          }
+        }, 300);
+      } else {
+        // Fallback: remove immediately if no element
+        lastMarkerRef.current.remove();
+        lastMarkerRef.current = null;
+      }
+    }
+    
+    // Step 2: Reset form states immediately
+    setShowForm(false);
+    setIsMoving(false);
+    
+    // Step 3: Show picker with a slight delay for smooth transition
+    setTimeout(() => {
+      setShowPicker(true);
+    }, 200);
+    
+    // Step 4: Clear selected data to allow fresh selection
+    setSelectedAddress("");
+    selectedCordinates.current = null;
+    
+    // Step 5: Clear any error messages
+    setErrorMessage("");
+    
+    // Step 6: Optional: Reset zoom slightly for better selection experience
+    if (typeof window !== 'undefined' && window.neshanMapInstance) {
+      const currentZoom = window.neshanMapInstance.getZoom();
+      if (currentZoom > 17) {
+        // If zoomed in too much, zoom out slightly for easier navigation
+        window.neshanMapInstance.easeTo({ 
+          zoom: 16, 
+          duration: 600,
+          easing: t => t * (2 - t)
+        });
+      }
+    }
+  };
+
+  // Handle drawer state changes (when user clicks backdrop or close button)
+  const handleDrawerOpenChange = (isOpen) => {
+    if (!isOpen && showForm) {
+      // Drawer is being closed
+      handleCloseDrawer();
     }
   };
 
@@ -467,95 +588,139 @@ function LocationSelectorPage({ tripId }) {
       </div>
 
       {/* Content */}
-      {showForm ? (
-        // Bottom Sheet Form View
-        <div
-        
-          style={{
-            position: "fixed",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 5000,
-            background: "rgba(255,255,255,0.98)",
-            boxShadow: "0 -4px 24px rgba(0,0,0,0.10)",
-            borderTopLeftRadius: 18,
-            borderTopRightRadius: 18,
-            padding: "24px 20px 32px 20px",
-            height: 240,
-            minHeight: 180,
-            maxHeight: 320,
-            overflowY: 'auto',
-            transition: "transform 0.3s cubic-bezier(.4,0,.2,1)",
-            transform: showForm ? "translateY(0%)" : "translateY(100%)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <div style={{ width: 40, height: 5, background: "#ddd", borderRadius: 3, margin: "0 auto 18px auto" }} />
-          <form onSubmit={handleSubmit} className="space-y-3 w-full max-w-md mx-auto">
-            {errorMessage && (
-              <p className="text-red-600 text-sm text-center">{errorMessage}</p>
-            )}
-            <div>
-              <label className="block text-sm font-medium mb-2">آدرس</label>
-              <Textarea
-                value={selectedAddress}
-                onChange={(e) => setSelectedAddress(e.target.value)}
-                placeholder="آدرس موقعیت شما"
-                variant="faded"
-                maxRows={3}
-                style={{ fontSize: '16px' }}
-              />
+      {/* HeroUI Drawer for location confirmation */}
+      <Drawer 
+        isOpen={showForm} 
+        onOpenChange={handleDrawerOpenChange}
+        placement="right"
+        size="full"
+        hideCloseButton={false}
+        isDismissable={true}
+        isKeyboardDismissDisabled={false}
+        classNames={{
+          base: "max-w-sm sm:max-w-md",
+          backdrop: "backdrop-blur-md bg-black/20",
+          wrapper: "z-[9999]",
+          closeButton: "z-[10000]"
+        }}
+      >
+        <DrawerContent className="h-full">
+          <DrawerHeader className="flex flex-col gap-2 px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between w-full">
+              <h2 className="text- font-bold text-gray-800">تایید مبدأ</h2>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">شماره تلفن</label>
-              <Input
-                value={numberPhone}
-                onChange={(e) => setNumberPhone(e.target.value)}
-                variant="faded"
-                style={{ fontSize: '16px' }}
-              />
+            <p className="text-sm text-gray-500 text-right">اطلاعات مورد نیاز برای ثبت موقعیت را وارد کنید</p>
+          </DrawerHeader>
+          
+          <DrawerBody className="overflow-y-auto px-6 py-4 flex-1">
+            <div className="space-y-6 h-full">
+              {errorMessage && (
+                <div className="bg-red-50 border-l-4 border-red-400 rounded-r-lg p-4 animate-pulse">
+                  <p className="text-red-700 text-sm font-medium">{errorMessage}</p>
+                </div>
+              )}
+              
+              {/* Address Field */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  📍 آدرس دقیق
+                </label>
+                <Textarea
+                  value={selectedAddress}
+                  onChange={(e) => setSelectedAddress(e.target.value)}
+                  placeholder="آدرس کامل موقعیت شما را بنویسید..."
+                  variant="bordered"
+                  maxRows={4}
+                  minRows={2}
+                  size="lg"
+                  radius="lg"
+                  classNames={{
+                    base: "w-full",
+                    input: "text-base leading-relaxed resize-none",
+                    inputWrapper: "min-h-[80px] border-gray-200 hover:border-gray-300 focus-within:border-blue-500"
+                  }}
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
+
+              {/* Phone Field */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  📞 شماره تلفن
+                </label>
+                <Input
+                  value={numberPhone}
+                  onChange={(e) => setNumberPhone(e.target.value)}
+                  placeholder="09xxxxxxxxx"
+                  variant="bordered"
+                  size="lg"
+                  radius="lg"
+                  type="tel"
+                  dir="ltr"
+                  classNames={{
+                    base: "w-full",
+                    input: "text-base text-right",
+                    inputWrapper: "border-gray-200 hover:border-gray-300 focus-within:border-blue-500"
+                  }}
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
+
+              {/* Description Field */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  📝 توضیحات (اختیاری)
+                </label>
+                <Input
+                  type="text"
+                  placeholder="طبقه، واحد، کوچه، نشانه‌های اضافی..."
+                  variant="bordered"
+                  size="lg"
+                  radius="lg"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  classNames={{
+                    base: "w-full",
+                    input: "text-base",
+                    inputWrapper: "border-gray-200 hover:border-gray-300 focus-within:border-blue-500"
+                  }}
+                  style={{ fontSize: '16px' }}
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">توضیحات (اختیاری)</label>
-              <Input
-                type="text"
-                placeholder="توضیحات اضافی"
-                variant="faded"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                style={{ fontSize: '16px' }}
-              />
-            </div>
-            <div className="flex gap-2 mt-6">
+          </DrawerBody>
+          
+          <DrawerFooter className="border-t border-gray-100 bg-white px-6 py-4">
+            <div className="flex gap-3 w-full">
               <Button
-                variant="ghost"
+                variant="bordered"
                 color="default"
-                className="flex-1 py-5"
+                className="flex-1 h-12 text-base font-medium border-gray-300 hover:bg-gray-50"
                 type="button"
                 onClick={handleBack}
+                radius="lg"
               >
                 بازگشت
               </Button>
               <Button
-                variant={isSubmitting ? "faded" : "solid"}
-                color="secondary"
-                className="flex-1 py-5"
-                size="lg"
+                variant="solid"
+                color="primary"
+                className="flex-1 h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-shadow"
                 type="submit"
                 disabled={isSubmitting}
+                onClick={handleSubmit}
+                isLoading={isSubmitting}
+                radius="lg"
               >
-                {isSubmitting ? "درحال ثبت مبدأ ..." : "تایید و ذخیره"}
+                {isSubmitting ? "درحال ثبت..." : "تایید و ذخیره"}
               </Button>
             </div>
-          </form>
-        </div>
-      ) : (
-        // Map View
-        // Map settings
-        <div className="flex-1 flex flex-col relative rounded-xl" style={{ minHeight: 0, marginTop: 49, marginBottom: 72, overflow: 'hidden' }}>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Map View - Always visible */}
+      <div className="flex-1 flex flex-col relative rounded-xl" style={{ minHeight: 0, marginTop: 49, marginBottom: 72, overflow: 'hidden' }}>
           <MapComponent
             options={{
               mapKey: MAP_KEY,
@@ -583,8 +748,8 @@ function LocationSelectorPage({ tripId }) {
             style={{
               position: "absolute",
               left: "50%",
-              top: "45%", // Just slightly above the red dot center
-              transform: "translate(-50%, -50%)",
+              top: "50%", // Centered perfectly
+              transform: "translate(-50%, -50%)", // Center both horizontally and vertically
               transition: "none",
               zIndex: 10,
               pointerEvents: "none",
@@ -597,12 +762,13 @@ function LocationSelectorPage({ tripId }) {
               className="text-gray-800"
               style={{
                 background: "white",
-                padding: "3px 6px",
-                borderRadius: "9px",
+                opacity: 0.8,
+                padding: "2px 5px",
+                borderRadius: "10px",
                 marginBottom: "8px",
                 fontWeight: "normal",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                fontSize: "14px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+                fontSize: "12px",
                 userSelect: "none",
               }}
             >
@@ -870,11 +1036,24 @@ function LocationSelectorPage({ tripId }) {
                         setResults([]);
                         if (typeof window !== 'undefined' && window.neshanMapInstance) {
                           const map = window.neshanMapInstance;
-                          // Center the map directly on the searched location (where the red dot will indicate selection)
-                          // Note: Neshan API returns {x: longitude, y: latitude}
-                          const targetLngLat = [item.location.x, item.location.y];
-                          console.log('Search result coordinates:', item.location, 'Setting center to:', targetLngLat);
-                          map.setCenter(targetLngLat);
+                          
+                          // IMPORTANT: We need to offset the map center UP by the pointer offset
+                          // so that when the pointer points DOWN 45px, it points to the exact searched location
+                          const searchedCoords = [item.location.x, item.location.y];
+                          
+                          // Convert searched location to pixels
+                          const searchPixel = map.project(searchedCoords);
+                          
+                          // Offset UP by the pointer offset (so pointer will point to exact location)
+                          const offsetMapCenter = map.unproject([
+                            searchPixel.x,
+                            searchPixel.y - 45  // Move UP by 45px
+                          ]);
+                          
+                          console.log('Search result coordinates:', item.location);
+                          console.log('Offsetting map center to:', offsetMapCenter);
+                          
+                          map.setCenter([offsetMapCenter.lng, offsetMapCenter.lat]);
                           map.easeTo({ 
                             zoom: 16, 
                             duration: 1000 
@@ -912,7 +1091,7 @@ function LocationSelectorPage({ tripId }) {
             )}
           </div>
 
-          {/* Select button */}
+          {/* Select button - Hidden when drawer is open */}
           <div
           className="px-4"
             style={{
@@ -920,29 +1099,38 @@ function LocationSelectorPage({ tripId }) {
               left: 10,
               right: 10,
               bottom: 10,
-              zIndex: 4000,
+              zIndex: showForm ? -1 : 4000,
               background: "rgba(255,255,255,0.96)",
-              boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
+              boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
               padding: "16px 0 16px 0",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               height: 79,
+              opacity: showForm ? 0 : 1,
+              transform: showForm ? "translateY(100%)" : "translateY(0)",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              pointerEvents: showForm ? "none" : "auto",
             }}
           >
             <Button
-              className="w-full py-6 px-4"
+              className={`w-full py-6 px-4 shadow-lg transition-all duration-300 ${
+                showForm ? 'scale-95 opacity-50' : 'scale-100 opacity-100'
+              }`}
               variant="solid"
               color="warning"
               size="lg"
               onClick={handleSelectLocation}
+              radius="xl"
+              disabled={showForm}
             >
-              انتخاب این موقعیت
+              <span className="text-white font-semibold">
+               انتخاب این موقعیت
+              </span>
             </Button>
           </div>
         </div>
-      )}
     </div>
   );
 }
