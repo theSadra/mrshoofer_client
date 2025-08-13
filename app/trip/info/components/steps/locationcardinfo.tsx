@@ -30,7 +30,7 @@ export default function StepItem({
   const router = useRouter();
 
   const handleLocationSelection = () => {
-    // Navigate to the location selector page
+    // Navigate to the location selector page using SecureToken (which is the tripId parameter)
     router.push(`/trip/location/${trip.SecureToken}`);
   };
 
