@@ -122,7 +122,7 @@ function LocationSelectorPage({ tripId, tripData }) {
   const [showPicker, setShowPicker] = useState(true);
   const [selectedAddress, setSelectedAddress] = useState("در حال بارگذاری آدرس...");
   const [numberPhone, setNumberPhone] = useState(tripData?.Passenger?.NumberPhone || contextTripData?.Passenger?.NumberPhone || "");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(tripData?.Location?.Description || contextTripData?.Location?.Description || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -133,11 +133,12 @@ function LocationSelectorPage({ tripId, tripData }) {
   const searchTimeoutRef = useRef(null);
   const currentSearchRef = useRef(null); // Track current search to prevent race conditions
   const isProgrammaticSearch = useRef(false); // Flag to prevent auto-search when setting programmatically
+  const abortControllerRef = useRef(null); // For canceling previous requests
 
-  // Define searchNeshan with useCallback BEFORE any useEffects or early returns
+  // Define optimized searchNeshan with useCallback and request cancellation
   const searchNeshan = useCallback(async (query) => {
-    // Early return checks
-    if (!query || query.length < 2) {
+    // Early return checks - now requires minimum 3 characters
+    if (!query || query.length < 3) {
       setResults([]);
       setSearchLoading(false);
       return;
@@ -149,6 +150,14 @@ function LocationSelectorPage({ tripId, tripData }) {
       return;
     }
 
+    // Cancel previous request if it exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+
     // Prevent multiple simultaneous searches
     if (searchLoading) {
       return;
@@ -156,7 +165,7 @@ function LocationSelectorPage({ tripId, tripData }) {
 
     // Set current search and prevent race conditions
     currentSearchRef.current = query;
-    console.log('Starting search for:', query);
+    console.log('Starting optimized search for:', query);
     setSearchLoading(true);
 
     try {
@@ -196,6 +205,7 @@ function LocationSelectorPage({ tripId, tripData }) {
           "Api-Key": API_KEY,
           "Content-Type": "application/json"
         },
+        signal: abortControllerRef.current.signal // Add abort signal for request cancellation
       });
       
       if (!response.ok) {
@@ -213,14 +223,20 @@ function LocationSelectorPage({ tripId, tripData }) {
       }
       
     } catch (error) {
+      // Handle aborted requests gracefully
+      if (error.name === 'AbortError') {
+        console.log('Search request aborted for:', query);
+        return; // Don't update state for aborted requests
+      }
+      
       console.error('Error searching Neshan:', error);
-      // Only update state if this is still the current search
+      // Only update state if this is still the current search and not aborted
       if (currentSearchRef.current === query) {
         setResults([]);
         setShowDropdown(false);
       }
     } finally {
-      // Only update loading state if this is still the current search
+      // Only update loading state if this is still the current search and not aborted
       if (currentSearchRef.current === query) {
         setSearchLoading(false);
       }
@@ -232,7 +248,7 @@ function LocationSelectorPage({ tripId, tripData }) {
     setMounted(true);
   }, []);
 
-  // Debounce search input to avoid excessive API calls
+  // Debounce search input to avoid excessive API calls with optimized timing
   useEffect(() => {
     // Clear previous timeout
     if (searchTimeoutRef.current) {
@@ -249,15 +265,20 @@ function LocationSelectorPage({ tripId, tripData }) {
 
     // Only proceed if search has actual content and is different from last search
     const trimmedSearch = search.trim();
-    if (trimmedSearch && trimmedSearch.length >= 2 && trimmedSearch !== currentSearchRef.current) {
+    // Increased minimum length to 3 characters to reduce API calls
+    if (trimmedSearch && trimmedSearch.length >= 3 && trimmedSearch !== currentSearchRef.current) {
       console.log('Scheduling search for:', trimmedSearch);
+      
+      // Dynamic debounce timing: longer for shorter queries, shorter for longer queries
+      const debounceTime = trimmedSearch.length <= 4 ? 800 : trimmedSearch.length <= 6 ? 600 : 400;
+      
       searchTimeoutRef.current = setTimeout(() => {
         // Double check that search hasn't changed
         if (search.trim() === trimmedSearch && !searchLoading) {
           searchNeshan(trimmedSearch);
         }
-      }, 500); // Increased debounce time
-    } else if (!trimmedSearch || trimmedSearch.length < 2) {
+      }, debounceTime);
+    } else if (!trimmedSearch || trimmedSearch.length < 3) {
       // Clear results immediately if search is empty or too short
       console.log('Clearing search results - empty or too short');
       currentSearchRef.current = null;
@@ -299,11 +320,13 @@ function LocationSelectorPage({ tripId, tripData }) {
           // Use data passed from parent (highest priority)
           setTrip(tripData);
           setNumberPhone(tripData.Passenger?.NumberPhone || "");
+          setDescription(tripData.Location?.Description || "");
           console.log('Using trip data from parent:', tripData);
         } else if (contextTripData) {
           // Use data from context (second priority)
           setTrip(contextTripData);
           setNumberPhone(contextTripData.Passenger?.NumberPhone || "");
+          setDescription(contextTripData.Location?.Description || "");
           console.log('Using trip data from context:', contextTripData);
         } else if (tripId) {
           // Fallback: fetch data if not passed from parent or context
@@ -315,6 +338,7 @@ function LocationSelectorPage({ tripId, tripData }) {
           const fetchedTripData = await response.json();
           setTrip(fetchedTripData);
           setNumberPhone(fetchedTripData.Passenger?.NumberPhone || "");
+          setDescription(fetchedTripData.Location?.Description || "");
           
           console.log('Fetched trip data:', fetchedTripData);
         }
@@ -333,6 +357,7 @@ function LocationSelectorPage({ tripId, tripData }) {
         };
         setTrip(mockTrip);
         setNumberPhone(mockTrip.Passenger?.NumberPhone || "");
+        setDescription(""); // Reset description for mock data
       }
     };
 
@@ -349,17 +374,20 @@ function LocationSelectorPage({ tripId, tripData }) {
   // Don't render anything until mounted on client
   if (!mounted) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center">
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-3 border-gray-200 border-t-blue-500"></div>
+          <div className="text-center space-y-3">
+            <p className="text-gray-800 font-semibold text-lg">در حال بارگذاری...</p>
+            <p className="text-gray-500 text-sm">لطفاً منتظر بمانید</p>
+          </div>
           <Image
-            className="mb-4"
+            className="opacity-100"
             src="/mrshoofer_logo_full.png"
-            width={190}
-            height={40}
+            width={120}
+            height={25}
             alt="mrshoofer"
           />
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="mt-2">در حال بارگذاری...</span>
         </div>
       </div>
     );
@@ -368,17 +396,20 @@ function LocationSelectorPage({ tripId, tripData }) {
   // Show loading if trip data is not loaded yet
   if (!trip) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center">
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-3 border-gray-200 border-t-blue-500"></div>
+          <div className="text-center space-y-3">
+            <p className="text-gray-800 font-semibold text-lg">در حال بارگذاری اطلاعات سفر...</p>
+            <p className="text-gray-500 text-sm">دریافت جزئیات سفر شما</p>
+          </div>
           <Image
-            className="mb-4"
+            className="opacity-100"
             src="/mrshoofer_logo_full.png"
-            width={190}
-            height={40}
+            width={120}
+            height={25}
             alt="mrshoofer"
           />
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="mt-2">در حال بارگذاری اطلاعات سفر...</span>
         </div>
       </div>
     );
@@ -746,6 +777,9 @@ function LocationSelectorPage({ tripId, tripData }) {
     setSelectedAddress("");
     selectedCordinates.current = null;
     
+    // Step 4.5: Reset description to original trip value
+    setDescription(trip?.Location?.Description || "");
+    
     // Step 5: Clear any error messages
     setErrorMessage("");
     
@@ -817,7 +851,7 @@ function LocationSelectorPage({ tripId, tripData }) {
         <Button 
           variant="light" 
           size="md" 
-          onClick={handleBack}
+          onPress={handleBack}
           className="bg-white/80 hover:bg-white border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm"
           radius="full"
           startContent={
@@ -853,12 +887,12 @@ function LocationSelectorPage({ tripId, tripData }) {
           <DrawerHeader className="flex flex-col gap-2 px-6 py-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg">
                   <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-bold text-gray-800">تایید مبدأ</h2>
+                <h2 className="text-lg font-bold text-gray-800">تایید مبدأ</h2>
               </div>
             </div>
             <p className="text-sm text-gray-600 text-right leading-relaxed">
@@ -872,7 +906,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                 <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 rounded-r-xl p-5 shadow-sm animate-slide-in">
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
-                      <svg className="w-5 h-5 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-5 h-5 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
                     </div>
@@ -903,7 +937,7 @@ function LocationSelectorPage({ tripId, tripData }) {
               {/* Enhanced Address Field */}
               <div className="space-y-4">
                 <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center shadow-sm">
+                  <div className="w-6 h-6 bg-gradient-to-br bg-gray-200 rounded-md flex items-center justify-center shadow-sm">
                     <span className="text-white text-xs">📍</span>
                   </div>
                   آدرس دقیق
@@ -929,11 +963,10 @@ function LocationSelectorPage({ tripId, tripData }) {
               {/* Enhanced Phone Field */}
               <div className="space-y-4">
                 <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-sm">
+                  <div className="w-6 h-6 bg-gradient-to-br bg-gray-200 rounded-md flex items-center justify-center shadow-sm">
                     <span className="text-white text-xs">📞</span>
                   </div>
                   شماره تلفن
-                  <span className="text-xs text-gray-500 font-normal">(برای هماهنگی)</span>
                 </label>
                 <Input
                   value={numberPhone}
@@ -950,16 +983,14 @@ function LocationSelectorPage({ tripId, tripData }) {
                     inputWrapper: "border-2 border-gray-200 hover:border-blue-400 focus-within:border-blue-500 transition-all duration-300 bg-white shadow-sm"
                   }}
                   style={{ fontSize: '16px' }}
-                  startContent={
-                    <div className="text-gray-400 text-sm font-mono">+98</div>
-                  }
+                 
                 />
               </div>
 
               {/* Enhanced Description Field */}
               <div className="space-y-4">
                 <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center shadow-sm">
+                  <div className="w-6 h-6 bg-gradient-to-br bg-gray-200 rounded-md flex items-center justify-center shadow-sm">
                     <span className="text-white text-xs">📝</span>
                   </div>
                   توضیحات
@@ -991,7 +1022,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                 color="default"
                 className="flex-1 h-14 text-base font-semibold border-2 border-gray-300 hover:bg-gray-100 hover:border-gray-400 transition-all duration-300"
                 type="button"
-                onClick={handleBack}
+                onPress={handleBack}
                 radius="xl"
                 startContent={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1006,7 +1037,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                 className="flex-1 h-14 text-base font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
                 type="button"
                 disabled={isSubmitting}
-                onClick={handleSubmit}
+                onPress={handleSubmit}
                 isLoading={isSubmitting}
                 radius="xl"
                 style={{
@@ -1035,7 +1066,7 @@ function LocationSelectorPage({ tripId, tripData }) {
       </Drawer>
 
       {/* Map View - Always visible */}
-      <div className="flex-1 flex flex-col relative" style={{ minHeight: 0, marginTop: 56, marginBottom: 80, overflow: 'hidden' }}>
+      <div className="flex-1 flex flex-col relative rounded-md" style={{ minHeight: 0, marginTop: 56, marginBottom: 80, overflow: 'hidden' }}>
           <MapComponent
             options={{
               mapKey: MAP_KEY,
@@ -1066,18 +1097,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                 backdropFilter: 'blur(8px)',
               }}
             >
-              <div className="flex flex-col items-center space-y-6 animate-fade-in">
-                <div className="relative">
-                  <Image
-                    className="mb-2 opacity-90 animate-pulse"
-                    src="/mrshoofer_logo_full.png"
-                    width={180}
-                    height={38}
-                    alt="mrshoofer"
-                  />
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full animate-pulse"></div>
-                </div>
-                
+              <div className="flex flex-col items-center space-y-6 animate-fade-in">                
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-gray-200 border-t-4 border-t-blue-600 rounded-full animate-spin shadow-lg"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -1089,14 +1109,24 @@ function LocationSelectorPage({ tripId, tripData }) {
                   </div>
                 </div>
                 
-                <div className="text-center space-y-2">
+                <div className="text-center space-y-3">
                   <p className="text-gray-800 font-semibold text-lg">در حال بارگذاری نقشه</p>
-                  <p className="text-gray-600 text-sm animate-pulse">آماده‌سازی بهترین تجربه برای شما...</p>
+                  <p className="text-gray-600 text-sm">آماده‌سازی بهترین تجربه برای شما...</p>
                   <div className="flex justify-center space-x-1 rtl:space-x-reverse">
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
                   </div>
+                </div>
+
+                <div className="relative mt-2">
+                  <Image
+                    className="opacity-100"
+                    src="/mrshoofer_logo_full.png"
+                    width={100}
+                    height={21}
+                    alt="mrshoofer"
+                  />
                 </div>
               </div>
             </div>
@@ -1368,7 +1398,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                   ].filter(Boolean),
                 }}
                 label=""
-                placeholder="جستجوی آدرس، نام محله، خیابان و مکان‌های اطراف..."
+                placeholder="جستجوی آدرس، نام محله، خیابان و..."
                 radius="full"
                 size="lg"
                 startContent={
@@ -1388,7 +1418,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                         </div>
                       ) : (
                         // Show clear button when not focused
-                        <button
+                        <div
                           onClick={() => {
                             setSearch("");
                             setResults([]);
@@ -1400,12 +1430,28 @@ function LocationSelectorPage({ tripId, tripData }) {
                               searchTimeoutRef.current = null;
                             }
                           }}
-                          className="p-1 rounded-full hover:bg-gray-200 transition-colors duration-200"
+                          className="p-1 rounded-full hover:bg-gray-200 transition-colors duration-200 cursor-pointer"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setSearch("");
+                              setResults([]);
+                              setShowDropdown(false);
+                              setSearchLoading(false);
+                              currentSearchRef.current = null;
+                              if (searchTimeoutRef.current) {
+                                clearTimeout(searchTimeoutRef.current);
+                                searchTimeoutRef.current = null;
+                              }
+                            }
+                          }}
                         >
                           <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
-                        </button>
+                        </div>
                       )}
                     </div>
                   )
@@ -1510,10 +1556,11 @@ function LocationSelectorPage({ tripId, tripData }) {
                             console.log('Search result coordinates:', item.location);
                             console.log('Offsetting map center to:', offsetMapCenter);
                             
-                            map.setCenter([offsetMapCenter.lng, offsetMapCenter.lat]);
+                            // Smooth animation without zoom change
                             map.easeTo({ 
-                              zoom: 16, 
-                              duration: 1000 
+                              center: [offsetMapCenter.lng, offsetMapCenter.lat],
+                              duration: 1000,
+                              easing: t => t * (2 - t) // easeOutQuad for smooth animation
                             });
                           }
                         }, 50);
@@ -1521,8 +1568,8 @@ function LocationSelectorPage({ tripId, tripData }) {
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 mt-1">
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-sm">
-                            <span className="text-white text-xs">{getTypeIcon(item.type)}</span>
+                          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-blue-100 hover:border-blue-200 transition-colors duration-200">
+                            <span className="text-gray-600 text-sm font-medium">{getTypeIcon(item.type)}</span>
                           </div>
                         </div>
 
