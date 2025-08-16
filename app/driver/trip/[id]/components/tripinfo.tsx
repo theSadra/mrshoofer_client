@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Prisma, Trip, TripStatus } from "@prisma/client";
+import { useToast, addToast } from "@heroui/react";
 
 const PersianDate = require("persian-date");
 
@@ -24,28 +25,18 @@ type TripInfoProps = {
 };
 
 function TripInfo({ trip }: TripInfoProps) {
-    // Prevent body scroll when this component is mounted
-    React.useEffect(() => {
-        const originalOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = originalOverflow;
-        };
-    }, []);
     const [currentStep, setCurrentStep] = React.useState(-1);
+    const prevLocationRef = useRef<{ lat?: number; lng?: number } | null>(null);
 
     // Handle case where trip is null or undefined
     if (!trip) {
         return (
-            <div className="w-full h-screen min-h-0 bg-white flex flex-col overflow-hidden">
-                <div className="flex-1 flex flex-col justify-center items-center">
+            <div className="w-full bg-white flex flex-col">
+                <div className="flex-1 flex flex-col justify-center items-center p-8">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
                         <span className="mt-2 block">در حال بارگذاری اطلاعات سفر...</span>
                     </div>
-                </div>
-                <div className="w-full bg-white border-t p-4 flex justify-center">
-                    <button className="w-full max-w-md bg-blue-600 text-white py-3 rounded-xl shadow-lg text-lg font-bold">بازگشت به صفحه اصلی</button>
                 </div>
             </div>
         );
@@ -102,8 +93,8 @@ function TripInfo({ trip }: TripInfoProps) {
     // Show canceled chip and message if trip is canceled
     if (trip.status === TripStatus.canceled) {
         return (
-            <div className="w-full h-screen min-h-0 bg-white flex flex-col overflow-hidden">
-                <div className="flex-1 p-4 overflow-y-auto">
+            <div className="w-full bg-white flex flex-col">
+                <div className="p-4">
                     <div className="flex justify-between align-center">
                         <h1 className="text-xl font-semibold">اطلاعات سفر</h1>
                         <Chip variant="bordered" color="default">
@@ -131,16 +122,42 @@ function TripInfo({ trip }: TripInfoProps) {
                         </p>
                     </div>
                 </div>
-                <div className="w-full bg-white border-t p-4 flex justify-center">
-                    <button className="w-full max-w-md bg-blue-600 text-white py-3 rounded-xl shadow-lg text-lg font-bold">بازگشت به صفحه اصلی</button>
-                </div>
             </div>
         );
     }
 
+    useEffect(() => {
+        if (!trip || !trip.Location) return;
+        const lat = trip.Location.Latitude;
+        const lng = trip.Location.Longitude;
+        if (typeof lat === 'number' && typeof lng === 'number') {
+            if (!prevLocationRef.current) {
+                addToast({
+                    title: 'مختصات مبدا ثبت شد',
+                    description: '',
+                    color: 'success',
+                    timeout: 3000,
+                    variant: 'bordered',
+                });
+            } else if (
+                prevLocationRef.current.lat !== lat ||
+                prevLocationRef.current.lng !== lng
+            ) {
+                addToast({
+                    title: 'مختصات مبدا بروز رسانی شد',
+                    description: '',
+                    color: 'primary',
+                    timeout: 3000,
+                    variant: 'bordered',
+                });
+            }
+            prevLocationRef.current = { lat, lng };
+        }
+    }, [trip?.Location?.Latitude, trip?.Location?.Longitude]);
+
     return (
-        <div className="w-full h-screen min-h-0 bg-white flex flex-col overflow-hidden">
-            <div className="flex-1 p-4 overflow-y-auto">
+        <div className="w-full bg-white flex flex-col">
+            <div className="p-4">
                 <div className="flex justify-between align-center">
                     <h1 className="text-2xl font-semibold">اطلاعات سفر</h1>
                     <Chip variant="bordered" color="default">
@@ -215,9 +232,6 @@ function TripInfo({ trip }: TripInfoProps) {
                         </div>
                     </div>
                 </Card>
-            </div>
-            <div className="w-full bg-white border-t p-4 flex justify-center">
-                <button className="w-full max-w-md bg-blue-600 text-white py-3 rounded-xl shadow-lg text-lg font-bold">پایان سفر</button>
             </div>
         </div>
     );

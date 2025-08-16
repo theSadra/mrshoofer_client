@@ -131,27 +131,26 @@ export default function StepItem({
             <div className="relative">
               <div
                 className={cn(
-                  " relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold ",
-                  {
-                    "shadow-lg": status === "complete",
-                    "bg-green-500": status === "complete",
-                  },
-                  {
-                    "border-yellow-600": status === "active",
-                  }
+                  "relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold border-primary-300 bg-primary-100 text-primary-700 shadow-lg"
                 )}
               >
-                <div className="fle x items-center justify-center align-center">
-                  {status === "active" ? (
-                    <>
-                      <span className="self-center text-center">⌛</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="self-center text-center">⌛</span>
-                    </>
-                  )}
-                </div>
+                {status === "complete" ? (
+                  <svg
+                    className="h-6 w-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M5 13l4 4L19 7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  <span className="text-2xl">⌛</span>
+                )}
               </div>
             </div>
           </div>
@@ -176,9 +175,9 @@ export default function StepItem({
             }}
           >
             <Spacer x={1} />
-            <ul className="list-disc pb-4 pe-3 pr-12 text-default-400 text-start mt-2">
+            <ul className="list-disc pb-4 pe-3 pr-7 text-default-400 text-start mt-2">
               {content.details.map((detail, idx) => (
-                <li key={idx} className="mb-1 text-tiny">
+                <li key={idx} className="mb-1 text-sm">
                   {detail}
                 </li>
               ))}

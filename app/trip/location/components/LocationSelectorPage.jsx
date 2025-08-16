@@ -541,9 +541,11 @@ function LocationSelectorPage({ tripId, tripData }) {
         const centerPixel = map.project(map.getCenter());
 
         // 2. Apply the visual offset in pixels.
-        // Fine-tuned to match the exact visual pointer tip position
-        const pointerTipOffsetY = 39; // Adjusted to match exact tip location
-        const finalPixel = {
+        // Fine-tune the offset to match exactly where the tip of the black pointer line visually points
+        // Even though the picker is repositioned, we need a small adjustment to perfect the alignment
+        const pointerTipOffsetY = -1; // Small negative offset to move selection point up to match visual tip
+        
+        const finalPixel = {  
             x: centerPixel.x,
             y: centerPixel.y + pointerTipOffsetY
         };
@@ -627,7 +629,7 @@ function LocationSelectorPage({ tripId, tripData }) {
         lineSvg.setAttribute("viewBox", "0 0 2 24");
         lineSvg.style.zIndex = "15";
         lineSvg.style.pointerEvents = "none";
-        lineSvg.innerHTML = `<line x1="1" y1="0" x2="1" y2="24" stroke="black" stroke-width="1" stroke-linecap="round"/>`;
+        lineSvg.innerHTML = `<line x1="1" y1="0" x2="1" y2="24" stroke="black" stroke-width="2" stroke-linecap="round"/>`;
         markerEl.appendChild(lineSvg);
 
         // Initial scale for animation
@@ -635,10 +637,21 @@ function LocationSelectorPage({ tripId, tripData }) {
         
 
         // Create marker using Neshan Map's official approach
+        // Adjust the marker placement to align with where the selection pointer was pointing
+        const markerCoordinates = map.getCenter();
+        
+        // Apply offset to move the origin marker down to match the selection pointer tip
+        const markerPixel = map.project(markerCoordinates);
+        const adjustedMarkerPixel = {
+            x: markerPixel.x,
+            y: markerPixel.y + 6 // Move marker down to align with selection pointer tip
+        };
+        const adjustedMarkerCoords = map.unproject(adjustedMarkerPixel);
+        
         const marker = new nmp_mapboxgl.Marker(markerEl, { 
           anchor: "bottom"  // Bottom anchor aligns with the line tip
         })
-        .setLngLat([pointerTipCoords.lng, pointerTipCoords.lat])
+        .setLngLat([adjustedMarkerCoords.lng, adjustedMarkerCoords.lat])
         .addTo(map);
 
         // Animate marker appearance
@@ -648,10 +661,11 @@ function LocationSelectorPage({ tripId, tripData }) {
 
         lastMarkerRef.current = marker;
 
-        // Store coordinates immediately
+        // Store the offset-adjusted coordinates for the database (accurate coordinates)
         selectedCordinates.current = { lat: pointerTipCoords.lat, lng: pointerTipCoords.lng };
 
         console.log('Marker placed at:', pointerTipCoords);
+        console.log('Selected Coordinates - Lat:', pointerTipCoords.lat, 'Lng:', pointerTipCoords.lng);
 
         // Wait before showing form
         await new Promise(resolve => setTimeout(resolve, 450));
@@ -1138,8 +1152,9 @@ function LocationSelectorPage({ tripId, tripData }) {
             style={{
               position: "absolute",
               left: "50%",
-              top: "50%", // Centered perfectly
-              transform: "translate(-50%, -50%)", // Center both horizontally and vertically
+              top: "50%", 
+              // Adjust transform to position the selection tip (not the pin center) at map center
+              transform: "translate(-50%, calc(-50% - 31px))", // Move up by ~half of (label + pin + line)
               transition: "none",
               zIndex: 10,
               pointerEvents: "none",

@@ -89,7 +89,7 @@ function TripInfo({ trip }: TripInfoProps) {
   }
 
   return (
-    <div>
+    <div className="flex flex-col w-full h-full" style={{ minHeight: '0', flex: 1, overflowY: 'auto' }}>
       <div className="flex justify-between align-center">
         <h1 className="text-2xl font-semibold">اطلاعات سفر</h1>
 

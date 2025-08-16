@@ -30,7 +30,7 @@ export default function StepItem({
   const router = useRouter();
 
   const handleLocationSelection = () => {
-    // Navigate to the location selector page using SecureToken (which is the tripId parameter)
+    // Navigate to the location selector page
     router.push(`/trip/location/${trip.SecureToken}`);
   };
 
@@ -84,8 +84,8 @@ export default function StepItem({
             </span>
           </>
         ) : (
-          <span className="text-gray-500 font-light inline-block align-bottom">
-            <span className="text-black me-1">آدرس ثبت شده:</span>
+          <span className="text-gray-800 font-bold inline-block align-bottom">
+            <span className="text-black me-1 font-light">آدرس :</span>
             {trip.Location?.TextAddress}
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -111,25 +111,26 @@ export default function StepItem({
     ],
   };
 
-  const status: "active" | "inactive" | "complete" =
-    trip.status === TripStatus.wating_info ? "active" : "complete";
+  // Always open, never closed
+  const status: "active" | "inactive" | "complete" = "active";
 
   return (
-    <li
-      className={cn(
-        "group shadow-md bg-white  relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
-        stepClassName
-      )}
-      data-status={status}
-    >
+      <li
+        className={cn(
+          "group shadow-md bg-white relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
+          trip.Location ? "opacity-60 pointer-events-none" : "",
+          stepClassName
+        )}
+        data-status={status}
+      >
       <div className="flex w-full max-w-full items-center">
         <button
           ref={ref}
           aria-current={undefined}
           className={cn(
-            "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5"
+            "flex w-full cursor-default items-center justify-center gap-x-4 rounded-large px-3 py-2.5"
           )}
-          onClick={() => setCurrentStep(2)}
+          // Remove click handler so it never closes
           {...props}
         >
           <div className="flex-1 text-right">
@@ -144,7 +145,7 @@ export default function StepItem({
               </div>
               <div
                 className={cn(
-                  "text-tiny text-default-600 transition-[color,opacity] duration-300 group-active:opacity-80 lg:text-small",
+                  "text-small text-default-600 transition-[color,opacity] duration-300 group-active:opacity-80 lg:text-small",
                   {}
                 )}
               >
@@ -156,33 +157,27 @@ export default function StepItem({
             <div className="relative">
               <div
                 className={cn(
-                  " relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold ",
-                  {
-                    "shadow-lg": status === "complete",
-                    "bg-green-500": status === "complete",
-                  },
-                  {
-                    "border-primary-300 bg-primary-100 text-primary-700 shadow-lg":
-                      status === "active",
-                  }
+                  "relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold border-primary-300 bg-primary-100 text-primary-700 shadow-lg"
                 )}
               >
-                {status === "complete" && (
+                {trip.Location ? (
+                  // Show check icon if location exists
                   <svg
-                    className="h-[18px] w-[18px] text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
                   >
                     <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
+                      d="M5 13l4 4L19 7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </svg>
-                )}
-                {status === "active" && (
-                  <span className="text-primary-700 ">2</span>
+                ) : (
+                  // Show number 3 if no location
+                  <span className="text-primary-700 font-bold">3</span>
                 )}
               </div>
             </div>
@@ -193,19 +188,24 @@ export default function StepItem({
       <LazyMotion features={domAnimation}>
         <m.div
           animate={{
-            height: currentStep >= 2 ? "auto" : 0,
-            opacity: currentStep >= 2 ? 1 : 0,
+            height: "auto",
+            opacity: 1,
           }}
           exit={{ height: 0, opacity: 0 }}
           initial={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.25, ease: "easeInOut" }}
           style={{ overflow: "hidden" }}
         >
-          <Card className="m-4 mt-0 pt-2">
+          <Card className="m-4 mt-5 pt-0">
             <Button
-              className="mx-4 my-4 text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:focus:ring-cyan-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+              size="lg"
+              className=""
+              color="primary" variant="solid"
+
               onClick={handleLocationSelection}
             >
+              {trip.Location == null ? "ثبت مبدأ" : "مشاهده لوکیشن و تغییر"}
+
               {trip.Location == null ? (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -238,7 +238,6 @@ export default function StepItem({
                 </svg>
               )}
 
-              {trip.Location == null ? "ثبت مبدأ" : "مشاهده لوکیشن و تغییر"}
             </Button>
           </Card>
         </m.div>
