@@ -366,6 +366,17 @@ function LocationSelectorPage({ tripId, tripData }) {
       return;
     }
 
+    // Check if permission is already granted
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'denied') {
+          setLocationError('Location access denied. Please enable location in your browser settings.');
+          setIsLoadingLocation(false);
+          return;
+        }
+      });
+    }
+
     setIsLoadingLocation(true);
     setLocationError(null);
     setIsTrackingLocation(true);
@@ -390,12 +401,21 @@ function LocationSelectorPage({ tripId, tripData }) {
         setLocationAccuracy(position.coords.accuracy);
         setIsLoadingLocation(false);
         setLocationError(null);
+        setIsTrackingLocation(false); // Stop tracking state
 
         // Store current location for zoom handler
         currentLocationRef.current = newLocation;
 
+        // Center the map on the user location
+        centerMapAndAddDot(newLocation);
+
         // Update the location marker and accuracy circle
         updateLocationDisplay(newLocation);
+
+        // Stop watching after first successful location
+        if (watchId) {
+          navigator.geolocation.clearWatch(watchId);
+        }
       },
       (error) => {
         // Only log significant location errors, not empty objects
@@ -403,6 +423,7 @@ function LocationSelectorPage({ tripId, tripData }) {
           console.error('Location error:', error.code, error.message || '');
         }
         setIsLoadingLocation(false);
+        setIsTrackingLocation(false); // Stop tracking state on error
         
         let errorMessage;
         switch (error.code) {
@@ -596,10 +617,10 @@ function LocationSelectorPage({ tripId, tripData }) {
   };
   // ============= END LOCATION TRACKING FUNCTIONS =============
 
-  // Get user location on mount - now with real-time tracking
+  // Get user location on mount - now with user interaction
   useEffect(() => {
-    // Start real-time location tracking automatically
-    startLocationTracking();
+    // Don't start location tracking automatically
+    // Wait for user interaction with the "My Location" button
     
     // Cleanup on unmount
     return () => {
@@ -751,14 +772,27 @@ function LocationSelectorPage({ tripId, tripData }) {
         // Initialize map coordinates AFTER the map is loaded
         if (trip?.OriginCity) {
           if (trip?.Location == null) {
+            // Center map on origin city
+            console.log('Centering map on origin city:', trip.OriginCity);
             getCoordinatesFromCityName(trip.OriginCity).then((coords) => {
               if (coords && window.neshanMapInstance) {
                 console.log('Setting map center to city coordinates:', coords);
                 window.neshanMapInstance.setCenter([coords.lng, coords.lat]);
                 window.neshanMapInstance.setZoom(13);
+              } else {
+                console.warn('Could not get coordinates for city:', trip.OriginCity);
+                // Fallback to Tehran if city lookup fails
+                window.neshanMapInstance.setCenter([51.389, 35.6892]);
+                window.neshanMapInstance.setZoom(11);
               }
+            }).catch((error) => {
+              console.error('Error getting city coordinates:', error);
+              // Fallback to Tehran if city lookup fails
+              window.neshanMapInstance.setCenter([51.389, 35.6892]);
+              window.neshanMapInstance.setZoom(11);
             });
           } else {
+            // Use saved location if available
             const { Latitude, Longitude } = trip.Location;
             console.log('Setting map center to saved location:', { Latitude, Longitude });
             if (window.neshanMapInstance && Latitude && Longitude) {
@@ -766,6 +800,11 @@ function LocationSelectorPage({ tripId, tripData }) {
               window.neshanMapInstance.setZoom(14.5);
             }
           }
+        } else {
+          // No trip city info, default to Tehran
+          console.log('No origin city found, defaulting to Tehran');
+          window.neshanMapInstance.setCenter([51.389, 35.6892]);
+          window.neshanMapInstance.setZoom(11);
         }
         
         // IMPORTANT: Show user location blue dot immediately when map loads
@@ -2115,44 +2154,19 @@ function LocationSelectorPage({ tripId, tripData }) {
           >
             <Button
               isIconOnly
-              isDisabled={locationError || (!userLocation && !isTrackingLocation)}
-              className={`w-12 h-12 border-2 shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm ${
-                locationError 
-                  ? 'bg-red-50/95 hover:bg-red-100 border-red-200/60 hover:border-red-300' 
-                  : !userLocation && !isTrackingLocation
-                  ? 'bg-gray-50/95 border-gray-200/60 opacity-50 cursor-not-allowed'
-                  : 'bg-white/95 hover:bg-white border-gray-200/60 hover:border-gray-300'
-              }`}
+              isDisabled={false}
+              className="w-12 h-12 border-2 shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm bg-white/95 hover:bg-white border-gray-200/60 hover:border-gray-300"
               radius="full"
               onClick={centerOnUserLocation}
               onTouchStart={() => {
-                // Haptic feedback for mobile (only if not disabled)
-                if (!locationError && (userLocation || isTrackingLocation) && 'vibrate' in navigator) {
+                // Haptic feedback for mobile
+                if ('vibrate' in navigator) {
                   navigator.vibrate(10);
                 }
               }}
             >
               <div className="relative">
-                {locationError ? (
-                  // Error state - show warning icon
-                  <svg 
-                    className="w-6 h-6 text-red-500" 
-                    fill="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                  </svg>
-                ) : !userLocation && !isTrackingLocation ? (
-                  // No location available - show disabled GPS icon
-                  <svg 
-                    className="w-6 h-6 text-gray-400" 
-                    fill="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
-                  </svg>
-                ) : isLoadingLocation ? (
+                {isTrackingLocation ? (
                   // Loading state - show spinning icon
                   <svg 
                     className="w-6 h-6 text-blue-600 animate-spin" 
@@ -2163,18 +2177,14 @@ function LocationSelectorPage({ tripId, tripData }) {
                   </svg>
                 ) : (
                   // Normal state - show crosshair/target icon for precise location
-                  <>
-                    <svg 
-                      className="w-8 h-8 text-blue-600" 
-                      fill="currentColor" 
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path d="M11.5 20.95v-.961q-3.125-.293-5.16-2.328q-2.036-2.036-2.328-5.161H3.05q-.212 0-.356-.144t-.144-.357t.144-.356t.356-.143h.962q.292-3.125 2.328-5.16t5.16-2.328V3.05q0-.212.144-.356t.357-.144t.356.144t.143.356v.962q3.125.292 5.16 2.328t2.329 5.16h.961q.213 0 .356.144t.144.357t-.144.356t-.356.143h-.961q-.293 3.125-2.328 5.16q-2.036 2.036-5.161 2.329v.961q0 .213-.144.356t-.357.144t-.356-.144t-.143-.356M12 19q2.9 0 4.95-2.05T19 12t-2.05-4.95T12 5T7.05 7.05T5 12t2.05 4.95T12 19m0-4q-1.237 0-2.119-.881T9 12t.881-2.119T12 9t2.119.881T15 12t-.881 2.119T12 15"/>
-                    </svg>
-                    {/* Small blue dot in center */}
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-blue-600 rounded-full"></div>
-                  </>
+                  <svg 
+                    className="w-8 h-8 text-blue-600" 
+                    fill="currentColor" 
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M11.5 20.95v-.961q-3.125-.293-5.16-2.328q-2.036-2.036-2.328-5.161H3.05q-.212 0-.356-.144t-.144-.357t.144-.356t.356-.143h.962q.292-3.125 2.328-5.16t5.16-2.328V3.05q0-.212.144-.356t.357-.144t.356.144t.143.356v.962q3.125.292 5.16 2.328t2.329 5.16h.961q.213 0 .356.144t.144.357t-.144.356t-.356.143h-.961q-.293 3.125-2.328 5.16q-2.036 2.036-5.161 2.329v.961q0 .213-.144.356t-.357.144t-.356-.144t-.143-.356M12 19q2.9 0 4.95-2.05T19 12t-2.05-4.95T12 5T7.05 7.05T5 12t2.05 4.95T12 19m0-4q-1.237 0-2.119-.881T9 12t.881-2.119T12 9t2.119.881T15 12t-.881 2.119T12 15"/>
+                  </svg>
                 )}
               </div>
             </Button>
@@ -2187,16 +2197,6 @@ function LocationSelectorPage({ tripId, tripData }) {
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                   <span>اجازه موقعیت داده نشده است</span>
-                </div>
-              </div>
-            )}
-            {!locationError && !userLocation && !isTrackingLocation && (
-              <div className="absolute bottom-14 right-0 bg-amber-50/95 border border-amber-200/60 text-amber-800 px-3 py-2 rounded-lg text-xs whitespace-nowrap shadow-lg backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <svg className="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                  </svg>
-                  <span>موقعیت در دسترس نیست</span>
                 </div>
               </div>
             )}
@@ -2233,13 +2233,13 @@ function LocationSelectorPage({ tripId, tripData }) {
           >
             <Button
               className={`w-full transition-all duration-200 font-bold ${
-                showForm ? 'scale-95 opacity-50' : 'scale-100 opacity-100 active:scale-[0.96]'
+                !selectedCordinates.current ? 'scale-95 opacity-50' : 'scale-100 opacity-100 active:scale-[0.96]'
               }`}
               variant="solid"
               size="lg"
               onClick={handleSelectLocation}
               radius="xl"
-              disabled={showForm}
+              disabled={!selectedCordinates.current || loading}
               style={{
                 background: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)",
                 boxShadow: "0 8px 32px rgba(249,115,22,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
