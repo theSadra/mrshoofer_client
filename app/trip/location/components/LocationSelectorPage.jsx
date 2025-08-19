@@ -68,6 +68,25 @@ const customStyles = `
   .custom-scroll::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, #2563eb, #7c3aed);
   }
+  
+  /* User location marker animations */
+  @keyframes pulse {
+    0%, 100% { 
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% { 
+      transform: scale(1.1);
+      opacity: 0.9;
+    }
+  }
+  
+  @keyframes ping {
+    75%, 100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
 `;
 
 export const SearchIcon = (props) => (
@@ -126,9 +145,19 @@ function LocationSelectorPage({ tripId, tripData }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showForm, setShowForm] = useState(false);
+  // Real-time location tracking states
+  const [isTrackingLocation, setIsTrackingLocation] = useState(false);
+  const [locationAccuracy, setLocationAccuracy] = useState(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [locationError, setLocationError] = useState(null);
 
   const selectedMarkerRef = useRef(null);
   const lastMarkerRef = useRef(null);
+  const userLocationMarkerRef = useRef(null);
+  // Real-time location tracking refs
+  const accuracyCircleRef = useRef(null);
+  const locationWatchIdRef = useRef(null);
+  const currentLocationRef = useRef(null); // Store current location for zoom handler
   const selectedCordinates = useRef({ lat: 0, lng: 0 });
   const searchTimeoutRef = useRef(null);
   const currentSearchRef = useRef(null); // Track current search to prevent race conditions
@@ -296,21 +325,319 @@ function LocationSelectorPage({ tripId, tripData }) {
     };
   }, [search, searchLoading]); // Include searchLoading to prevent scheduling while loading
 
-  // Get user location on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserLocation({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          });
-        },
-        () => {},
-        { enableHighAccuracy: true }
-      );
+  // ============= LOCATION TRACKING FUNCTIONS =============
+  // Advanced location tracking functions
+  const startLocationTracking = () => {
+    console.log('=== STARTING REAL-TIME LOCATION TRACKING ===');
+    
+    if (!navigator.geolocation) {
+      console.error('Geolocation not supported');
+      setLocationError('GPS not supported by this browser');
+      return;
     }
+
+    setIsLoadingLocation(true);
+    setLocationError(null);
+    setIsTrackingLocation(true);
+
+    // High-precision geolocation options
+    const watchOptions = {
+      enableHighAccuracy: true,
+      maximumAge: 0, // Always get fresh location
+      timeout: 10000, // 10 seconds timeout
+    };
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        console.log('=== LOCATION UPDATE RECEIVED ===');
+        console.log('Accuracy:', position.coords.accuracy, 'meters');
+        console.log('Coordinates:', position.coords.latitude, position.coords.longitude);
+        
+        const newLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: position.timestamp,
+        };
+
+        setUserLocation(newLocation);
+        setLocationAccuracy(position.coords.accuracy);
+        setIsLoadingLocation(false);
+        setLocationError(null);
+
+        // Store current location for zoom handler
+        currentLocationRef.current = newLocation;
+
+        // Update the location marker and accuracy circle
+        updateLocationDisplay(newLocation);
+      },
+      (error) => {
+        console.error('=== LOCATION ERROR ===', error);
+        setIsLoadingLocation(false);
+        
+        let errorMessage;
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access denied";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location unavailable";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timeout";
+            break;
+          default:
+            errorMessage = "Unknown location error";
+            break;
+        }
+        
+        setLocationError(errorMessage);
+      },
+      watchOptions
+    );
+
+    locationWatchIdRef.current = watchId;
+    console.log('Location tracking started with ID:', watchId);
+  };
+
+  const stopLocationTracking = () => {
+    console.log('=== STOPPING LOCATION TRACKING ===');
+    
+    if (locationWatchIdRef.current) {
+      navigator.geolocation.clearWatch(locationWatchIdRef.current);
+      locationWatchIdRef.current = null;
+      console.log('Location tracking stopped');
+    }
+    
+    setIsTrackingLocation(false);
+    setIsLoadingLocation(false);
+    
+    // Remove accuracy circle
+    if (accuracyCircleRef.current) {
+      accuracyCircleRef.current.remove();
+      accuracyCircleRef.current = null;
+    }
+    
+    // Remove user location marker (now only DOM markers)
+    if (userLocationMarkerRef.current) {
+      try {
+        userLocationMarkerRef.current.remove();
+      } catch (error) {
+        console.warn('Error removing user location marker:', error);
+      }
+      userLocationMarkerRef.current = null;
+    }
+  };
+
+  const updateLocationDisplay = (location) => {
+    console.log('=== UPDATING LOCATION DISPLAY ===');
+    console.log('Location:', location);
+    
+    if (!window.neshanMapInstance) {
+      console.warn('Map not ready for location display update');
+      return;
+    }
+
+    const map = window.neshanMapInstance;
+
+    // Use separate markers like the working search markers
+    updateAccuracyCircle(location.lat, location.lng, location.accuracy);
+    updateUserLocationMarker(location.lat, location.lng);
+  };
+
+  const updateAccuracyCircle = (lat, lng, accuracy) => {
+    console.log('=== UPDATING ACCURACY CIRCLE ===');
+    console.log('Input parameters:');
+    console.log('- Latitude:', lat);
+    console.log('- Longitude:', lng);
+    console.log('- Accuracy:', accuracy, 'meters (type:', typeof accuracy, ')');
+    
+    // Validate accuracy value
+    if (accuracy === null || accuracy === undefined || isNaN(accuracy)) {
+      console.warn('Invalid accuracy value:', accuracy, '- using fallback of 50 meters');
+      accuracy = 50;
+    }
+    
+    if (accuracy <= 0) {
+      console.warn('Non-positive accuracy value:', accuracy, '- using fallback of 50 meters');
+      accuracy = 50;
+    }
+    
+    // Clamp accuracy to reasonable bounds (5m to 500m)
+    if (accuracy < 5) {
+      console.warn('Unusually high accuracy:', accuracy, 'm - clamping to 5m minimum');
+      accuracy = 5;
+    }
+    
+    if (accuracy > 500) {
+      console.warn('Unusually low accuracy:', accuracy, 'm - clamping to 500m maximum');
+      accuracy = 500;
+    }
+    
+    console.log('Final validated accuracy:', accuracy, 'meters');
+    
+    if (!window.neshanMapInstance) {
+      console.warn('Map not ready for accuracy circle update');
+      return;
+    }
+    
+    const map = window.neshanMapInstance;
+    
+    // Remove existing accuracy circle
+    if (accuracyCircleRef.current) {
+      accuracyCircleRef.current.remove();
+      accuracyCircleRef.current = null;
+    }
+
+    // Create accuracy circle element using EXACT pattern as working markers
+    const circleEl = document.createElement("div");
+    
+    // Calculate circle size based on map zoom and accuracy
+    const zoom = map.getZoom();
+    const metersPerPixel = 40075000 * Math.cos(lat * Math.PI / 180) / Math.pow(2, zoom + 8);
+    const radiusPixels = Math.min(Math.max(accuracy / metersPerPixel, 10), 200);
+    const diameter = radiusPixels * 2;
+    
+    console.log('Accuracy calculation details:');
+    console.log('- GPS accuracy:', accuracy, 'meters');
+    console.log('- Map zoom level:', zoom);
+    console.log('- Meters per pixel at this zoom:', metersPerPixel.toFixed(2));
+    console.log('- Calculated radius in pixels:', radiusPixels.toFixed(2));
+    console.log('- Final diameter:', diameter.toFixed(2), 'px');
+    
+    // IDENTICAL styling pattern to working markers
+    circleEl.style.width = diameter + "px";
+    circleEl.style.height = diameter + "px";
+    circleEl.style.borderRadius = "50%";
+    circleEl.style.background = "rgba(59, 130, 246, 0.1)";
+    circleEl.style.border = "2px solid rgba(59, 130, 246, 0.3)";
+    circleEl.style.display = "block";
+    circleEl.style.pointerEvents = "none";
+
+    console.log('Creating accuracy circle with diameter:', diameter, 'px at coordinates:', [lng, lat]);
+    
+    // Create marker using IDENTICAL pattern to working search markers
+    const circleMarker = new nmp_mapboxgl.Marker(circleEl, { 
+      anchor: "center"  // IDENTICAL to working markers
+    })
+    .setLngLat([lng, lat])  // IDENTICAL coordinates
+    .addTo(map);
+
+    accuracyCircleRef.current = circleMarker;
+    console.log('Accuracy circle created and added to map');
+  };
+
+  const updateUserLocationMarker = (lat, lng) => {
+    console.log('=== UPDATING USER LOCATION MARKER ===');
+    console.log('Input coordinates - lat:', lat, 'lng:', lng);
+    
+    if (!window.neshanMapInstance) {
+      console.warn('Map not ready for marker update');
+      return;
+    }
+
+    const map = window.neshanMapInstance;
+    
+    // Remove existing user location marker
+    if (userLocationMarkerRef.current) {
+      try {
+        userLocationMarkerRef.current.remove();
+      } catch (error) {
+        console.warn('Error removing user location marker:', error);
+      }
+      userLocationMarkerRef.current = null;
+    }
+
+    try {
+      // Create marker element using EXACT pattern as working search markers
+      const markerEl = document.createElement("div");
+      
+      // IDENTICAL styling approach to working search markers
+      markerEl.style.display = "flex";
+      markerEl.style.flexDirection = "column";
+      markerEl.style.alignItems = "center";
+      markerEl.style.pointerEvents = "none";
+      markerEl.style.background = "transparent";
+      markerEl.style.justifyContent = "center";
+      
+      // Create simple blue dot
+      const blueDot = document.createElement("div");
+      blueDot.style.width = "16px";
+      blueDot.style.height = "16px";
+      blueDot.style.borderRadius = "50%";
+      blueDot.style.background = "#007AFF";
+      blueDot.style.border = "3px solid #FFFFFF";
+      blueDot.style.boxShadow = "0 2px 8px rgba(0, 122, 255, 0.6)";
+      blueDot.style.animation = "locationPulse 2s infinite";
+      
+      // Add animation if not exists
+      if (!document.getElementById('location-pulse-animation')) {
+        const style = document.createElement('style');
+        style.id = 'location-pulse-animation';
+        style.innerHTML = `
+          @keyframes locationPulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      markerEl.appendChild(blueDot);
+      
+      console.log('Creating user location marker at coordinates [lng, lat]:', [lng, lat]);
+      
+      // Create marker using IDENTICAL pattern to working search markers
+      const userMarker = new nmp_mapboxgl.Marker(markerEl, {
+        anchor: "center"  // IDENTICAL to working search markers
+      })
+      .setLngLat([lng, lat])  // IDENTICAL coordinates
+      .addTo(map);
+
+      console.log('✅ User location marker created and properly bound to map');
+      
+      userLocationMarkerRef.current = userMarker;
+      
+    } catch (error) {
+      console.error('❌ Error creating user location marker:', error);
+    }
+  };
+  // ============= END LOCATION TRACKING FUNCTIONS =============
+
+  // Get user location on mount - now with real-time tracking
+  useEffect(() => {
+    console.log('=== ADVANCED USER LOCATION SETUP ===');
+    
+    // Start real-time location tracking automatically
+    startLocationTracking();
+    
+    // Cleanup on unmount
+    return () => {
+      stopLocationTracking();
+    };
   }, []);
+
+  // Watch for when both map and user location are available to show blue dot
+  useEffect(() => {
+    console.log('=== MAP AND LOCATION SYNC CHECK ===');
+    console.log('userLocation:', userLocation);
+    console.log('Map instance available:', typeof window !== 'undefined' && !!window.neshanMapInstance);
+    console.log('Loading state:', loading);
+    
+    // Show user location blue dot as soon as both map and location are available
+    if (!loading && userLocation && typeof window !== 'undefined' && window.neshanMapInstance) {
+      console.log('Both map and location ready - showing blue dot...');
+      setTimeout(() => {
+        updateLocationDisplay(userLocation);
+      }, 300); // Small delay to ensure everything is initialized
+    } else  {
+      console.log('=== NOT READY YET ===');
+      console.log('- loading:', loading);
+      console.log('- userLocation exists:', !!userLocation);
+      console.log('- map ready:', typeof window !== 'undefined' && !!window.neshanMapInstance);
+    }
+  }, [userLocation, loading]); // Trigger when userLocation changes or loading completes
 
   // Use trip data passed from parent, context, or fetch if not provided
   useEffect(() => {
@@ -370,6 +697,27 @@ function LocationSelectorPage({ tripId, tripData }) {
     // The actual coordinate setting happens in mapSetter's "load" event
     console.log('Trip data updated:', trip);
   }, [trip]);
+
+  // Add user location marker when both map is loaded and user location is available
+  useEffect(() => {
+    console.log('=== USER LOCATION MARKER EFFECT ===');
+    console.log('loading:', loading);
+    console.log('userLocation:', userLocation);
+    console.log('window exists:', typeof window !== 'undefined');
+    console.log('neshanMapInstance exists:', typeof window !== 'undefined' && !!window.neshanMapInstance);
+    
+    if (!loading && userLocation && typeof window !== 'undefined' && window.neshanMapInstance) {
+      console.log('All conditions met, adding user location marker...');
+      console.log('Calling updateLocationDisplay with:', { lat: userLocation.lat, lng: userLocation.lng });
+      updateLocationDisplay(userLocation);
+    } else {
+      console.log('Conditions not met for adding user location marker:');
+      console.log('- loading is false:', !loading);
+      console.log('- userLocation exists:', !!userLocation);
+      console.log('- window exists:', typeof window !== 'undefined');
+      console.log('- neshanMapInstance exists:', typeof window !== 'undefined' && !!window.neshanMapInstance);
+    }
+  }, [loading, userLocation]);
 
   // Don't render anything until mounted on client
   if (!mounted) {
@@ -441,10 +789,36 @@ function LocationSelectorPage({ tripId, tripData }) {
             }
           }
         }
+        
+        // IMPORTANT: Show user location blue dot immediately when map loads
+        console.log('=== MAP LOADED - CHECKING FOR USER LOCATION ===');
+        console.log('Current userLocation state:', userLocation);
+        if (userLocation) {
+          console.log('User location available, showing blue dot immediately...');
+          setTimeout(() => {
+            updateLocationDisplay(userLocation);
+          }, 500); // Small delay to ensure map is fully ready
+        } else {
+          console.log('User location not yet available, will show when location is obtained');
+        }
       });
 
       neshanMap.on("zoom", () => {
-        setZoom(neshanMap.getZoom());
+        const newZoom = neshanMap.getZoom();
+        setZoom(newZoom);
+        
+        // Update accuracy circle when zoom changes (blue dot stays same size)
+        if (currentLocationRef.current && accuracyCircleRef.current) {
+          const currentAccuracy = currentLocationRef.current.accuracy || 50;
+          console.log('Zoom changed to:', newZoom, '- updating accuracy circle');
+          console.log('Current location ref:', currentLocationRef.current);
+          console.log('Using accuracy value:', currentAccuracy, 'meters');
+          updateAccuracyCircle(
+            currentLocationRef.current.lat, 
+            currentLocationRef.current.lng, 
+            currentAccuracy
+          );
+        }
       });
 
       neshanMap.on("movestart", () => {
@@ -508,6 +882,169 @@ function LocationSelectorPage({ tripId, tripData }) {
     return null;
   }
 
+  // Enhanced "My Location" button functionality
+  const centerOnUserLocation = () => {
+    console.log('=== CENTER ON USER LOCATION CALLED ===');
+    
+    if (!userLocation) {
+      console.log('No user location available, starting location tracking...');
+      startLocationTracking();
+      return;
+    }
+    
+    // If we have a location, center immediately and update with fresh location
+    centerMapAndAddDot(userLocation);
+    
+    // Also request a fresh location update
+    if (navigator.geolocation && !isLoadingLocation) {
+      setIsLoadingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const freshLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: position.timestamp,
+          };
+          console.log('Fresh location obtained for centering:', freshLocation);
+          
+          setUserLocation(freshLocation);
+          setLocationAccuracy(position.coords.accuracy);
+          setIsLoadingLocation(false);
+          
+          // Update display with fresh location
+          updateLocationDisplay(freshLocation);
+        },
+        (error) => {
+          console.warn('Failed to get fresh location:', error);
+          setIsLoadingLocation(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 30000 // Accept cached location up to 30 seconds old
+        }
+      );
+    }
+  };
+
+  // Helper function to center map and add blue dot
+  const centerMapAndAddDot = (location) => {
+    console.log('=== CENTERING MAP AND ADDING DOT ===');
+    console.log('Location:', location);
+    console.log('window.neshanMapInstance:', typeof window !== 'undefined' ? !!window.neshanMapInstance : 'undefined');
+    
+    if (location && typeof window !== 'undefined' && window.neshanMapInstance) {
+      try {
+        // Get the map instance
+        const map = window.neshanMapInstance;
+        
+        // Calculate the offset coordinates like in the search selection
+        // We need to offset the map center so the bottom tip of the center indicator shows our location
+        const targetPixel = map.project([location.lng, location.lat]);
+        
+        // Apply the reverse offset (move map center UP so the tip points to our location)
+        const pointerTipOffsetY = 39; // Same offset as used in handleSelectLocation
+        const adjustedPixel = {
+          x: targetPixel.x,
+          y: targetPixel.y - pointerTipOffsetY // Move center UP so tip points DOWN to our location
+        };
+        
+        // Convert back to coordinates
+        const adjustedCoords = map.unproject(adjustedPixel);
+        const mapCenterCoords = [adjustedCoords.lng, adjustedCoords.lat];
+        
+        console.log('Original location coordinates:', [location.lng, location.lat]);
+        console.log('Adjusted map center coordinates:', mapCenterCoords);
+        
+        // Try flyTo first with the adjusted center
+        if (typeof map.flyTo === 'function') {
+          console.log('Using flyTo method with adjusted center...');
+          map.flyTo({
+            center: mapCenterCoords,
+            zoom: 17, // Higher zoom to see the blue dot clearly
+            duration: 2000, // Longer duration to see the movement
+          });
+          console.log('flyTo executed successfully');
+          
+          // Update location display after animation completes
+          setTimeout(() => {
+            console.log('Updating location display after flyTo animation...');
+            updateLocationDisplay(location);
+          }, 2100);
+          
+        } 
+        // Fallback to easeTo if flyTo doesn't exist
+        else if (typeof map.easeTo === 'function') {
+          console.log('Using easeTo method with adjusted center...');
+          map.easeTo({
+            center: mapCenterCoords,
+            zoom: 17,
+            duration: 2000,
+          });
+          console.log('easeTo executed successfully');
+          
+          // Update location display after animation completes
+          setTimeout(() => {
+            console.log('Updating location display after easeTo animation...');
+            updateLocationDisplay(location);
+          }, 2100);
+          
+        }
+        // Last resort: setCenter and setZoom
+        else {
+          console.log('Using setCenter/setZoom methods with adjusted center...');
+          map.setCenter(mapCenterCoords);
+          map.setZoom(17);
+          console.log('setCenter/setZoom executed successfully');
+          
+          // Update location display immediately for instant methods
+          setTimeout(() => {
+            console.log('Updating location display after setCenter/setZoom...');
+            updateLocationDisplay(location);
+          }, 100);
+        }
+        
+        // Update the selected coordinates and address (like in search selection)
+        selectedCordinates.current = { lat: location.lat, lng: location.lng };
+        
+        // Load address for the location
+        const loadAddress = async () => {
+          try {
+            const address = await getAddressFromNeshan(location.lat, location.lng);
+            setSelectedAddress(address);
+            console.log('Address loaded for user location:', address);
+          } catch (error) {
+            console.error('Error loading address for user location:', error);
+            setSelectedAddress("آدرس در حال بارگذاری...");
+          }
+        };
+        loadAddress();
+        
+        // Log the new center after a short delay
+        setTimeout(() => {
+          console.log('New map center after centering:', map.getCenter());
+          console.log('Center indicator tip should point to:', [location.lng, location.lat]);
+        }, 500);
+        
+      } catch (error) {
+        console.error('Error centering map on user location:', error);
+        console.error('Error stack:', error.stack);
+      }
+    } else {
+      console.log('=== CANNOT CENTER MAP - MISSING REQUIREMENTS ===');
+      console.log('- location exists:', !!location);
+      if (location) {
+        console.log('  location value:', location);
+      }
+      console.log('- window exists:', typeof window !== 'undefined');
+      console.log('- neshanMapInstance exists:', !!(typeof window !== 'undefined' && window.neshanMapInstance));
+      if (typeof window !== 'undefined' && window.neshanMapInstance) {
+        console.log('  neshanMapInstance methods:', Object.getOwnPropertyNames(window.neshanMapInstance));
+      }
+    }
+  };
+
   const handleSelectLocation = async () => {
     if (typeof window !== 'undefined' && window.neshanMapInstance && nmp_mapboxgl && nmp_mapboxgl.Marker) {
       try {
@@ -541,11 +1078,9 @@ function LocationSelectorPage({ tripId, tripData }) {
         const centerPixel = map.project(map.getCenter());
 
         // 2. Apply the visual offset in pixels.
-        // Fine-tune the offset to match exactly where the tip of the black pointer line visually points
-        // Even though the picker is repositioned, we need a small adjustment to perfect the alignment
-        const pointerTipOffsetY = -1; // Small negative offset to move selection point up to match visual tip
-        
-        const finalPixel = {  
+        // Fine-tuned to match the exact visual pointer tip position
+        const pointerTipOffsetY = 39; // Adjusted to match exact tip location
+        const finalPixel = {
             x: centerPixel.x,
             y: centerPixel.y + pointerTipOffsetY
         };
@@ -629,7 +1164,7 @@ function LocationSelectorPage({ tripId, tripData }) {
         lineSvg.setAttribute("viewBox", "0 0 2 24");
         lineSvg.style.zIndex = "15";
         lineSvg.style.pointerEvents = "none";
-        lineSvg.innerHTML = `<line x1="1" y1="0" x2="1" y2="24" stroke="black" stroke-width="2" stroke-linecap="round"/>`;
+        lineSvg.innerHTML = `<line x1="1" y1="0" x2="1" y2="24" stroke="black" stroke-width="1" stroke-linecap="round"/>`;
         markerEl.appendChild(lineSvg);
 
         // Initial scale for animation
@@ -637,21 +1172,10 @@ function LocationSelectorPage({ tripId, tripData }) {
         
 
         // Create marker using Neshan Map's official approach
-        // Adjust the marker placement to align with where the selection pointer was pointing
-        const markerCoordinates = map.getCenter();
-        
-        // Apply offset to move the origin marker down to match the selection pointer tip
-        const markerPixel = map.project(markerCoordinates);
-        const adjustedMarkerPixel = {
-            x: markerPixel.x,
-            y: markerPixel.y + 6 // Move marker down to align with selection pointer tip
-        };
-        const adjustedMarkerCoords = map.unproject(adjustedMarkerPixel);
-        
         const marker = new nmp_mapboxgl.Marker(markerEl, { 
           anchor: "bottom"  // Bottom anchor aligns with the line tip
         })
-        .setLngLat([adjustedMarkerCoords.lng, adjustedMarkerCoords.lat])
+        .setLngLat([pointerTipCoords.lng, pointerTipCoords.lat])
         .addTo(map);
 
         // Animate marker appearance
@@ -661,11 +1185,10 @@ function LocationSelectorPage({ tripId, tripData }) {
 
         lastMarkerRef.current = marker;
 
-        // Store the offset-adjusted coordinates for the database (accurate coordinates)
+        // Store coordinates immediately
         selectedCordinates.current = { lat: pointerTipCoords.lat, lng: pointerTipCoords.lng };
 
         console.log('Marker placed at:', pointerTipCoords);
-        console.log('Selected Coordinates - Lat:', pointerTipCoords.lat, 'Lng:', pointerTipCoords.lng);
 
         // Wait before showing form
         await new Promise(resolve => setTimeout(resolve, 450));
@@ -827,55 +1350,55 @@ function LocationSelectorPage({ tripId, tripData }) {
       {/* Inject custom styles */}
       <style jsx global>{customStyles}</style>
       
-      <div className="flex flex-col w-full h-screen" style={{ height: '100vh', maxHeight: '100vh', overflow: 'hidden', position: 'relative' }}>
-      {/* Header */}
+  <div className="fixed inset-0 w-full h-full z-0" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', overflow: 'hidden', background: '#f8fafc' }}>
+      {/* Header - Optimized for Mobile */}
       <div 
-        className="flex items-center justify-between p-4 bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100/50 z-50 transition-all duration-300" 
+        className="flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-100/30 z-50 transition-all duration-300" 
         style={{ 
           position: 'fixed', 
           top: 0, 
           left: 0, 
           right: 0, 
-          height: 64, 
-          minHeight: 64,
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)'
+          height: 52, 
+          minHeight: 52,
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.90) 0%, rgba(248,250,252,0.92) 100%)'
         }}
       >
-        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2 transition-all duration-300">
+        <h1 className="text-base font-semibold text-gray-800 flex items-center gap-2 transition-all duration-300">
           {showForm ? (
             <>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-sm">
+                <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span>تایید مبدأ</span>
+              <span className="text-sm">تایید مبدأ</span>
             </>
           ) : (
             <>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-sm">
+                <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span>انتخاب مبدا</span>
+              <span className="text-sm">انتخاب مبدا</span>
             </>
           )}
         </h1>
         <Button 
           variant="light" 
-          size="md" 
+          size="sm" 
           onPress={handleBack}
-          className="bg-white/80 hover:bg-white border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm"
-          radius="full"
+          className="bg-white/70 hover:bg-white/90 border border-gray-200/40 shadow-sm hover:shadow transition-all duration-200 backdrop-blur-sm min-w-0 px-3"
+          radius="lg"
           startContent={
-            <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 24 24" className="transition-transform duration-200 group-hover:translate-x-0.5">
-              <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 18l-6-6 6-6" />
+            <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 24 24" className="transition-transform duration-200">
+              <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 18l-6-6 6-6" />
             </svg>
           }
         >
-          <span className="font-medium text-gray-700">
-            {showForm ? "بازگشت به نقشه" : "بازگشت"}
+          <span className="font-medium text-gray-700 text-xs hidden sm:inline">
+            {showForm ? "نقشه" : "بازگشت"}
           </span>
         </Button>
       </div>
@@ -898,7 +1421,7 @@ function LocationSelectorPage({ tripId, tripData }) {
         }}
       >
         <DrawerContent className="h-full bg-white">
-          <DrawerHeader className="flex flex-col gap-2 px-6 py-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
+          <DrawerHeader className="flex flex-col gap-1 px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg">
@@ -931,7 +1454,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                 </div>
               )}
 
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-5 shadow-sm">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-3 shadow-sm">
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
@@ -1080,7 +1603,7 @@ function LocationSelectorPage({ tripId, tripData }) {
       </Drawer>
 
       {/* Map View - Always visible */}
-      <div className="flex-1 flex flex-col relative rounded-md" style={{ minHeight: 0, marginTop: 56, marginBottom: 80, overflow: 'hidden' }}>
+      <div className="absolute inset-0 flex flex-col" style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}>
           <MapComponent
             options={{
               mapKey: MAP_KEY,
@@ -1105,7 +1628,7 @@ function LocationSelectorPage({ tripId, tripData }) {
           {/* Enhanced Map Loading Overlay */}
           {loading && (
             <div 
-              className="absolute inset-0 flex items-center justify-center z-[1000] transition-all duration-500"
+              className="absolute inset-0 flex items-center justify-center z-[7000] transition-all duration-500"
               style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)',
                 backdropFilter: 'blur(8px)',
@@ -1152,11 +1675,10 @@ function LocationSelectorPage({ tripId, tripData }) {
             style={{
               position: "absolute",
               left: "50%",
-              top: "50%", 
-              // Adjust transform to position the selection tip (not the pin center) at map center
-              transform: "translate(-50%, calc(-50% - 31px))", // Move up by ~half of (label + pin + line)
+              top: "50%", // Centered perfectly
+              transform: "translate(-50%, -50%)", // Center both horizontally and vertically
               transition: "none",
-              zIndex: 10,
+              zIndex: 2000,
               pointerEvents: "none",
               display: "flex",
               flexDirection: "column",
@@ -1362,10 +1884,10 @@ function LocationSelectorPage({ tripId, tripData }) {
           <div
             style={{
               position: "absolute",
-              top: 20,
+              top: 65,
               left: "50%",
               transform: "translateX(-50%)",
-              zIndex: 1000,
+              zIndex: 5000,
               width: "90%",
               maxWidth: 420,
             }}
@@ -1383,9 +1905,9 @@ function LocationSelectorPage({ tripId, tripData }) {
                   label: "text-black/70 dark:text-white/90",
                   input: [
                     "text-xs",
-                    "font-sm",
+                    "font-md",
                     "text-black/90 dark:text-white/90",
-                    "placeholder:text-xs placeholder:text-gray-400 dark:placeholder:text-white/40",
+                    "placeholder:text-xs placeholder:text-gray-600 dark:placeholder:text-white/40",
                     "leading-relaxed",
                   ],
                   innerWrapper: "bg-transparent px-1",
@@ -1407,8 +1929,8 @@ function LocationSelectorPage({ tripId, tripData }) {
                     showDropdown && search ? "group-data-[focus=true]:shadow-[0_20px_80px_rgba(59,130,246,0.15)]" : "",
                     "!cursor-text",
                     "transition-all duration-400 ease-out",
-                    "min-h-[56px]",
-                    "py-3",
+                    "min-h-[53px]",
+                    "py-2",
                     "ps-1"
                   ].filter(Boolean),
                 }}
@@ -1418,7 +1940,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                 size="lg"
                 startContent={
                   <div className="bg-slate-200 p-2 rounded-full shadow-xl hover:shadow-xl transition-all duration-300">
-                    <SearchIcon className="text-gray-800 w-4.5 h-4.5" />
+                    <SearchIcon className="text-gray-900 w-4.5 h-4.5" />
                   </div>
                 }
                 endContent={
@@ -1428,7 +1950,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                         <div className="w-5 h-5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
                       ) : isSearchFocused ? (
                         // Show result count when focused
-                        <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full font-medium">
+                        <div className="text-xs text-gray-800 bg-gray-200 px-2 py-1 rounded-full font-medium">
                           {results.length} نتیجه
                         </div>
                       ) : (
@@ -1520,7 +2042,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                   position: "absolute",
                   left: 0,
                   right: 0,
-                  zIndex: 3000,
+                  zIndex: 5100,
                 }}
                 className="animate-slide-down"
               >
@@ -1542,7 +2064,8 @@ function LocationSelectorPage({ tripId, tripData }) {
                       style={{
                         padding: "14px 16px",
                         cursor: "pointer",
-                        background: index === 0 ? "linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(147,51,234,0.05) 100%)" : "transparent",
+                        background: "transparent",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
                       }}
                       onClick={() => {
                         currentSearchRef.current = null;
@@ -1609,36 +2132,135 @@ function LocationSelectorPage({ tripId, tripData }) {
           </div>
           )}
 
-          {/* Enhanced Select button with premium design */}
+          {/* My Location Button - Google Maps Style with Status */}
           {!loading && (
           <div
-            className="px-4"
+            className="fixed right-4 z-50"
+            style={{
+              bottom: 130, // Position above the select button
+              zIndex: 5500,
+            }}
+          >
+            <Button
+              isIconOnly
+              isDisabled={locationError || (!userLocation && !isTrackingLocation)}
+              className={`w-12 h-12 border-2 shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm ${
+                locationError 
+                  ? 'bg-red-50/95 hover:bg-red-100 border-red-200/60 hover:border-red-300' 
+                  : !userLocation && !isTrackingLocation
+                  ? 'bg-gray-50/95 border-gray-200/60 opacity-50 cursor-not-allowed'
+                  : 'bg-white/95 hover:bg-white border-gray-200/60 hover:border-gray-300'
+              }`}
+              radius="full"
+              onClick={centerOnUserLocation}
+              onTouchStart={() => {
+                // Haptic feedback for mobile (only if not disabled)
+                if (!locationError && (userLocation || isTrackingLocation) && 'vibrate' in navigator) {
+                  navigator.vibrate(10);
+                }
+              }}
+            >
+              <div className="relative">
+                {locationError ? (
+                  // Error state - show warning icon
+                  <svg 
+                    className="w-6 h-6 text-red-500" 
+                    fill="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                  </svg>
+                ) : !userLocation && !isTrackingLocation ? (
+                  // No location available - show disabled GPS icon
+                  <svg 
+                    className="w-6 h-6 text-gray-400" 
+                    fill="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                  </svg>
+                ) : isLoadingLocation ? (
+                  // Loading state - show spinning icon
+                  <svg 
+                    className="w-6 h-6 text-blue-600 animate-spin" 
+                    fill="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
+                  </svg>
+                ) : (
+                  // Normal state - show crosshair/target icon for precise location
+                  <>
+                    <svg 
+                      className="w-8 h-8 text-blue-600" 
+                      fill="currentColor" 
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M11.5 20.95v-.961q-3.125-.293-5.16-2.328q-2.036-2.036-2.328-5.161H3.05q-.212 0-.356-.144t-.144-.357t.144-.356t.356-.143h.962q.292-3.125 2.328-5.16t5.16-2.328V3.05q0-.212.144-.356t.357-.144t.356.144t.143.356v.962q3.125.292 5.16 2.328t2.329 5.16h.961q.213 0 .356.144t.144.357t-.144.356t-.356.143h-.961q-.293 3.125-2.328 5.16q-2.036 2.036-5.161 2.329v.961q0 .213-.144.356t-.357.144t-.356-.144t-.143-.356M12 19q2.9 0 4.95-2.05T19 12t-2.05-4.95T12 5T7.05 7.05T5 12t2.05 4.95T12 19m0-4q-1.237 0-2.119-.881T9 12t.881-2.119T12 9t2.119.881T15 12t-.881 2.119T12 15"/>
+                    </svg>
+                    {/* Small blue dot in center */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-blue-600 rounded-full"></div>
+                  </>
+                )}
+              </div>
+            </Button>
+            
+            {/* Status tooltip/indicator */}
+            {locationError && (
+              <div className="absolute bottom-14 right-0 bg-blue-50/95 border border-blue-200/60 text-blue-800 px-3 py-2 rounded-lg text-xs whitespace-nowrap shadow-lg backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <span>اجازه موقعیت داده نشده است</span>
+                </div>
+              </div>
+            )}
+            {!locationError && !userLocation && !isTrackingLocation && (
+              <div className="absolute bottom-14 right-0 bg-amber-50/95 border border-amber-200/60 text-amber-800 px-3 py-2 rounded-lg text-xs whitespace-nowrap shadow-lg backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <svg className="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  <span>موقعیت در دسترس نیست</span>
+                </div>
+              </div>
+            )}
+          </div>
+          )}
+
+          {/* Mobile-Optimized Select Button */}
+          {!loading && (
+          <div
+            className="px-3 sm:px-4"
             style={{
               position: "fixed",
-              left: 12,
-              right: 12,
-              bottom: 12,
-              zIndex: showForm ? -1 : 4000,
-              background: "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)",
-              backdropFilter: "blur(20px)",
-              boxShadow: "0 -8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.2)",
-              borderRadius: "24px 24px 16px 16px",
-              padding: "20px 16px 20px 16px",
+              left: 8,
+              right: 8,
+              bottom: 8,
+              zIndex: showForm ? -1 : 6000,
+              background: "linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)",
+              backdropFilter: "blur(24px)",
+              boxShadow: "0 -12px 48px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.25)",
+              borderRadius: "28px 28px 20px 20px",
+              padding: "16px 12px 16px 12px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              minHeight: 84,
+              minHeight: 92,
               opacity: showForm ? 0 : 1,
               transform: showForm ? "translateY(100%)" : "translateY(0)",
               transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
               pointerEvents: showForm ? "none" : "auto",
-              border: "1px solid rgba(255,255,255,0.3)",
+              border: "1px solid rgba(255,255,255,0.4)",
             }}
           >
             <Button
-              className={`w-full py-7 px-6 shadow-2xl transition-all duration-300 font-bold text-lg ${
-                showForm ? 'scale-95 opacity-50' : 'scale-100 opacity-100 hover:scale-[1.02] active:scale-[0.98]'
+              className={`w-full transition-all duration-200 font-bold ${
+                showForm ? 'scale-95 opacity-50' : 'scale-100 opacity-100 active:scale-[0.96]'
               }`}
               variant="solid"
               size="lg"
@@ -1647,28 +2269,41 @@ function LocationSelectorPage({ tripId, tripData }) {
               disabled={showForm}
               style={{
                 background: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)",
-                boxShadow: "0 10px 40px rgba(249,115,22,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                boxShadow: "0 8px 32px rgba(249,115,22,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                minHeight: "54px",
+                fontSize: "15px",
+                fontWeight: "600",
+                padding: "0 18px",
+                borderRadius: "18px",
+              }}
+              onTouchStart={() => {
+                // Haptic feedback simulation for mobile
+                if ('vibrate' in navigator) {
+                  navigator.vibrate(10);
+                }
               }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+              <div className="flex items-center justify-center gap-1 w-full">
+                <div className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center flex-shrink-0">
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-white drop-shadow-sm">انتخاب این موقعیت</span>
-                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-white drop-shadow-md flex-1 text-center font-semibold tracking-normal">
+                  انتخاب این موقعیت
+                </span>
+                <div className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center flex-shrink-0">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
               </div>
             </Button>
             
-            {/* Subtle hint text */}
-            <p className="text-xs text-gray-700 mt-3 text-center opacity-70">
-              نقشه را حرکت دهید تا موقعیت دقیق را انتخاب کنید
+            {/* Mobile-optimized hint text */}
+            <p className="text-xs text-gray-600 mt-2 text-center opacity-80 font-medium leading-relaxed px-2">
+              نقشه را حرکت دهید و موقعیت مبدا را انتخاب کنید
             </p>
           </div>
           )}

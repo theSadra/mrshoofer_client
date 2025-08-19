@@ -72,7 +72,6 @@ export default function StepItem({
     ],
   };
 
-  // Always closed, never open
   const status: "active" | "inactive" | "complete" = "complete";
 
   return (
@@ -88,9 +87,9 @@ export default function StepItem({
           ref={ref}
           aria-current={undefined}
           className={cn(
-            "flex w-full cursor-not-allowed items-center justify-center gap-x-4 rounded-large px-3 py-2.5 opacity-60"
+            "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5"
           )}
-          // Remove click handler so it never opens
+          onClick={() => setCurrentStep(1)}
           {...props}
         >
           <div className="flex-1 text-right">
@@ -117,28 +116,64 @@ export default function StepItem({
             <div className="relative">
               <div
                 className={cn(
-                  "relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold border-primary-300 bg-primary-100 text-primary-700 shadow-lg"
+                  " relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold bg-green-500",
+                  {
+                    "shadow-lg": status === "complete",
+                  }
                 )}
               >
-                <svg
-                  className="h-6 w-6 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M5 13l4 4L19 7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <div className="fle x items-center justify-center">
+                  <svg
+                    className="h-6 w-6 text-[var(--active-fg-color)]"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M5 13l4 4L19 7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      pathLength={1}
+                      strokeDashoffset="0px"
+                      strokeDasharray="1px 1px"
+                    />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
         </button>
       </div>
-      {/* Details always closed */}
+      {content.details && content.details?.length > 0 && (
+        <LazyMotion features={domAnimation}>
+          <m.div
+            key={0}
+            animate={currentStep == 1 ? "open" : "closed"}
+            className="flex"
+            exit="complete"
+            initial={false}
+            transition={{
+              opacity: { duration: 0.25 },
+              height: { type: "spring", stiffness: 300, damping: 30 },
+            }}
+            variants={{
+              open: { opacity: 1, height: "auto" },
+              closed: { opacity: 0, height: 0 },
+              // complete: { opacity: 0, height: 0 },
+            }}
+          >
+            <Spacer x={1} />
+            <ul className="list-disc pb-4 pe-3 pr-7 text-default-700 text-start mt-2">
+              {content.details.map((detail, idx) => (
+                <li key={idx} className="mb-1 text-sm">
+                  {detail}
+                </li>
+              ))}
+            </ul>
+          </m.div>
+        </LazyMotion>
+      )}
     </li>
   );
 }

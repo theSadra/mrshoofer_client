@@ -22,7 +22,7 @@ export default function ClientRootLayout({ children }: { children: React.ReactNo
                         <main className="container mx-auto max-w-7xl pt-4 px-3.5 flex-grow">
                             {children}
                         </main>
-                        <footer className="w-full flex items-center justify-center py-5 mt-5">
+                        <footer className="w-full flex items-center justify-center py-5 mt-5" style={{ zIndex: 1 }}>
                             <img
                                 src="/mrshoofer_logo_full.png"
                                 alt="mrshoofer"

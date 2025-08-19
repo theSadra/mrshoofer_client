@@ -1,4 +1,4 @@
-// removed 'use client' - root layout must be a Server Component
+// removed 'use client' - root layout should be Server Component
 import React, { ReactNode } from "react";
 import "@/styles/globals.css";
 import { Link } from "@heroui/link";
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <main className="container mx-auto max-w-7xl pt-4 px-3.5 flex-grow">
               {children}
             </main>
-            <footer className="w-full flex items-center justify-center py-5 mt-5">
+            <footer className="w-full flex items-center justify-center py-5 mt-5" style={{ zIndex: 1 }}>
               <img
                 src="/mrshoofer_logo_full.png"
                 alt="mrshoofer"
@@ -51,3 +51,43 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
+
+// Metadata for the app
+export const metadata = {
+  title: {
+    default: "MrShoofer",
+    template: "%s - MrShoofer",
+  },
+  description: "درخواست تاکسی آنلاین",
+  keywords: ["MrShoofer", "تاکسی", "درخواست تاکسی"],
+  authors: [
+    {
+      name: "MrShoofer",
+    },
+  ],
+  creator: "MrShoofer",
+  openGraph: {
+    type: "website",
+    locale: "fa_IR",
+    url: "https://mrshoofer.com",
+    title: "MrShoofer",
+    description: "درخواست تاکسی آنلاین",
+    siteName: "MrShoofer",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MrShoofer",
+    description: "درخواست تاکسی آنلاین",
+    creator: "@mrshoofer",
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
+};
+
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
+};
