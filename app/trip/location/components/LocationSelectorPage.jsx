@@ -81,6 +81,20 @@ const customStyles = `
     }
   }
   
+  /* Mobile-friendly viewport handling */
+  .mobile-safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  }
+  
+  /* Ensure proper height on mobile browsers */
+  .full-height-mobile {
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* Dynamic viewport height */
+    min-height: -webkit-fill-available; /* Safari mobile fix */
+  }
+    }
+  }
+  
   @keyframes ping {
     75%, 100% {
       transform: scale(2);
@@ -277,6 +291,24 @@ function LocationSelectorPage({ tripId, tripData }) {
     setMounted(true);
   }, []);
 
+  // Apply mobile viewport styles to body only for location selector page
+  useEffect(() => {
+    const originalBodyStyle = {
+      maxHeight: document.body.style.maxHeight,
+      overflow: document.body.style.overflow,
+    };
+    
+    // Apply location selector specific styles
+    document.body.style.maxHeight = '100dvh';
+    document.body.style.overflow = 'hidden';
+    
+    // Cleanup function to restore original body styles when component unmounts
+    return () => {
+      document.body.style.maxHeight = originalBodyStyle.maxHeight;
+      document.body.style.overflow = originalBodyStyle.overflow;
+    };
+  }, []);
+
   // Debounce search input to avoid excessive API calls with optimized timing
   useEffect(() => {
     // Clear previous timeout
@@ -328,8 +360,6 @@ function LocationSelectorPage({ tripId, tripData }) {
   // ============= LOCATION TRACKING FUNCTIONS =============
   // Advanced location tracking functions
   const startLocationTracking = () => {
-    console.log('=== STARTING REAL-TIME LOCATION TRACKING ===');
-    
     if (!navigator.geolocation) {
       console.error('Geolocation not supported');
       setLocationError('GPS not supported by this browser');
@@ -349,10 +379,6 @@ function LocationSelectorPage({ tripId, tripData }) {
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
-        console.log('=== LOCATION UPDATE RECEIVED ===');
-        console.log('Accuracy:', position.coords.accuracy, 'meters');
-        console.log('Coordinates:', position.coords.latitude, position.coords.longitude);
-        
         const newLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
@@ -372,7 +398,10 @@ function LocationSelectorPage({ tripId, tripData }) {
         updateLocationDisplay(newLocation);
       },
       (error) => {
-        console.error('=== LOCATION ERROR ===', error);
+        // Only log significant location errors, not empty objects
+        if (error.code) {
+          console.error('Location error:', error.code, error.message || '');
+        }
         setIsLoadingLocation(false);
         
         let errorMessage;
@@ -401,12 +430,9 @@ function LocationSelectorPage({ tripId, tripData }) {
   };
 
   const stopLocationTracking = () => {
-    console.log('=== STOPPING LOCATION TRACKING ===');
-    
     if (locationWatchIdRef.current) {
       navigator.geolocation.clearWatch(locationWatchIdRef.current);
       locationWatchIdRef.current = null;
-      console.log('Location tracking stopped');
     }
     
     setIsTrackingLocation(false);
@@ -430,11 +456,7 @@ function LocationSelectorPage({ tripId, tripData }) {
   };
 
   const updateLocationDisplay = (location) => {
-    console.log('=== UPDATING LOCATION DISPLAY ===');
-    console.log('Location:', location);
-    
     if (!window.neshanMapInstance) {
-      console.warn('Map not ready for location display update');
       return;
     }
 
@@ -446,38 +468,25 @@ function LocationSelectorPage({ tripId, tripData }) {
   };
 
   const updateAccuracyCircle = (lat, lng, accuracy) => {
-    console.log('=== UPDATING ACCURACY CIRCLE ===');
-    console.log('Input parameters:');
-    console.log('- Latitude:', lat);
-    console.log('- Longitude:', lng);
-    console.log('- Accuracy:', accuracy, 'meters (type:', typeof accuracy, ')');
-    
     // Validate accuracy value
     if (accuracy === null || accuracy === undefined || isNaN(accuracy)) {
-      console.warn('Invalid accuracy value:', accuracy, '- using fallback of 50 meters');
       accuracy = 50;
     }
     
     if (accuracy <= 0) {
-      console.warn('Non-positive accuracy value:', accuracy, '- using fallback of 50 meters');
       accuracy = 50;
     }
     
     // Clamp accuracy to reasonable bounds (5m to 500m)
     if (accuracy < 5) {
-      console.warn('Unusually high accuracy:', accuracy, 'm - clamping to 5m minimum');
       accuracy = 5;
     }
     
     if (accuracy > 500) {
-      console.warn('Unusually low accuracy:', accuracy, 'm - clamping to 500m maximum');
       accuracy = 500;
     }
     
-    console.log('Final validated accuracy:', accuracy, 'meters');
-    
     if (!window.neshanMapInstance) {
-      console.warn('Map not ready for accuracy circle update');
       return;
     }
     
@@ -498,13 +507,6 @@ function LocationSelectorPage({ tripId, tripData }) {
     const radiusPixels = Math.min(Math.max(accuracy / metersPerPixel, 10), 200);
     const diameter = radiusPixels * 2;
     
-    console.log('Accuracy calculation details:');
-    console.log('- GPS accuracy:', accuracy, 'meters');
-    console.log('- Map zoom level:', zoom);
-    console.log('- Meters per pixel at this zoom:', metersPerPixel.toFixed(2));
-    console.log('- Calculated radius in pixels:', radiusPixels.toFixed(2));
-    console.log('- Final diameter:', diameter.toFixed(2), 'px');
-    
     // IDENTICAL styling pattern to working markers
     circleEl.style.width = diameter + "px";
     circleEl.style.height = diameter + "px";
@@ -514,8 +516,6 @@ function LocationSelectorPage({ tripId, tripData }) {
     circleEl.style.display = "block";
     circleEl.style.pointerEvents = "none";
 
-    console.log('Creating accuracy circle with diameter:', diameter, 'px at coordinates:', [lng, lat]);
-    
     // Create marker using IDENTICAL pattern to working search markers
     const circleMarker = new nmp_mapboxgl.Marker(circleEl, { 
       anchor: "center"  // IDENTICAL to working markers
@@ -524,15 +524,10 @@ function LocationSelectorPage({ tripId, tripData }) {
     .addTo(map);
 
     accuracyCircleRef.current = circleMarker;
-    console.log('Accuracy circle created and added to map');
   };
 
   const updateUserLocationMarker = (lat, lng) => {
-    console.log('=== UPDATING USER LOCATION MARKER ===');
-    console.log('Input coordinates - lat:', lat, 'lng:', lng);
-    
     if (!window.neshanMapInstance) {
-      console.warn('Map not ready for marker update');
       return;
     }
 
@@ -586,8 +581,6 @@ function LocationSelectorPage({ tripId, tripData }) {
       
       markerEl.appendChild(blueDot);
       
-      console.log('Creating user location marker at coordinates [lng, lat]:', [lng, lat]);
-      
       // Create marker using IDENTICAL pattern to working search markers
       const userMarker = new nmp_mapboxgl.Marker(markerEl, {
         anchor: "center"  // IDENTICAL to working search markers
@@ -595,8 +588,6 @@ function LocationSelectorPage({ tripId, tripData }) {
       .setLngLat([lng, lat])  // IDENTICAL coordinates
       .addTo(map);
 
-      console.log('✅ User location marker created and properly bound to map');
-      
       userLocationMarkerRef.current = userMarker;
       
     } catch (error) {
@@ -607,8 +598,6 @@ function LocationSelectorPage({ tripId, tripData }) {
 
   // Get user location on mount - now with real-time tracking
   useEffect(() => {
-    console.log('=== ADVANCED USER LOCATION SETUP ===');
-    
     // Start real-time location tracking automatically
     startLocationTracking();
     
@@ -620,22 +609,11 @@ function LocationSelectorPage({ tripId, tripData }) {
 
   // Watch for when both map and user location are available to show blue dot
   useEffect(() => {
-    console.log('=== MAP AND LOCATION SYNC CHECK ===');
-    console.log('userLocation:', userLocation);
-    console.log('Map instance available:', typeof window !== 'undefined' && !!window.neshanMapInstance);
-    console.log('Loading state:', loading);
-    
     // Show user location blue dot as soon as both map and location are available
     if (!loading && userLocation && typeof window !== 'undefined' && window.neshanMapInstance) {
-      console.log('Both map and location ready - showing blue dot...');
       setTimeout(() => {
         updateLocationDisplay(userLocation);
       }, 300); // Small delay to ensure everything is initialized
-    } else  {
-      console.log('=== NOT READY YET ===');
-      console.log('- loading:', loading);
-      console.log('- userLocation exists:', !!userLocation);
-      console.log('- map ready:', typeof window !== 'undefined' && !!window.neshanMapInstance);
     }
   }, [userLocation, loading]); // Trigger when userLocation changes or loading completes
 
@@ -810,9 +788,6 @@ function LocationSelectorPage({ tripId, tripData }) {
         // Update accuracy circle when zoom changes (blue dot stays same size)
         if (currentLocationRef.current && accuracyCircleRef.current) {
           const currentAccuracy = currentLocationRef.current.accuracy || 50;
-          console.log('Zoom changed to:', newZoom, '- updating accuracy circle');
-          console.log('Current location ref:', currentLocationRef.current);
-          console.log('Using accuracy value:', currentAccuracy, 'meters');
           updateAccuracyCircle(
             currentLocationRef.current.lat, 
             currentLocationRef.current.lng, 
@@ -884,10 +859,7 @@ function LocationSelectorPage({ tripId, tripData }) {
 
   // Enhanced "My Location" button functionality
   const centerOnUserLocation = () => {
-    console.log('=== CENTER ON USER LOCATION CALLED ===');
-    
     if (!userLocation) {
-      console.log('No user location available, starting location tracking...');
       startLocationTracking();
       return;
     }
@@ -1350,7 +1322,7 @@ function LocationSelectorPage({ tripId, tripData }) {
       {/* Inject custom styles */}
       <style jsx global>{customStyles}</style>
       
-  <div className="fixed inset-0 w-full h-full z-0" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100dvh', overflow: 'hidden', background: '#f8fafc' }}>
+  <div className="fixed inset-0 w-full full-height-mobile z-0" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', overflow: 'hidden', background: '#f8fafc' }}>
       {/* Header - Optimized for Mobile */}
       <div 
         className="flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-100/30 z-50 transition-all duration-300" 
@@ -2234,12 +2206,13 @@ function LocationSelectorPage({ tripId, tripData }) {
           {/* Mobile-Optimized Select Button */}
           {!loading && (
           <div
-            className="px-3 sm:px-4"
+            className="px-3 sm:px-4 mobile-safe-bottom"
             style={{
               position: "fixed",
               left: 8,
               right: 8,
-              bottom: 8,
+              bottom: 5, // Reduced from 24 to 12 to move closer to bottom
+              paddingBottom: "env(safe-area-inset-bottom, 0px)", // Additional safe area padding
               zIndex: showForm ? -1 : 6000,
               background: "linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)",
               backdropFilter: "blur(24px)",
