@@ -88,9 +88,52 @@ const customStyles = `
   
   /* Ensure proper height on mobile browsers */
   .full-height-mobile {
-    height: 100vh; /* Fallback for older browsers */
+    height: 100vh !important; /* Fallback for older browsers */
     height: 100dvh; /* Dynamic viewport height */
-    min-height: -webkit-fill-available; /* Safari mobile fix */
+    height: -webkit-fill-available; /* Safari mobile fix */
+    min-height: 100vh !important; /* Minimum fallback */
+    min-height: 100dvh; /* Minimum dynamic viewport */
+    min-height: -webkit-fill-available; /* Safari minimum height fix */
+    max-height: 100vh; /* Prevent overflow */
+    max-height: 100dvh; /* Dynamic max height */
+  }
+  
+  /* Safari-specific body and html fixes */
+  @supports (-webkit-touch-callout: none) {
+    .safari-height-fix {
+      height: -webkit-fill-available !important;
+      min-height: -webkit-fill-available !important;
+    }
+    
+    /* Use custom property for Safari height */
+    .safari-height-fix {
+      height: var(--safari-height, 100vh) !important;
+      min-height: var(--safari-height, 100vh) !important;
+    }
+  }
+  
+  /* Additional Safari iOS fixes */
+  @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 2) {
+    .full-height-mobile {
+      height: 100vh !important;
+      min-height: 100vh !important;
+    }
+  }
+  
+  /* Global body override when location selector is active */
+  body.location-selector-active {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+  }
+  
+  html.location-selector-active {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    overflow: hidden !important;
   }
     }
   }
@@ -161,6 +204,7 @@ function LocationSelectorPage({ tripId, tripData }) {
   const [showForm, setShowForm] = useState(false);
   // Real-time location tracking states
   const [isTrackingLocation, setIsTrackingLocation] = useState(false);
+  const [isContinuousTracking, setIsContinuousTracking] = useState(false);
   const [locationAccuracy, setLocationAccuracy] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState(null);
@@ -171,6 +215,8 @@ function LocationSelectorPage({ tripId, tripData }) {
   // Real-time location tracking refs
   const accuracyCircleRef = useRef(null);
   const locationWatchIdRef = useRef(null);
+  const locationRefreshIntervalRef = useRef(null);
+  const locationDisplayTimeoutRef = useRef(null);
   const currentLocationRef = useRef(null); // Store current location for zoom handler
   const selectedCordinates = useRef({ lat: 0, lng: 0 });
   const searchTimeoutRef = useRef(null);
@@ -293,19 +339,185 @@ function LocationSelectorPage({ tripId, tripData }) {
 
   // Apply mobile viewport styles to body only for location selector page
   useEffect(() => {
+    // CRITICAL: Do not apply any styles if we're on a driver page
+    const isDriverPage = window.location.pathname.includes('/driver/');
+    if (isDriverPage) {
+      console.log('LocationSelector: Skipping viewport styles - on driver page');
+      return;
+    }
+    
+    // Store COMPLETE original styles for restoration
     const originalBodyStyle = {
-      maxHeight: document.body.style.maxHeight,
-      overflow: document.body.style.overflow,
+      maxHeight: document.body.style.maxHeight || '',
+      height: document.body.style.height || '',
+      overflow: document.body.style.overflow || '',
+      position: document.body.style.position || '',
+      width: document.body.style.width || '',
+      minHeight: document.body.style.minHeight || '',
     };
     
-    // Apply location selector specific styles
-    document.body.style.maxHeight = '100dvh';
-    document.body.style.overflow = 'hidden';
+    const originalHtmlStyle = {
+      height: document.documentElement.style.height || '',
+      maxHeight: document.documentElement.style.maxHeight || '',
+      overflow: document.documentElement.style.overflow || '',
+      minHeight: document.documentElement.style.minHeight || '',
+    };
     
-    // Cleanup function to restore original body styles when component unmounts
+    // Also store any existing CSS text for complete restoration
+    const originalBodyCSSText = document.body.style.cssText;
+    const originalHtmlCSSText = document.documentElement.style.cssText;
+    
+    // Detect Safari and dvh support
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const supportsDvh = CSS.supports('height', '100dvh');
+    
+    console.log('LocationSelector: Applying viewport styles ONLY for trip/location page');
+    
+    // Apply location selector specific styles with dvh priority - ONLY for this page
+    if (supportsDvh) {
+      // Modern browsers with dvh support
+      document.body.style.height = '100dvh';
+      document.body.style.maxHeight = '100dvh';
+      document.body.style.minHeight = '100dvh';
+      document.documentElement.style.height = '100dvh';
+      document.documentElement.style.minHeight = '100dvh';
+    } else if (isSafari) {
+      // Safari-specific fixes
+      const viewportHeight = window.innerHeight;
+      document.body.style.height = viewportHeight + 'px';
+      document.body.style.maxHeight = viewportHeight + 'px';
+      document.body.style.minHeight = viewportHeight + 'px';
+      document.documentElement.style.height = viewportHeight + 'px';
+      document.body.classList.add('safari-height-fix');
+    } else {
+      // Fallback for older browsers
+      document.body.style.height = '100vh';
+      document.body.style.maxHeight = '100vh';
+      document.body.style.minHeight = '100vh';
+    }
+    
+    // Apply positioning styles
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    
+    // Add specific CSS classes for this component only
+    document.body.classList.add('location-selector-active');
+    document.documentElement.classList.add('location-selector-active');
+    
+    // Inject critical CSS for comprehensive dvh support - ULTRA SPECIFIC
+    const criticalCSS = document.createElement('style');
+    criticalCSS.id = 'location-selector-dvh-styles';
+    criticalCSS.innerHTML = `
+      /* ULTRA-SPECIFIC: Only apply to trip/location pages, exclude driver pages completely */
+      body.location-selector-active:not([data-driver-page]) {
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        min-height: 100dvh !important;
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+      }
+      
+      html.location-selector-active {
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        min-height: 100dvh !important;
+        overflow: hidden !important;
+      }
+      
+      /* Fallback for browsers without dvh support */
+      @supports not (height: 100dvh) {
+        body.location-selector-active:not([data-driver-page]) {
+          height: 100vh !important;
+          max-height: 100vh !important;
+          min-height: 100vh !important;
+        }
+        
+        html.location-selector-active {
+          height: 100vh !important;
+          max-height: 100vh !important;
+          min-height: 100vh !important;
+        }
+      }
+      
+      /* Safari-specific fixes */
+      @supports (-webkit-touch-callout: none) {
+        body.safari-height-fix.location-selector-active:not([data-driver-page]) {
+          height: -webkit-fill-available !important;
+          max-height: -webkit-fill-available !important;
+          min-height: -webkit-fill-available !important;
+        }
+      }
+    `;
+    document.head.appendChild(criticalCSS);
+    
+    // CRITICAL CLEANUP: Aggressively restore everything on unmount
     return () => {
+      console.log('LocationSelector: COMPLETELY removing all viewport styles and restoring original state');
+      
+      // Method 1: Restore individual properties
       document.body.style.maxHeight = originalBodyStyle.maxHeight;
+      document.body.style.height = originalBodyStyle.height;
       document.body.style.overflow = originalBodyStyle.overflow;
+      document.body.style.position = originalBodyStyle.position;
+      document.body.style.width = originalBodyStyle.width;
+      document.body.style.minHeight = originalBodyStyle.minHeight;
+      
+      document.documentElement.style.height = originalHtmlStyle.height;
+      document.documentElement.style.maxHeight = originalHtmlStyle.maxHeight;
+      document.documentElement.style.overflow = originalHtmlStyle.overflow;
+      document.documentElement.style.minHeight = originalHtmlStyle.minHeight;
+      
+      // Method 2: Restore complete CSS text (fallback)
+      if (originalBodyCSSText) {
+        document.body.style.cssText = originalBodyCSSText;
+      }
+      if (originalHtmlCSSText) {
+        document.documentElement.style.cssText = originalHtmlCSSText;
+      }
+      
+      // Remove ALL classes completely
+      document.body.classList.remove('safari-height-fix');
+      document.body.classList.remove('location-selector-active');
+      document.documentElement.classList.remove('location-selector-active');
+      
+      // Remove injected CSS completely
+      const injectedStyles = document.getElementById('location-selector-dvh-styles');
+      if (injectedStyles) {
+        injectedStyles.remove();
+      }
+      
+      // Force DOM reflow to ensure styles are applied
+      void document.body.offsetHeight;
+      void document.documentElement.offsetHeight;
+      
+      console.log('LocationSelector: All styles completely removed, original state restored');
+    };
+  }, []);
+
+  // Cleanup location tracking on component unmount
+  useEffect(() => {
+    return () => {
+      // Stop location tracking when component unmounts
+      if (locationWatchIdRef.current) {
+        navigator.geolocation.clearWatch(locationWatchIdRef.current);
+        locationWatchIdRef.current = null;
+        console.log('Location tracking cleaned up on unmount');
+      }
+      
+      // Clear forced refresh interval
+      if (locationRefreshIntervalRef.current) {
+        clearInterval(locationRefreshIntervalRef.current);
+        locationRefreshIntervalRef.current = null;
+        console.log('Location refresh interval cleaned up on unmount');
+      }
+      
+      // Clear location display timeout
+      if (locationDisplayTimeoutRef.current) {
+        clearTimeout(locationDisplayTimeoutRef.current);
+        locationDisplayTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -381,11 +593,11 @@ function LocationSelectorPage({ tripId, tripData }) {
     setLocationError(null);
     setIsTrackingLocation(true);
 
-    // High-precision geolocation options
+    // High-precision geolocation options for continuous tracking
     const watchOptions = {
       enableHighAccuracy: true,
-      maximumAge: 0, // Always get fresh location
-      timeout: 10000, // 10 seconds timeout
+      maximumAge: 5000, // Reduced to 5 seconds for more frequent updates
+      timeout: 15000, // 15 seconds timeout
     };
 
     const watchId = navigator.geolocation.watchPosition(
@@ -401,21 +613,28 @@ function LocationSelectorPage({ tripId, tripData }) {
         setLocationAccuracy(position.coords.accuracy);
         setIsLoadingLocation(false);
         setLocationError(null);
-        setIsTrackingLocation(false); // Stop tracking state
 
         // Store current location for zoom handler
         currentLocationRef.current = newLocation;
 
-        // Center the map on the user location
-        centerMapAndAddDot(newLocation);
+        // Only center map on first location or if user clicked the button again
+        if (!isContinuousTracking) {
+          // First time getting location - center the map
+          centerMapAndAddDot(newLocation);
+          setIsContinuousTracking(true);
+        }
 
-        // Update the location marker and accuracy circle
+        // Always update the location marker and accuracy circle
         updateLocationDisplay(newLocation);
 
-        // Stop watching after first successful location
-        if (watchId) {
-          navigator.geolocation.clearWatch(watchId);
-        }
+        // Set tracking state to false after first successful location (for button visual)
+        setIsTrackingLocation(false);
+
+        console.log('Location updated:', {
+          lat: newLocation.lat,
+          lng: newLocation.lng,
+          accuracy: newLocation.accuracy
+        });
       },
       (error) => {
         // Only log significant location errors, not empty objects
@@ -424,6 +643,7 @@ function LocationSelectorPage({ tripId, tripData }) {
         }
         setIsLoadingLocation(false);
         setIsTrackingLocation(false); // Stop tracking state on error
+        setIsContinuousTracking(false); // Stop continuous tracking on error
         
         let errorMessage;
         switch (error.code) {
@@ -448,15 +668,70 @@ function LocationSelectorPage({ tripId, tripData }) {
 
     locationWatchIdRef.current = watchId;
     console.log('Location tracking started with ID:', watchId);
+    
+    // Add forced refresh every 8 seconds to ensure regular updates
+    // This complements the browser's automatic updates
+    locationRefreshIntervalRef.current = setInterval(() => {
+      if (isContinuousTracking && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const refreshedLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              timestamp: position.timestamp,
+            };
+            
+            // Only update if this is a newer/more accurate position
+            const isNewer = !currentLocationRef.current || 
+              refreshedLocation.timestamp > currentLocationRef.current.timestamp;
+            const isMoreAccurate = !currentLocationRef.current || 
+              refreshedLocation.accuracy < currentLocationRef.current.accuracy;
+              
+            if (isNewer || isMoreAccurate) {
+              setUserLocation(refreshedLocation);
+              setLocationAccuracy(refreshedLocation.accuracy);
+              currentLocationRef.current = refreshedLocation;
+              updateLocationDisplay(refreshedLocation);
+              console.log('Force-refreshed location:', refreshedLocation);
+            }
+          },
+          (error) => {
+            // Silently handle forced refresh errors
+            console.warn('Forced location refresh failed:', error.code);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0 // Force fresh location for periodic refresh
+          }
+        );
+      }
+    }, 8000); // 8-second forced refresh interval
   };
 
   const stopLocationTracking = () => {
     if (locationWatchIdRef.current) {
       navigator.geolocation.clearWatch(locationWatchIdRef.current);
       locationWatchIdRef.current = null;
+      console.log('Location tracking stopped');
+    }
+    
+    // Clear forced refresh interval
+    if (locationRefreshIntervalRef.current) {
+      clearInterval(locationRefreshIntervalRef.current);
+      locationRefreshIntervalRef.current = null;
+      console.log('Location refresh interval cleared');
+    }
+    
+    // Clear location display timeout
+    if (locationDisplayTimeoutRef.current) {
+      clearTimeout(locationDisplayTimeoutRef.current);
+      locationDisplayTimeoutRef.current = null;
     }
     
     setIsTrackingLocation(false);
+    setIsContinuousTracking(false);
     setIsLoadingLocation(false);
     
     // Remove accuracy circle
@@ -481,11 +756,22 @@ function LocationSelectorPage({ tripId, tripData }) {
       return;
     }
 
-    const map = window.neshanMapInstance;
+    // Clear any pending update to prevent duplicate circles
+    if (locationDisplayTimeoutRef.current) {
+      clearTimeout(locationDisplayTimeoutRef.current);
+      locationDisplayTimeoutRef.current = null;
+    }
 
-    // Use separate markers like the working search markers
-    updateAccuracyCircle(location.lat, location.lng, location.accuracy);
-    updateUserLocationMarker(location.lat, location.lng);
+    // Debounce the update by 100ms to prevent duplicate calls
+    locationDisplayTimeoutRef.current = setTimeout(() => {
+      const map = window.neshanMapInstance;
+
+      // Use separate markers like the working search markers
+      updateAccuracyCircle(location.lat, location.lng, location.accuracy);
+      updateUserLocationMarker(location.lat, location.lng);
+      
+      locationDisplayTimeoutRef.current = null;
+    }, 100);
   };
 
   const updateAccuracyCircle = (lat, lng, accuracy) => {
@@ -513,11 +799,25 @@ function LocationSelectorPage({ tripId, tripData }) {
     
     const map = window.neshanMapInstance;
     
-    // Remove existing accuracy circle
+    // More aggressive cleanup of existing accuracy circles
     if (accuracyCircleRef.current) {
-      accuracyCircleRef.current.remove();
+      try {
+        accuracyCircleRef.current.remove();
+      } catch (error) {
+        console.warn('Error removing accuracy circle:', error);
+      }
       accuracyCircleRef.current = null;
     }
+
+    // Also remove any orphaned accuracy circles that might exist
+    const existingCircles = document.querySelectorAll('[id^="accuracy-circle-"]');
+    existingCircles.forEach(circle => {
+      try {
+        circle.remove();
+      } catch (error) {
+        console.warn('Error removing orphaned circle:', error);
+      }
+    });
 
     // Create accuracy circle element using EXACT pattern as working markers
     const circleEl = document.createElement("div");
@@ -898,123 +1198,69 @@ function LocationSelectorPage({ tripId, tripData }) {
 
   // Enhanced "My Location" button functionality
   const centerOnUserLocation = () => {
-    if (!userLocation) {
+    if (!userLocation && !isContinuousTracking) {
+      // Start fresh tracking
       startLocationTracking();
       return;
     }
     
-    // If we have a location, center immediately and update with fresh location
-    centerMapAndAddDot(userLocation);
-    
-    // Also request a fresh location update
-    if (navigator.geolocation && !isLoadingLocation) {
-      setIsLoadingLocation(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const freshLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: position.timestamp,
-          };
-          console.log('Fresh location obtained for centering:', freshLocation);
-          
-          setUserLocation(freshLocation);
-          setLocationAccuracy(position.coords.accuracy);
-          setIsLoadingLocation(false);
-          
-          // Update display with fresh location
-          updateLocationDisplay(freshLocation);
-        },
-        (error) => {
-          console.warn('Failed to get fresh location:', error);
-          setIsLoadingLocation(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 30000 // Accept cached location up to 30 seconds old
-        }
-      );
+    if (userLocation) {
+      // If we have a location, center immediately
+      centerMapAndAddDot(userLocation);
+      
+      // If not already tracking continuously, start it
+      if (!isContinuousTracking) {
+        startLocationTracking();
+      }
     }
   };
 
   // Helper function to center map and add blue dot
   const centerMapAndAddDot = (location) => {
-    console.log('=== CENTERING MAP AND ADDING DOT ===');
-    console.log('Location:', location);
-    console.log('window.neshanMapInstance:', typeof window !== 'undefined' ? !!window.neshanMapInstance : 'undefined');
     
     if (location && typeof window !== 'undefined' && window.neshanMapInstance) {
       try {
         // Get the map instance
         const map = window.neshanMapInstance;
         
-        // Calculate the offset coordinates like in the search selection
-        // We need to offset the map center so the bottom tip of the center indicator shows our location
-        const targetPixel = map.project([location.lng, location.lat]);
+        // Get current zoom level to calculate zoom-appropriate offset
+        const currentZoom = map.getZoom();
         
-        // Apply the reverse offset (move map center UP so the tip points to our location)
-        const pointerTipOffsetY = 39; // Same offset as used in handleSelectLocation
-        const adjustedPixel = {
-          x: targetPixel.x,
-          y: targetPixel.y - pointerTipOffsetY // Move center UP so tip points DOWN to our location
-        };
+        // Calculate zoom-based offset - more offset at higher zoom levels
+        // Base offset of 45px at zoom 15, scales with zoom level
+        const baseOffset = 45;
+        const baseZoom = 15;
+        const zoomFactor = Math.pow(2, currentZoom - baseZoom);
+        const dynamicOffset = baseOffset * zoomFactor;
         
-        // Convert back to coordinates
-        const adjustedCoords = map.unproject(adjustedPixel);
-        const mapCenterCoords = [adjustedCoords.lng, adjustedCoords.lat];
+        // Use zoom-aware algorithm
+        const searchedCoords = [location.lng, location.lat];
+        const searchPixel = map.project(searchedCoords);
+        const offsetMapCenter = map.unproject([
+          searchPixel.x,
+          searchPixel.y - dynamicOffset  // Dynamic offset based on zoom level
+        ]);
         
         console.log('Original location coordinates:', [location.lng, location.lat]);
-        console.log('Adjusted map center coordinates:', mapCenterCoords);
+        console.log('Current zoom level:', currentZoom);
+        console.log('Dynamic offset (px):', dynamicOffset);
+        console.log('Offsetting map center to:', offsetMapCenter);
         
-        // Try flyTo first with the adjusted center
-        if (typeof map.flyTo === 'function') {
-          console.log('Using flyTo method with adjusted center...');
-          map.flyTo({
-            center: mapCenterCoords,
-            zoom: 17, // Higher zoom to see the blue dot clearly
-            duration: 2000, // Longer duration to see the movement
-          });
-          console.log('flyTo executed successfully');
-          
-          // Update location display after animation completes
-          setTimeout(() => {
-            console.log('Updating location display after flyTo animation...');
-            updateLocationDisplay(location);
-          }, 2100);
-          
-        } 
-        // Fallback to easeTo if flyTo doesn't exist
-        else if (typeof map.easeTo === 'function') {
-          console.log('Using easeTo method with adjusted center...');
-          map.easeTo({
-            center: mapCenterCoords,
-            zoom: 17,
-            duration: 2000,
-          });
-          console.log('easeTo executed successfully');
-          
-          // Update location display after animation completes
-          setTimeout(() => {
-            console.log('Updating location display after easeTo animation...');
-            updateLocationDisplay(location);
-          }, 2100);
-          
-        }
-        // Last resort: setCenter and setZoom
-        else {
-          console.log('Using setCenter/setZoom methods with adjusted center...');
-          map.setCenter(mapCenterCoords);
-          map.setZoom(17);
-          console.log('setCenter/setZoom executed successfully');
-          
-          // Update location display immediately for instant methods
-          setTimeout(() => {
-            console.log('Updating location display after setCenter/setZoom...');
-            updateLocationDisplay(location);
-          }, 100);
-        }
+        // Use easeTo with zoom-aware settings
+        map.easeTo({ 
+          center: [offsetMapCenter.lng, offsetMapCenter.lat],
+          zoom: Math.max(currentZoom, 16), // Ensure minimum zoom for location visibility
+          duration: 1000, // Same duration as search results
+          easing: t => t * (2 - t) // Same easeOutQuad easing as search results
+        });
+        
+        console.log('easeTo executed successfully with zoom-aware algorithm');
+        
+        // Update location display after animation completes
+        setTimeout(() => {
+          console.log('Updating location display after easeTo animation...');
+          updateLocationDisplay(location);
+        }, 1100); // Match the animation duration + 100ms buffer
         
         // Update the selected coordinates and address (like in search selection)
         selectedCordinates.current = { lat: location.lat, lng: location.lng };
@@ -1361,7 +1607,21 @@ function LocationSelectorPage({ tripId, tripData }) {
       {/* Inject custom styles */}
       <style jsx global>{customStyles}</style>
       
-  <div className="fixed inset-0 w-full full-height-mobile z-0" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', overflow: 'hidden', background: '#f8fafc' }}>
+  <div className="fixed inset-0 w-full full-height-mobile safari-height-fix z-0" style={{ 
+    position: 'fixed', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    bottom: 0, 
+    width: '100vw', 
+    height: '100vh',
+    minHeight: '100vh',
+    overflow: 'hidden', 
+    background: '#f8fafc',
+    // Safari specific fixes
+    WebkitAppearance: 'none',
+    MozAppearance: 'none'
+  }}>
       {/* Header - Optimized for Mobile */}
       <div 
         className="flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-100/30 z-50 transition-all duration-300" 
@@ -2155,7 +2415,9 @@ function LocationSelectorPage({ tripId, tripData }) {
             <Button
               isIconOnly
               isDisabled={false}
-              className="w-12 h-12 border-2 shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm bg-white/95 hover:bg-white border-gray-200/60 hover:border-gray-300"
+              className={`w-12 h-12 border-2 shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm ${
+                'bg-white/95 hover:bg-white border-gray-200/60 hover:border-gray-300'
+              }`}
               radius="full"
               onClick={centerOnUserLocation}
               onTouchStart={() => {
@@ -2177,14 +2439,18 @@ function LocationSelectorPage({ tripId, tripData }) {
                   </svg>
                 ) : (
                   // Normal state - show crosshair/target icon for precise location
-                  <svg 
-                    className="w-8 h-8 text-blue-600" 
-                    fill="currentColor" 
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M11.5 20.95v-.961q-3.125-.293-5.16-2.328q-2.036-2.036-2.328-5.161H3.05q-.212 0-.356-.144t-.144-.357t.144-.356t.356-.143h.962q.292-3.125 2.328-5.16t5.16-2.328V3.05q0-.212.144-.356t.357-.144t.356.144t.143.356v.962q3.125.292 5.16 2.328t2.329 5.16h.961q.213 0 .356.144t.144.357t-.144.356t-.356.143h-.961q-.293 3.125-2.328 5.16q-2.036 2.036-5.161 2.329v.961q0 .213-.144.356t-.357.144t-.356-.144t-.143-.356M12 19q2.9 0 4.95-2.05T19 12t-2.05-4.95T12 5T7.05 7.05T5 12t2.05 4.95T12 19m0-4q-1.237 0-2.119-.881T9 12t.881-2.119T12 9t2.119.881T15 12t-.881 2.119T12 15"/>
-                  </svg>
+                  <>
+                    <svg 
+                      className={`w-8 h-8 ${isContinuousTracking ? 'text-blue-600' : 'text-blue-600'}`}
+                      fill="currentColor" 
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M11.5 20.95v-.961q-3.125-.293-5.16-2.328q-2.036-2.036-2.328-5.161H3.05q-.212 0-.356-.144t-.144-.357t.144-.356t.356-.143h.962q.292-3.125 2.328-5.16t5.16-2.328V3.05q0-.212.144-.356t.357-.144t.356.144t.143.356v.962q3.125.292 5.16 2.328t2.329 5.16h.961q.213 0 .356.144t.144.357t-.144.356t-.356.143h-.961q-.293 3.125-2.328 5.16q-2.036 2.036-5.161 2.329v.961q0 .213-.144.356t-.357.144t-.356-.144t-.143-.356M12 19q2.9 0 4.95-2.05T19 12t-2.05-4.95T12 5T7.05 7.05T5 12t2.05 4.95T12 19m0-4q-1.237 0-2.119-.881T9 12t.881-2.119T12 9t2.119.881T15 12t-.881 2.119T12 15"/>
+                    </svg>
+                    {/* Show small pulsing dot when continuously tracking */}
+                   
+                  </>
                 )}
               </div>
             </Button>

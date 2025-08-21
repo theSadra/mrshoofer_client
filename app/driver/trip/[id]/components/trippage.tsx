@@ -39,6 +39,17 @@ interface TripPageProps {
 
 function TripPage({ trip }: TripPageProps) {
 
+    // Ensure driver page exclusion from location selector styles
+    React.useEffect(() => {
+        document.body.setAttribute('data-driver-page', 'true');
+        document.body.classList.add('driver-page');
+        
+        return () => {
+            document.body.removeAttribute('data-driver-page');
+            document.body.classList.remove('driver-page');
+        };
+    }, []);
+
     const directionApps = [
         {
             name: "Google Maps",
@@ -92,7 +103,7 @@ function TripPage({ trip }: TripPageProps) {
     };
 
     return (
-        <div dir="rtl">
+        <div dir="rtl" data-driver-page="true">
             <div className="mt-2 flex justify-start gap-2 items-center mb-4 ">
                 <Icon icon="fluent-color:person-starburst-28" width={26} ></Icon>
                 <p className="text-lg font-semibold ">
