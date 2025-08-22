@@ -373,22 +373,77 @@ function LocationSelectorPage({ tripId, tripData }) {
     
     console.log('LocationSelector: Applying viewport styles ONLY for trip/location page');
     
-    // Apply location selector specific styles with dvh priority - ONLY for this page
-    if (supportsDvh) {
-      // Modern browsers with dvh support
+    // Apply location selector specific styles with aggressive Safari handling
+    if (isSafari) {
+      console.log('Safari detected: Applying aggressive viewport handling');
+      
+      // Force viewport meta for proper Safari handling
+      let viewportMeta = document.querySelector('meta[name="viewport"]');
+      if (viewportMeta) {
+        viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+      }
+      
+      // Get true viewport dimensions
+      const viewportHeight = window.innerHeight;
+      const screenHeight = window.screen.height;
+      const visualViewportHeight = window.visualViewport ? window.visualViewport.height : viewportHeight;
+      
+      console.log('Safari viewport dimensions:', {
+        innerHeight: viewportHeight,
+        screenHeight: screenHeight,
+        visualViewportHeight: visualViewportHeight,
+        supportsDvh: supportsDvh
+      });
+      
+      // Multiple fallback strategies for Safari
+      if (supportsDvh) {
+        // Try dvh first but with fallbacks
+        document.body.style.height = '100dvh';
+        document.body.style.maxHeight = '100dvh';
+        document.body.style.minHeight = '100dvh';
+        document.documentElement.style.height = '100dvh';
+        document.documentElement.style.minHeight = '100dvh';
+      }
+      
+      // Always add pixel fallback for Safari
+      const targetHeight = Math.max(viewportHeight, visualViewportHeight);
+      document.body.style.setProperty('height', targetHeight + 'px', 'important');
+      document.body.style.setProperty('max-height', targetHeight + 'px', 'important');
+      document.body.style.setProperty('min-height', targetHeight + 'px', 'important');
+      
+      // Additional Safari-specific properties
+      document.body.style.setProperty('-webkit-fill-available', '100%', 'important');
+      document.body.classList.add('safari-height-fix');
+      
+      // Handle dynamic viewport changes
+      const handleSafariResize = () => {
+        const newHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        console.log('Safari resize detected:', newHeight);
+        
+        document.body.style.setProperty('height', newHeight + 'px', 'important');
+        document.body.style.setProperty('max-height', newHeight + 'px', 'important');
+        document.body.style.setProperty('min-height', newHeight + 'px', 'important');
+        document.documentElement.style.setProperty('height', newHeight + 'px', 'important');
+      };
+      
+      // Listen to multiple resize events
+      window.addEventListener('resize', handleSafariResize);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(handleSafariResize, 100);
+        setTimeout(handleSafariResize, 500); // Double timeout for Safari
+      });
+      
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', handleSafariResize);
+      }
+      
+    } else if (supportsDvh) {
+      // Modern browsers with dvh support (non-Safari)
       document.body.style.height = '100dvh';
       document.body.style.maxHeight = '100dvh';
       document.body.style.minHeight = '100dvh';
       document.documentElement.style.height = '100dvh';
       document.documentElement.style.minHeight = '100dvh';
-    } else if (isSafari) {
-      // Safari-specific fixes
-      const viewportHeight = window.innerHeight;
-      document.body.style.height = viewportHeight + 'px';
-      document.body.style.maxHeight = viewportHeight + 'px';
-      document.body.style.minHeight = viewportHeight + 'px';
-      document.documentElement.style.height = viewportHeight + 'px';
-      document.body.classList.add('safari-height-fix');
     } else {
       // Fallback for older browsers
       document.body.style.height = '100vh';
@@ -417,6 +472,10 @@ function LocationSelectorPage({ tripId, tripData }) {
         overflow: hidden !important;
         position: fixed !important;
         width: 100% !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
       }
       
       html.location-selector-active {
@@ -426,12 +485,61 @@ function LocationSelectorPage({ tripId, tripData }) {
         overflow: hidden !important;
       }
       
+      /* Aggressive Safari-specific handling */
+      @supports (-webkit-touch-callout: none) {
+        /* Safari with dvh support */
+        body.safari-height-fix.location-selector-active:not([data-driver-page]) {
+          height: 100dvh !important;
+          max-height: 100dvh !important;
+          min-height: 100dvh !important;
+          height: -webkit-fill-available !important;
+          max-height: -webkit-fill-available !important;
+          min-height: -webkit-fill-available !important;
+          /* Force full viewport on Safari */
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          /* Prevent any scrolling or bounce */
+          -webkit-overflow-scrolling: touch !important;
+          overscroll-behavior: none !important;
+          -webkit-transform: translate3d(0,0,0) !important;
+          transform: translate3d(0,0,0) !important;
+        }
+        
+        /* Additional Safari body constraints */
+        html.location-selector-active {
+          height: 100dvh !important;
+          height: -webkit-fill-available !important;
+          overflow: hidden !important;
+          position: fixed !important;
+          width: 100% !important;
+          overscroll-behavior: none !important;
+        }
+        
+        /* Safari iOS specific - handle safe areas */
+        @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 2) {
+          body.safari-height-fix.location-selector-active:not([data-driver-page]) {
+            height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+            height: 100dvh !important;
+            padding-top: env(safe-area-inset-top) !important;
+            padding-bottom: env(safe-area-inset-bottom) !important;
+          }
+        }
+      }
+      
       /* Fallback for browsers without dvh support */
       @supports not (height: 100dvh) {
         body.location-selector-active:not([data-driver-page]) {
           height: 100vh !important;
           max-height: 100vh !important;
           min-height: 100vh !important;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
         }
         
         html.location-selector-active {
@@ -441,13 +549,20 @@ function LocationSelectorPage({ tripId, tripData }) {
         }
       }
       
-      /* Safari-specific fixes */
-      @supports (-webkit-touch-callout: none) {
-        body.safari-height-fix.location-selector-active:not([data-driver-page]) {
-          height: -webkit-fill-available !important;
-          max-height: -webkit-fill-available !important;
-          min-height: -webkit-fill-available !important;
-        }
+      /* Smooth transitions for viewport changes */
+      body.location-selector-active {
+        transition: height 0.3s ease-out, max-height 0.3s ease-out !important;
+      }
+      
+      /* Force hardware acceleration for smoother performance */
+      body.location-selector-active:not([data-driver-page]),
+      html.location-selector-active {
+        -webkit-transform: translate3d(0,0,0) !important;
+        transform: translate3d(0,0,0) !important;
+        -webkit-backface-visibility: hidden !important;
+        backface-visibility: hidden !important;
+        -webkit-perspective: 1000px !important;
+        perspective: 1000px !important;
       }
     `;
     document.head.appendChild(criticalCSS);
@@ -494,6 +609,82 @@ function LocationSelectorPage({ tripId, tripData }) {
       
       console.log('LocationSelector: All styles completely removed, original state restored');
     };
+  }, []);
+
+  // Safari-specific dynamic viewport handling for full-screen experience
+  useEffect(() => {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isSafari && isIOS) {
+      console.log('iOS Safari detected: Setting up aggressive full-screen handling');
+      
+      // Force full screen on page load
+      const forceFullScreen = () => {
+        // Hide Safari's UI chrome
+        window.scrollTo(0, 1);
+        
+        // Get actual available viewport
+        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const screenHeight = window.screen.height;
+        
+        console.log('iOS Safari viewport adjustment:', {
+          visualViewport: viewportHeight,
+          innerHeight: window.innerHeight,
+          screenHeight: screenHeight
+        });
+        
+        // Apply the most aggressive height available
+        const targetHeight = Math.max(viewportHeight, window.innerHeight);
+        
+        document.body.style.setProperty('height', targetHeight + 'px', 'important');
+        document.body.style.setProperty('max-height', targetHeight + 'px', 'important');
+        document.body.style.setProperty('min-height', targetHeight + 'px', 'important');
+        
+        // Force layout recalculation
+        document.body.style.transform = 'translateZ(0)';
+        void document.body.offsetHeight;
+        document.body.style.transform = '';
+      };
+      
+      // Initial full screen attempt
+      setTimeout(forceFullScreen, 100);
+      setTimeout(forceFullScreen, 500);
+      setTimeout(forceFullScreen, 1000);
+      
+      // Handle address bar hide/show
+      const handleIOSViewportChange = () => {
+        console.log('iOS viewport change detected');
+        setTimeout(forceFullScreen, 50);
+        setTimeout(forceFullScreen, 200);
+      };
+      
+      // Listen to all possible viewport change events
+      window.addEventListener('scroll', handleIOSViewportChange, { passive: true });
+      window.addEventListener('resize', handleIOSViewportChange);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(forceFullScreen, 100);
+        setTimeout(forceFullScreen, 500);
+        setTimeout(forceFullScreen, 1000);
+      });
+      
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', handleIOSViewportChange);
+        window.visualViewport.addEventListener('scroll', handleIOSViewportChange);
+      }
+      
+      // Touch events to trigger full screen
+      document.addEventListener('touchstart', handleIOSViewportChange, { once: true, passive: true });
+      
+      return () => {
+        window.removeEventListener('scroll', handleIOSViewportChange);
+        window.removeEventListener('resize', handleIOSViewportChange);
+        if (window.visualViewport) {
+          window.visualViewport.removeEventListener('resize', handleIOSViewportChange);
+          window.visualViewport.removeEventListener('scroll', handleIOSViewportChange);
+        }
+      };
+    }
   }, []);
 
   // Cleanup location tracking on component unmount
@@ -572,15 +763,24 @@ function LocationSelectorPage({ tripId, tripData }) {
   // ============= LOCATION TRACKING FUNCTIONS =============
   // Advanced location tracking functions
   const startLocationTracking = () => {
+    console.log('🎯 startLocationTracking called - starting continuous location updates');
+    
     if (!navigator.geolocation) {
       console.error('Geolocation not supported');
       setLocationError('GPS not supported by this browser');
       return;
     }
 
+    // Stop any existing tracking first
+    if (locationWatchIdRef.current) {
+      console.log('🎯 Stopping existing location tracking before starting new one');
+      stopLocationTracking();
+    }
+
     // Check if permission is already granted
     if (navigator.permissions) {
       navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        console.log('🎯 Location permission status:', result.state);
         if (result.state === 'denied') {
           setLocationError('Location access denied. Please enable location in your browser settings.');
           setIsLoadingLocation(false);
@@ -592,6 +792,46 @@ function LocationSelectorPage({ tripId, tripData }) {
     setIsLoadingLocation(true);
     setLocationError(null);
     setIsTrackingLocation(true);
+
+    // Get immediate fresh location when user clicks button
+    console.log('🎯 Getting immediate fresh location for instant response');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const immediateLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: position.timestamp,
+        };
+        
+        console.log('🎯 IMMEDIATE location received:', {
+          lat: immediateLocation.lat,
+          lng: immediateLocation.lng,
+          accuracy: immediateLocation.accuracy,
+          timestamp: new Date(immediateLocation.timestamp).toLocaleTimeString()
+        });
+
+        // Update state immediately
+        setUserLocation(immediateLocation);
+        setLocationAccuracy(immediateLocation.accuracy);
+        setIsLoadingLocation(false);
+        currentLocationRef.current = immediateLocation;
+
+        // Center map and show blue dot immediately
+        centerMapAndAddDot(immediateLocation);
+        setIsContinuousTracking(true);
+        setIsTrackingLocation(false);
+      },
+      (error) => {
+        console.warn('🎯 Immediate location failed, will rely on watchPosition:', error);
+        // Continue with watchPosition even if immediate fails
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000, // Quick timeout for immediate response
+        maximumAge: 0 // Force fresh location
+      }
+    );
 
     // High-precision geolocation options for continuous tracking
     const watchOptions = {
@@ -609,32 +849,34 @@ function LocationSelectorPage({ tripId, tripData }) {
           timestamp: position.timestamp,
         };
 
+        console.log('🎯 Location update received:', {
+          lat: newLocation.lat,
+          lng: newLocation.lng,
+          accuracy: newLocation.accuracy,
+          timestamp: new Date(newLocation.timestamp).toLocaleTimeString()
+        });
+
+        // Always update location state and refs
         setUserLocation(newLocation);
         setLocationAccuracy(position.coords.accuracy);
         setIsLoadingLocation(false);
         setLocationError(null);
-
-        // Store current location for zoom handler
         currentLocationRef.current = newLocation;
 
         // Only center map on first location or if user clicked the button again
         if (!isContinuousTracking) {
           // First time getting location - center the map
+          console.log('🎯 First location - centering map');
           centerMapAndAddDot(newLocation);
           setIsContinuousTracking(true);
+        } else {
+          // Subsequent updates - just update the blue dot position
+          console.log('🎯 Updating location display for continuous tracking at', new Date().toLocaleTimeString());
+          updateLocationDisplay(newLocation);
         }
-
-        // Always update the location marker and accuracy circle
-        updateLocationDisplay(newLocation);
 
         // Set tracking state to false after first successful location (for button visual)
         setIsTrackingLocation(false);
-
-        console.log('Location updated:', {
-          lat: newLocation.lat,
-          lng: newLocation.lng,
-          accuracy: newLocation.accuracy
-        });
       },
       (error) => {
         // Only log significant location errors, not empty objects
@@ -667,12 +909,14 @@ function LocationSelectorPage({ tripId, tripData }) {
     );
 
     locationWatchIdRef.current = watchId;
-    console.log('Location tracking started with ID:', watchId);
+    console.log('🎯 Location tracking started with watch ID:', watchId);
     
-    // Add forced refresh every 8 seconds to ensure regular updates
+    // Add forced refresh every 6 seconds to ensure regular updates
     // This complements the browser's automatic updates
     locationRefreshIntervalRef.current = setInterval(() => {
-      if (isContinuousTracking && navigator.geolocation) {
+      console.log('🔄 Forced location refresh triggered');
+      
+      if (locationWatchIdRef.current && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const refreshedLocation = {
@@ -682,46 +926,49 @@ function LocationSelectorPage({ tripId, tripData }) {
               timestamp: position.timestamp,
             };
             
-            // Only update if this is a newer/more accurate position
-            const isNewer = !currentLocationRef.current || 
-              refreshedLocation.timestamp > currentLocationRef.current.timestamp;
-            const isMoreAccurate = !currentLocationRef.current || 
-              refreshedLocation.accuracy < currentLocationRef.current.accuracy;
-              
-            if (isNewer || isMoreAccurate) {
-              setUserLocation(refreshedLocation);
-              setLocationAccuracy(refreshedLocation.accuracy);
-              currentLocationRef.current = refreshedLocation;
-              updateLocationDisplay(refreshedLocation);
-              console.log('Force-refreshed location:', refreshedLocation);
-            }
+            console.log('🔄 Force-refresh location received:', {
+              lat: refreshedLocation.lat,
+              lng: refreshedLocation.lng,
+              accuracy: refreshedLocation.accuracy,
+              timestamp: new Date(refreshedLocation.timestamp).toLocaleTimeString()
+            });
+            
+            // Always update the location and display - don't check for newer/accuracy
+            // This ensures we get regular updates even if GPS is inconsistent
+            setUserLocation(refreshedLocation);
+            setLocationAccuracy(refreshedLocation.accuracy);
+            currentLocationRef.current = refreshedLocation;
+            updateLocationDisplay(refreshedLocation);
+            
+            console.log('🔄 Location force-updated successfully at', new Date().toLocaleTimeString());
           },
           (error) => {
-            // Silently handle forced refresh errors
-            console.warn('Forced location refresh failed:', error.code);
+            console.warn('⚠️ Forced location refresh failed:', error.code, error.message);
           },
           {
             enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0 // Force fresh location for periodic refresh
+            timeout: 8000, // Shorter timeout for forced refresh
+            maximumAge: 0 // Always get fresh location
           }
         );
       }
-    }, 8000); // 8-second forced refresh interval
+    }, 6000); // Reduced to 6 seconds for more frequent updates
   };
 
   const stopLocationTracking = () => {
+    console.log('🎯 stopLocationTracking called');
+    
     if (locationWatchIdRef.current) {
       navigator.geolocation.clearWatch(locationWatchIdRef.current);
       locationWatchIdRef.current = null;
-      console.log('Location tracking stopped');
+      console.log('🎯 Location watchPosition stopped');
     }
     
     // Clear forced refresh interval
     if (locationRefreshIntervalRef.current) {
       clearInterval(locationRefreshIntervalRef.current);
       locationRefreshIntervalRef.current = null;
-      console.log('Location refresh interval cleared');
+      console.log('🎯 Location refresh interval cleared');
     }
     
     // Clear location display timeout
@@ -733,6 +980,7 @@ function LocationSelectorPage({ tripId, tripData }) {
     setIsTrackingLocation(false);
     setIsContinuousTracking(false);
     setIsLoadingLocation(false);
+    console.log('🎯 Location tracking completely stopped');
     
     // Remove accuracy circle
     if (accuracyCircleRef.current) {
@@ -752,26 +1000,44 @@ function LocationSelectorPage({ tripId, tripData }) {
   };
 
   const updateLocationDisplay = (location) => {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log('🔵 updateLocationDisplay called at', timestamp, 'with:', {
+      lat: location?.lat,
+      lng: location?.lng,
+      accuracy: location?.accuracy
+    });
+    
     if (!window.neshanMapInstance) {
+      console.warn('🔵 Map instance not available, skipping location display update at', timestamp);
       return;
     }
 
-    // Clear any pending update to prevent duplicate circles
+    if (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+      console.warn('🔵 Invalid location data at', timestamp, ':', location);
+      return;
+    }
+
+    // Clear any pending update to prevent duplicate calls
     if (locationDisplayTimeoutRef.current) {
       clearTimeout(locationDisplayTimeoutRef.current);
       locationDisplayTimeoutRef.current = null;
     }
 
-    // Debounce the update by 100ms to prevent duplicate calls
+    // Immediate update for real-time feel, reduced debounce
     locationDisplayTimeoutRef.current = setTimeout(() => {
-      const map = window.neshanMapInstance;
-
-      // Use separate markers like the working search markers
-      updateAccuracyCircle(location.lat, location.lng, location.accuracy);
-      updateUserLocationMarker(location.lat, location.lng);
+      console.log('🔵 Executing location display update at', new Date().toLocaleTimeString());
+      
+      try {
+        // Always update both accuracy circle and user marker
+        updateAccuracyCircle(location.lat, location.lng, location.accuracy);
+        updateUserLocationMarker(location.lat, location.lng);
+        console.log('🔵 Location display updated successfully - blue dot should move!');
+      } catch (error) {
+        console.error('🔵 Error updating location display:', error);
+      }
       
       locationDisplayTimeoutRef.current = null;
-    }, 100);
+    }, 50); // Reduced debounce for more responsive updates
   };
 
   const updateAccuracyCircle = (lat, lng, accuracy) => {
@@ -848,23 +1114,29 @@ function LocationSelectorPage({ tripId, tripData }) {
   };
 
   const updateUserLocationMarker = (lat, lng) => {
+    console.log('🔴 updateUserLocationMarker called with:', { lat, lng, timestamp: new Date().toLocaleTimeString() });
+    
     if (!window.neshanMapInstance) {
+      console.warn('🔴 Map instance not available for marker update');
       return;
     }
 
     const map = window.neshanMapInstance;
     
-    // Remove existing user location marker
+    // Remove existing user location marker immediately for smooth transition
     if (userLocationMarkerRef.current) {
       try {
+        console.log('🔴 Removing existing user location marker for smooth update');
         userLocationMarkerRef.current.remove();
       } catch (error) {
-        console.warn('Error removing user location marker:', error);
+        console.warn('🔴 Error removing user location marker:', error);
       }
       userLocationMarkerRef.current = null;
     }
 
     try {
+      console.log('🔴 Creating new user location marker at:', { lat, lng });
+      
       // Create marker element using EXACT pattern as working search markers
       const markerEl = document.createElement("div");
       
@@ -876,7 +1148,7 @@ function LocationSelectorPage({ tripId, tripData }) {
       markerEl.style.background = "transparent";
       markerEl.style.justifyContent = "center";
       
-      // Create simple blue dot
+      // Create simple blue dot with smooth appearance animation
       const blueDot = document.createElement("div");
       blueDot.style.width = "16px";
       blueDot.style.height = "16px";
@@ -885,6 +1157,10 @@ function LocationSelectorPage({ tripId, tripData }) {
       blueDot.style.border = "3px solid #FFFFFF";
       blueDot.style.boxShadow = "0 2px 8px rgba(0, 122, 255, 0.6)";
       blueDot.style.animation = "locationPulse 2s infinite";
+      
+      // Add smooth appearance animation
+      blueDot.style.transform = "scale(0)";
+      blueDot.style.transition = "transform 0.3s ease-out";
       
       // Add animation if not exists
       if (!document.getElementById('location-pulse-animation')) {
@@ -909,18 +1185,25 @@ function LocationSelectorPage({ tripId, tripData }) {
       .setLngLat([lng, lat])  // IDENTICAL coordinates
       .addTo(map);
 
+      // Animate appearance after a tiny delay
+      setTimeout(() => {
+        blueDot.style.transform = "scale(1)";
+      }, 50);
+
       userLocationMarkerRef.current = userMarker;
+      console.log('🔴 User location marker created and added to map successfully with smooth animation');
       
     } catch (error) {
-      console.error('❌ Error creating user location marker:', error);
+      console.error('🔴 Error creating user location marker:', error);
     }
   };
   // ============= END LOCATION TRACKING FUNCTIONS =============
 
-  // Get user location on mount - now with user interaction
+  // Get user location on mount - wait for user interaction
   useEffect(() => {
-    // Don't start location tracking automatically
-    // Wait for user interaction with the "My Location" button
+    // DON'T start location tracking automatically
+    // Wait for user to click "My Location" button
+    console.log('🎯 Component mounted, waiting for user to click My Location button');
     
     // Cleanup on unmount
     return () => {
@@ -930,11 +1213,22 @@ function LocationSelectorPage({ tripId, tripData }) {
 
   // Watch for when both map and user location are available to show blue dot
   useEffect(() => {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log('🔵 Location display effect triggered at', timestamp, {
+      loading,
+      hasUserLocation: !!userLocation,
+      hasMapInstance: !!(typeof window !== 'undefined' && window.neshanMapInstance),
+      userLocationDetails: userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : null
+    });
+    
     // Show user location blue dot as soon as both map and location are available
     if (!loading && userLocation && typeof window !== 'undefined' && window.neshanMapInstance) {
+      console.log('🔵 All conditions met, updating location display at', timestamp);
       setTimeout(() => {
         updateLocationDisplay(userLocation);
-      }, 300); // Small delay to ensure everything is initialized
+      }, 100); // Reduced delay for more responsive updates
+    } else {
+      console.log('🔵 Conditions not met for location display at', timestamp);
     }
   }, [userLocation, loading]); // Trigger when userLocation changes or loading completes
 
@@ -1198,20 +1492,53 @@ function LocationSelectorPage({ tripId, tripData }) {
 
   // Enhanced "My Location" button functionality
   const centerOnUserLocation = () => {
-    if (!userLocation && !isContinuousTracking) {
-      // Start fresh tracking
-      startLocationTracking();
-      return;
+    console.log('🎯 MY LOCATION BUTTON CLICKED - User requested location tracking');
+    console.log('🎯 Current state:', {
+      hasUserLocation: !!userLocation,
+      isContinuousTracking,
+      isTrackingLocation,
+      watchId: locationWatchIdRef.current,
+      intervalId: locationRefreshIntervalRef.current
+    });
+
+    // IMMEDIATELY clear existing location markers for smooth UX
+    console.log('🎯 Clearing existing location markers immediately for smooth transition');
+    if (userLocationMarkerRef.current) {
+      try {
+        userLocationMarkerRef.current.remove();
+        userLocationMarkerRef.current = null;
+        console.log('🎯 Existing blue dot removed immediately');
+      } catch (error) {
+        console.warn('Error removing existing marker:', error);
+      }
     }
     
-    if (userLocation) {
-      // If we have a location, center immediately
-      centerMapAndAddDot(userLocation);
-      
-      // If not already tracking continuously, start it
-      if (!isContinuousTracking) {
-        startLocationTracking();
+    // Also clear accuracy circle immediately
+    if (accuracyCircleRef.current) {
+      try {
+        accuracyCircleRef.current.remove();
+        accuracyCircleRef.current = null;
+        console.log('🎯 Existing accuracy circle removed immediately');
+      } catch (error) {
+        console.warn('Error removing existing accuracy circle:', error);
       }
+    }
+
+    // Clear any pending location display updates
+    if (locationDisplayTimeoutRef.current) {
+      clearTimeout(locationDisplayTimeoutRef.current);
+      locationDisplayTimeoutRef.current = null;
+    }
+
+    // Always start/restart tracking when user clicks the button
+    // This ensures the interval updates begin
+    console.log('🎯 Starting location tracking with continuous updates');
+    startLocationTracking();
+
+    // If we already have a location, center on it immediately after clearing
+    if (userLocation) {
+      console.log('🎯 Will center on existing user location after getting fresh location');
+      // Note: Don't call centerMapAndAddDot immediately - let the fresh location update handle it
     }
   };
 
@@ -1303,6 +1630,14 @@ function LocationSelectorPage({ tripId, tripData }) {
   };
 
   const handleSelectLocation = async () => {
+    console.log('🎯 handleSelectLocation called', {
+      hasMapInstance: !!(typeof window !== 'undefined' && window.neshanMapInstance),
+      hasMapboxGL: !!nmp_mapboxgl,
+      hasMarker: !!nmp_mapboxgl?.Marker,
+      showPicker,
+      selectedCordinates: selectedCordinates.current
+    });
+    
     if (typeof window !== 'undefined' && window.neshanMapInstance && nmp_mapboxgl && nmp_mapboxgl.Marker) {
       try {
         // Step 1: Hide the picker immediately for visual feedback
@@ -1513,8 +1848,13 @@ function LocationSelectorPage({ tripId, tripData }) {
         setTripData(result.trip);
       }
       
-      // Navigate back to trip info page with refresh parameter
-      router.push(`/trip/info/${tripId}?refresh=${Date.now()}`);
+      // Determine if this was a first-time add or an update
+      const currentTripData = tripData || contextTripData;
+      const hadExistingLocation = currentTripData?.Location?.Latitude && currentTripData?.Location?.Longitude;
+      const successType = hadExistingLocation ? 'location_updated' : 'location_added';
+      
+      // Navigate back to trip info page with success parameter
+      router.push(`/trip/info/${tripId}?success=${successType}&refresh=${Date.now()}`);
     } catch (error) {
       console.error('Error updating location:', error);
       setErrorMessage("خطا در اتصال به سرور، لطفاً دوباره امتحان کنید");
@@ -1535,28 +1875,10 @@ function LocationSelectorPage({ tripId, tripData }) {
 
   // Enhanced function to handle drawer closing and cleanup
   const handleCloseDrawer = () => {
-    // Step 1: Remove the previous marker with animation
-    if (lastMarkerRef.current) {
-      const markerElement = lastMarkerRef.current.getElement();
-      if (markerElement) {
-        // Animate marker disappearing
-        markerElement.style.transition = "transform 0.3s ease-out, opacity 0.3s ease-out";
-        markerElement.style.transform = "scale(0)";
-        markerElement.style.opacity = "0";
-        
-        // Remove marker after animation
-        setTimeout(() => {
-          if (lastMarkerRef.current) {
-            lastMarkerRef.current.remove();
-            lastMarkerRef.current = null;
-          }
-        }, 300);
-      } else {
-        // Fallback: remove immediately if no element
-        lastMarkerRef.current.remove();
-        lastMarkerRef.current = null;
-      }
-    }
+    console.log('🎯 handleCloseDrawer called - preserving location selection');
+    
+    // Step 1: Keep the marker visible but reset form states
+    // DON'T remove the marker - user should be able to select it again
     
     // Step 2: Reset form states immediately
     setShowForm(false);
@@ -1567,17 +1889,20 @@ function LocationSelectorPage({ tripId, tripData }) {
       setShowPicker(true);
     }, 200);
     
-    // Step 4: Clear selected data to allow fresh selection
-    setSelectedAddress("");
-    selectedCordinates.current = null;
+    // Step 4: KEEP selectedAddress and selectedCordinates - don't clear them!
+    // This allows the user to select the same location again
+    console.log('🎯 Preserving selected location:', {
+      address: selectedAddress,
+      coordinates: selectedCordinates.current
+    });
     
-    // Step 4.5: Reset description to original trip value
+    // Step 5: Reset description to original trip value
     setDescription(trip?.Location?.Description || "");
     
-    // Step 5: Clear any error messages
+    // Step 6: Clear any error messages
     setErrorMessage("");
     
-    // Step 6: Optional: Reset zoom slightly for better selection experience
+    // Step 7: Optional: Reset zoom slightly for better selection experience
     if (typeof window !== 'undefined' && window.neshanMapInstance) {
       const currentZoom = window.neshanMapInstance.getZoom();
       if (currentZoom > 17) {
@@ -1703,7 +2028,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                 <h2 className="text-lg font-bold text-gray-800">تایید مبدأ</h2>
               </div>
             </div>
-            <p className="text-sm text-gray-600 text-right leading-relaxed">
+            <p className="text-xs text-gray-600 text-right leading-relaxed">
               اطلاعات مورد نیاز برای ثبت موقعیت را با دقت وارد کنید
             </p>
           </DrawerHeader>
@@ -1735,7 +2060,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                     </div>
                   </div>
                   <div className="mr-3">
-                    <p className="text-blue-800 text-sm font-medium leading-relaxed">
+                    <p className="text-blue-800 text-xs font-medium leading-relaxed">
                       هماهنگی برای سفر پیش رو با اطلاعات زیر انجام خواهد شد
                       <span className="text-red-600 mr-1">*</span>
                     </p>
@@ -1828,7 +2153,7 @@ function LocationSelectorPage({ tripId, tripData }) {
               <Button
                 variant="bordered"
                 color="default"
-                className="flex-1 h-14 text-base font-semibold border-2 border-gray-300 hover:bg-gray-100 hover:border-gray-400 transition-all duration-300"
+                className="flex-1 h-12 text-base font-semibold border-2 border-gray-300 hover:bg-gray-100 hover:border-gray-400 transition-all duration-300"
                 type="button"
                 onPress={handleBack}
                 radius="xl"
@@ -1842,7 +2167,7 @@ function LocationSelectorPage({ tripId, tripData }) {
               </Button>
               <Button
                 variant="solid"
-                className="flex-1 h-14 text-base font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
+                className="flex-1 h-12 text-base font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
                 type="button"
                 disabled={isSubmitting}
                 onPress={handleSubmit}
@@ -2408,7 +2733,7 @@ function LocationSelectorPage({ tripId, tripData }) {
           <div
             className="fixed right-4 z-50"
             style={{
-              bottom: 130, // Position above the select button
+              bottom: 110, // Position above the select button
               zIndex: 5500,
             }}
           >
@@ -2477,14 +2802,14 @@ function LocationSelectorPage({ tripId, tripData }) {
               position: "fixed",
               left: 8,
               right: 8,
-              bottom: 5, // Reduced from 24 to 12 to move closer to bottom
+              bottom:3, // Reduced from 24 to 12 to move closer to bottom
               paddingBottom: "env(safe-area-inset-bottom, 0px)", // Additional safe area padding
               zIndex: showForm ? -1 : 6000,
               background: "linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)",
               backdropFilter: "blur(24px)",
               boxShadow: "0 -12px 48px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.25)",
               borderRadius: "28px 28px 20px 20px",
-              padding: "16px 12px 16px 12px",
+              padding: "9px 12px 10px 12px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -2529,7 +2854,7 @@ function LocationSelectorPage({ tripId, tripData }) {
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-white drop-shadow-md flex-1 text-center font-semibold tracking-normal">
+                <span className="text-white drop-sha  dow-md flex-1 text-center font-semibold tracking-normal">
                   انتخاب این موقعیت
                 </span>
                 <div className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center flex-shrink-0">
@@ -2540,8 +2865,7 @@ function LocationSelectorPage({ tripId, tripData }) {
               </div>
             </Button>
             
-            {/* Mobile-optimized hint text */}
-            <p className="text-xs text-gray-600 mt-2 text-center opacity-80 font-medium leading-relaxed px-2">
+            <p className="text-xs text-gray-600 mt-0.5 text-center  font-light leading-relaxed pt-0">
               نقشه را حرکت دهید و موقعیت مبدا را انتخاب کنید
             </p>
           </div>

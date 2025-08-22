@@ -1,9 +1,22 @@
 "use client";
 
-import React, { useEffect, use, useRef } from "react";
+import React, { useEffect, use, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import TripInfo from "../components/tripinfo";
+import LocationSuccessModal from "../components/LocationSuccessModal";
+import LocationAddedModal from "../components/LocationAddedModal";
+import LocationUpdatedModal from "../components/LocationUpdatedModal";
 import { useTripContext } from "../../../contexts/TripContext";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button
+} from "@heroui/react";
+
+
 
 export default function Upcoming({ params }: { params: Promise<{ ticketid: string }> }) {
   const resolvedParams = use(params);
@@ -11,6 +24,10 @@ export default function Upcoming({ params }: { params: Promise<{ ticketid: strin
   const { tripData, loading, error, fetchTripData } = useTripContext();
   const hasInitialized = useRef(false);
   const lastRefreshParam = useRef<string | null>(null);
+
+  // Success modal states
+  const [showAddedModal, setShowAddedModal] = useState(false);
+  const [showUpdatedModal, setShowUpdatedModal] = useState(false);
 
   useEffect(() => {
     const refreshParam = searchParams.get('refresh');
@@ -33,6 +50,21 @@ export default function Upcoming({ params }: { params: Promise<{ ticketid: strin
       hasInitialized.current = true;
     }
   }, [resolvedParams.ticketid, searchParams.get('refresh'), fetchTripData]); // Only depend on the actual refresh param value
+
+  // Success modal detection
+  useEffect(() => {
+    const success = searchParams.get('success');
+
+    if (success === 'location_added') {
+      setShowAddedModal(true);
+      // Clean URL after detecting success parameter
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (success === 'location_updated') {
+      setShowUpdatedModal(true);
+      // Clean URL after detecting success parameter
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams]);
 
   // Force refresh when page gains focus (user returns from location selector)
   // Only if we don't already have recent data
@@ -82,6 +114,16 @@ export default function Upcoming({ params }: { params: Promise<{ ticketid: strin
   return (
     <div>
       <TripInfo trip={tripData} />
+
+
+      <LocationAddedModal
+        isOpen={showAddedModal}
+        onOpenChange={setShowAddedModal}
+      />
+      <LocationUpdatedModal
+        isOpen={showUpdatedModal}
+        onOpenChange={setShowUpdatedModal}
+      />
     </div>
   );
 }
