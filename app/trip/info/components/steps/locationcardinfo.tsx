@@ -212,7 +212,9 @@ export default function StepItem({
               disabled={isLoading}
             >
               {isLoading ? (
-                <Spinner classNames={{label: "text-foreground mt-4"}} label="default" variant="default" />
+                <label>درحال بارگذاری
+                  <svg xmlns="http://www.w3.org/2000/svg" className="animate-spinner inline ms-1" width={30} height={30} viewBox="0 0 50 50"><circle cx={25} cy={10} r={2} fill="currentColor"></circle><circle cx={25} cy={40} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={32.5} cy={12} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={17.5} cy={38} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={17.5} cy={12} r={2} fill="currentColor" opacity={0.93}></circle><circle cx={32.5} cy={38} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={10} cy={25} r={2} fill="currentColor" opacity={0.65}></circle><circle cx={40} cy={25} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={12} cy={17.5} r={2} fill="currentColor" opacity={0.86}></circle><circle cx={38} cy={32.5} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={12} cy={32.5} r={2} fill="currentColor" opacity={0.44}></circle><circle cx={38} cy={17.5} r={2} fill="currentColor" opacity={0.3}></circle></svg>
+                </label>
               ) : trip.Location == null ? (
                 <>
                   <svg

@@ -86,6 +86,14 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
     onOpenChange,
   } = useDisclosure();
 
+  // Clean up marker when sheet closes
+  useEffect(() => {
+    // Clean up marker when sheet closes
+    if (!sheetIsOpen) {
+      removeAllMarkers();
+    }
+  }, [sheetIsOpen]);
+
   // Get user location on mount
   useEffect(() => {
     if (navigator.geolocation) {
@@ -158,6 +166,15 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
       setTimeout(() => {
         window.neshanMapInstance.resize();
       }, 10);
+      // Scroll to top for better experience
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    // Unmount picker and remove ALL markers when modal closes
+    if (!isOpen) {
+      setShowPicker(false);
+      removeAllMarkers();
+    } else {
+      setShowPicker(true);
     }
   }, [isOpen]);
 
@@ -319,6 +336,22 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
   }
 
   const lastMarkerRef = useRef(null);
+  // Centralized cleanup for all origin markers (do not touch user location here)
+  const removeAllMarkers = useCallback(() => {
+    try {
+      if (lastMarkerRef.current) {
+        lastMarkerRef.current.remove();
+        lastMarkerRef.current = null;
+      }
+    } catch (e) {}
+    try {
+      if (selectedMarkerRef.current) {
+        selectedMarkerRef.current.remove();
+        selectedMarkerRef.current = null;
+      }
+    } catch (e) {}
+    // Note: userMarkerRef is intentionally kept to continue showing live location
+  }, []);
 
   const handleSelectLocation = async () => {
     if (window.neshanMapInstance && nmp_mapboxgl && nmp_mapboxgl.Marker) {
@@ -451,6 +484,9 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
       lineSvg.innerHTML = `<line x1="1" y1="0" x2="1" y2="24" stroke="black" stroke-width="1" stroke-linecap="round"/>`;
       el.appendChild(lineSvg);
 
+      // Remove any existing markers before adding new one
+      removeAllMarkers();
+
       // Add marker to map using the exact picker coordinates
       const marker = new nmp_mapboxgl.Marker(el, { anchor: "bottom" })
         .setLngLat([pickerCoordinates.lng, pickerCoordinates.lat])
@@ -494,11 +530,10 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
     return null;
   }
 
-  // Then call it (e.g., in useEffect)
+  // Center the map only the first time the modal opens (avoid jumps on intervals)
+  const hasCenteredRef = useRef(false);
   useEffect(() => {
-    if (isOpen && trip?.OriginCity) {
-      // There is no pre selected location
-      // Picking the center of the map
+    if (isOpen && trip?.OriginCity && !hasCenteredRef.current) {
       if (trip?.Location == null) {
         getCoordinatesFromCityName(trip.OriginCity).then((coords) => {
           if (coords && window.neshanMapInstance) {
@@ -506,17 +541,20 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
             window.neshanMapInstance.setZoom(13);
           }
         });
-      }
-      // The location exists and just needs to be updated
-      else {
+      } else {
         const { Latitude, Longitude } = trip.Location;
         if (window.neshanMapInstance) {
           window.neshanMapInstance.setCenter([Longitude, Latitude]);
           window.neshanMapInstance.setZoom(14.5);
         }
       }
+      hasCenteredRef.current = true;
     }
-  }, [isOpen]);
+    // Reset flag when modal closes
+    if (!isOpen) {
+      hasCenteredRef.current = false;
+    }
+  }, [isOpen, trip?.OriginCity, trip?.Location]);
 
   // Handle mobile keyboard visibility
   useEffect(() => {
@@ -670,12 +708,12 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
               className="text-gray-800"
               style={{
                 background: "white",
-                padding: "3px 6px",
+                padding: "3px 4px",
                 borderRadius: "9px",
                 marginBottom: "8px",
-                fontWeight: "normal",
+                fontWeight: "light",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                fontSize: "14px",
+                fontSize: "10px",
                 userSelect: "none",
               }}
             >
@@ -945,10 +983,10 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
                   نتیجه ای یافت نشد
                 </div>
               ) : (
-                results.map((item) => (
+                results.map((item, index) => (
                   <div
                     className="text-sm"
-                    key={item.location.x + "," + item.location.y}
+                    key={`${item.location.x},${item.location.y}-${index}`}
                     style={{
                       padding: "10px",
                       cursor: "pointer",
@@ -958,6 +996,8 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
                       setShowDropdown(false);
                       setSearch(item.title);
                       setResults([]);
+                      // Remove existing markers before centering to new location
+                      removeAllMarkers();
                       if (window.neshanMapInstance) {
                         window.neshanMapInstance.setCenter([
                           item.location.x,
@@ -1029,6 +1069,10 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
         isOpen={sheetIsOpen}
         onOpenChange={(open) => {
           onOpenChange(open);
+          // Remove ALL markers when drawer closes
+          if (!open) {
+            removeAllMarkers();
+          }
           // Handle mobile keyboard when drawer opens/closes
           if (open) {
             document.body.classList.add('drawer-open');
@@ -1056,13 +1100,14 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
             }
           }
           
-          if (!open && lastMarkerRef.current) {
-            lastMarkerRef.current.remove();
-            lastMarkerRef.current = null;
+          // Reset picker state when drawer closes
+          if (!open) {
             setShowPicker(true);
             setIsMoving(true);
             setTimeout(() => setIsMoving(false), 380);
-            window.neshanMapInstance.zoomIn();
+            if (window.neshanMapInstance) {
+              window.neshanMapInstance.zoomIn();
+            }
           }
         }}
         placement="bottom"

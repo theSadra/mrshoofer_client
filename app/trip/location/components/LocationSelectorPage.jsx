@@ -911,9 +911,9 @@ function LocationSelectorPage({ tripId, tripData }) {
     locationWatchIdRef.current = watchId;
     console.log('🎯 Location tracking started with watch ID:', watchId);
     
-    // Add forced refresh every 6 seconds to ensure regular updates
+  // Add forced refresh every 12 seconds to ensure regular updates
     // This complements the browser's automatic updates
-    locationRefreshIntervalRef.current = setInterval(() => {
+  locationRefreshIntervalRef.current = setInterval(() => {
       console.log('🔄 Forced location refresh triggered');
       
       if (locationWatchIdRef.current && navigator.geolocation) {
@@ -947,12 +947,12 @@ function LocationSelectorPage({ tripId, tripData }) {
           },
           {
             enableHighAccuracy: true,
-            timeout: 8000, // Shorter timeout for forced refresh
+            timeout: 6000, // Wait up to 6 seconds for this refresh
             maximumAge: 0 // Always get fresh location
           }
         );
       }
-    }, 6000); // Reduced to 6 seconds for more frequent updates
+    }, 12000); // Refresh every 12 seconds
   };
 
   const stopLocationTracking = () => {
@@ -1654,9 +1654,9 @@ function LocationSelectorPage({ tripId, tripData }) {
 
         
 
-        // Remove any existing marker before adding a new one
+        // Remove any existing origin marker before adding a new one
         if (lastMarkerRef.current) {
-          lastMarkerRef.current.remove();
+          try { lastMarkerRef.current.remove(); } catch {}
           lastMarkerRef.current = null;
         }
 
@@ -1785,7 +1785,7 @@ function LocationSelectorPage({ tripId, tripData }) {
         // Wait before showing form
         await new Promise(resolve => setTimeout(resolve, 450));
 
-        // Show form
+  // Show form
         setIsMoving(false);
         setShowForm(true);
 
@@ -1877,8 +1877,11 @@ function LocationSelectorPage({ tripId, tripData }) {
   const handleCloseDrawer = () => {
     console.log('🎯 handleCloseDrawer called - preserving location selection');
     
-    // Step 1: Keep the marker visible but reset form states
-    // DON'T remove the marker - user should be able to select it again
+    // Step 1: Remove the origin marker when leaving drawer to avoid lingering markers
+    if (lastMarkerRef.current) {
+      try { lastMarkerRef.current.remove(); } catch {}
+      lastMarkerRef.current = null;
+    }
     
     // Step 2: Reset form states immediately
     setShowForm(false);
@@ -1920,7 +1923,7 @@ function LocationSelectorPage({ tripId, tripData }) {
   const handleDrawerOpenChange = (isOpen) => {
     if (!isOpen && showForm) {
       // Drawer is being closed
-      handleCloseDrawer();
+  handleCloseDrawer();
     }
   };
 
@@ -2653,10 +2656,10 @@ function LocationSelectorPage({ tripId, tripData }) {
                     <p className="text-xs text-gray-500">عبارت دیگری را امتحان کنید</p>
                   </div>
                 ) : (
-                  results.map((item, index) => (
+          results.map((item, index) => (
                     <div
                       className="text-sm hover:bg-blue-50/80 transition-all duration-200 border-b border-gray-100/50 last:border-b-0"
-                      key={item.location.x + "," + item.location.y}
+            key={`${item.location.x},${item.location.y}-${index}`}
                       style={{
                         padding: "14px 16px",
                         cursor: "pointer",
@@ -2680,6 +2683,10 @@ function LocationSelectorPage({ tripId, tripData }) {
                         setTimeout(() => {
                           if (typeof window !== 'undefined' && window.neshanMapInstance) {
                             const map = window.neshanMapInstance;
+                            if (lastMarkerRef.current) {
+                              try { lastMarkerRef.current.remove(); } catch {}
+                              lastMarkerRef.current = null;
+                            }
                             const searchedCoords = [item.location.x, item.location.y];
                             const searchPixel = map.project(searchedCoords);
                             const offsetMapCenter = map.unproject([
