@@ -68,6 +68,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install Liara CLI (per docs)
+        run: npm i -g @liara/cli@7
+
       - name: Deploy pushed image to Liara
         env:
           IMAGE_BASE: sadradorostkar/mrshoofer-client
@@ -75,9 +83,9 @@ jobs:
           set -e
           COMMIT_HASH=$(git rev-parse --short HEAD)
           echo "Attempting deploy with tag: ${COMMIT_HASH}"
-          if npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}"; then
+          if liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}"; then
             echo "Deployed ${IMAGE_BASE}:${COMMIT_HASH}"
           else
             echo "Commit tag not available; falling back to :latest"
-            npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}"
+            liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}"
           fi
