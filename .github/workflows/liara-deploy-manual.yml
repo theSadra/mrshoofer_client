@@ -11,13 +11,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Liara CLI
-        run: |
-          curl -s https://liara.ir/install.sh | bash
-
       - name: Log in to Liara (API Token)
         run: |
-          liara login --api-token ${{ secrets.LIARA_API_TOKEN }}
+          npx @liara/cli login --api-token ${{ secrets.LIARA_API_TOKEN }}
 
       - name: Deploy selected image to Liara
         env:
@@ -25,4 +21,4 @@ jobs:
         run: |
           set -e
           echo "Deploying ${IMAGE_BASE}:${{ inputs.image_tag }}"
-          liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }}
+          npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }}

@@ -64,13 +64,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install Liara CLI
-        run: |
-          curl -s https://liara.ir/install.sh | bash
-
       - name: Log in to Liara (API Token)
         run: |
-          liara login --api-token ${{ secrets.LIARA_API_TOKEN }}
+          npx @liara/cli login --api-token ${{ secrets.LIARA_API_TOKEN }}
 
       - name: Deploy pushed image to Liara
         env:
@@ -79,9 +75,9 @@ jobs:
           set -e
           COMMIT_HASH=$(git rev-parse --short HEAD)
           echo "Attempting deploy with tag: ${COMMIT_HASH}"
-          if liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH}; then
+          if npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH}; then
             echo "Deployed ${IMAGE_BASE}:${COMMIT_HASH}"
           else
             echo "Commit tag not available; falling back to :latest"
-            liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest
+            npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest
           fi

@@ -14,13 +14,9 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Install Liara CLI
-      run: |
-        curl -s https://liara.ir/install.sh | bash
-
     - name: Log in to Liara (API Token)
       run: |
-        liara login --api-token ${{ secrets.LIARA_API_TOKEN }}
+        npx @liara/cli login --api-token ${{ secrets.LIARA_API_TOKEN }}
 
     - name: Deploy Docker Image to Liara (prefer SHA tag)
       env:
@@ -30,9 +26,9 @@ jobs:
         IMAGE_BASE="sadradorostkar/mrshoofer-client"
         PREFERRED_TAG="sha-${FULL_SHA}"
         echo "Attempting deploy with tag: ${PREFERRED_TAG}"
-        if liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG}; then
+        if npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG}; then
           echo "Deployed ${IMAGE_BASE}:${PREFERRED_TAG}"
         else
           echo "SHA-tag deploy failed; falling back to :latest"
-          liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest
+          npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest
         fi
