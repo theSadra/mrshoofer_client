@@ -6,11 +6,10 @@ const prisma = new PrismaClient();
 // GET /api/trip/[tripId]/location - Get location for a trip
 export async function GET(
     req: NextRequest,
-    { params }: { params: Promise<{ tripId: string }> }
+    { params }: { params: { tripId: string } }
 ) {
     try {
-        const resolvedParams = await params;
-        const tripId = resolvedParams.tripId;
+        const tripId = params.tripId;
 
         // Find the trip by SecureToken
         const trip = await prisma.trip.findUnique({
@@ -55,11 +54,10 @@ export async function GET(
 // PUT /api/trip/[tripId]/location - Update location for a trip
 export async function PUT(
     req: NextRequest,
-    { params }: { params: Promise<{ tripId: string }> }
+    { params }: { params: { tripId: string } }
 ) {
     try {
-        const resolvedParams = await params;
-        const tripId = resolvedParams.tripId;
+        const tripId = params.tripId;
         const body = await req.json();
 
         // Validate required fields
@@ -187,7 +185,7 @@ export async function PUT(
 // POST /api/trip/[tripId]/location - Create new location for a trip (alias for PUT)
 export async function POST(
     req: NextRequest,
-    { params }: { params: Promise<{ tripId: string }> }
+    { params }: { params: { tripId: string } }
 ) {
     return PUT(req, { params });
 }

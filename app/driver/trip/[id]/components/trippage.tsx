@@ -43,7 +43,7 @@ function TripPage({ trip }: TripPageProps) {
     React.useEffect(() => {
         document.body.setAttribute('data-driver-page', 'true');
         document.body.classList.add('driver-page');
-        
+
         return () => {
             document.body.removeAttribute('data-driver-page');
             document.body.classList.remove('driver-page');
@@ -159,79 +159,80 @@ function TripPage({ trip }: TripPageProps) {
             }
             <Divider className='mb-5' />
 
-            {/* Hide passenger info and location/map cards if trip is canceled */}
-            {trip.status !== 'canceled' && (
-                <>
-                    <Card className="mx-2" dir="rtl">
-                        <CardBody>
-                            <div className="flex justify-between ">
-                                <Icon icon="fluent-color:person-20" className='self-center align-middle' width={32}></Icon>
-                                <div className="flex flex-col items-start flex-1 ms-4">
-                                    <span>
-                                        {trip.Passenger?.Firstname} {trip.Passenger?.Lastname}
-                                    </span>
-                                    <span className="text-xs mt-1 text-blue-500">
-                                        <span className="text-default-600 me-1">
-                                            شماره تماس:
-                                        </span>
-                                        {trip.Passenger?.NumberPhone}
-                                    </span>
-                                </div>
-                                {/* Call button */}
-                                <a
-                                    href={`tel:${trip.Passenger?.NumberPhone ?? ''}`}
-                                    className="size-10 align-middle me-2"
-                                    tabIndex={-1}
-                                    aria-label="تماس با مسافر"
-                                >
-                                    <Button isIconOnly={true} variant="bordered" className="size-10 me-2 bg-default-50 shadow-2xl align-middle">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5 text-green-700">
-                                            <path fillRule="evenodd" d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z" clipRule="evenodd" />
-                                        </svg>
-                                    </Button>
-                                </a>
-                            </div>
-                        </CardBody>
-                    </Card>
+            <h1 className="text-xl ms-5 font-semibold " >
+                اطلاعات مسافر
+            </h1>
 
-                    <Card className="mx-2 mt-4 p-1.5" dir="rtl">
-                        <CardHeader>
-                            <span className="font-md text-default-700">موقعیت مبدا مسافر</span>
-                        </CardHeader>
-                        <CardBody className="gap-1" >
-                            <div className="flex flex-col gap-3" dir="rtl">
-                                {trip.Location && typeof trip.Location.Latitude === 'number' && typeof trip.Location.Longitude === 'number' ? (
-                                    <PassengerMap latitude={trip.Location.Latitude} longitude={trip.Location.Longitude} />
-                                ) : (
-                                    <span className="text-default-500 text-center">موقعیت مکانی ثبت نشده است.</span>
-                                )}
-                            </div>
-                            <div>
-                                <div className="flex justify-between mt-2" dir="rtl">
-                                    <textarea
-                                        className="w-full mx-1 text-sm text-default-700 bg-default-100 rounded-lg border border-default-200 p-2 resize-none"
-                                        rows={2}
-                                        value={typeof trip.Location?.TextAddress === 'string' ? trip.Location.TextAddress : 'آدرس ثبت نشده است.'}
-                                        disabled
-                                        readOnly
-                                        style={{ direction: 'rtl' }}
-                                    />
-                                </div>
-                            </div>
-                            {/* Direction Button at the bottom of the card */}
-                            {trip.Location && typeof trip.Location.Latitude === 'number' && typeof trip.Location.Longitude === 'number' && (
-                                <Button startContent={(
-                                    <Icon icon="solar:route-outline" className="" width={24} />
-                                )} className="w-full mt-3 px-3 font-md" color="primary" variant="solid" onClick={onOpen} size="lg">
-                                    مسیریابی
-                                </Button>
-                            )}
-                        </CardBody>
-                    </Card>
-                </>
-            )}
+            <Card className="mx-2 mt-4" dir="rtl">
+                <CardBody>
+                    <div className="flex justify-between ">
+                        <Icon icon="fluent-color:person-20" className='self-center align-middle' width={32}></Icon>
+                        <div className="flex flex-col items-start flex-1 ms-4">
+                            <span>
+                                {trip.Passenger?.Firstname} {trip.Passenger?.Lastname}
+                            </span>
+                            <span className="text-xs mt-1 text-blue-500">
+                                <span className="text-default-600 me-1">
+                                    شماره تماس:
+                                </span>
+                                {trip.Passenger?.NumberPhone}
+                            </span>
+                        </div>
+                        {/* Call button */}
+                        <a
+                            href={`tel:${trip.Passenger?.NumberPhone ?? ''}`}
+                            className="size-10 align-middle me-2"
+                            tabIndex={-1}
+                            aria-label="تماس با مسافر"
+                        >
+                            <Button isIconOnly={true} variant="bordered" className="size-10 me-2 bg-default-50 shadow-2xl align-middle">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5 text-green-700">
+                                    <path fillRule="evenodd" d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z" clipRule="evenodd" />
+                                </svg>
+                            </Button>
+                        </a>
+                    </div>
+                </CardBody>
+            </Card>
 
-            <Drawer isOpen={isOpen} placement={"buttom"} onOpenChange={onOpenChange} dir="rtl">
+            <Card className="mx-2 mt-4 p-1.5" dir="rtl">
+                <CardHeader>
+                    <span className="font-md text-default-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} className='inline me-1' viewBox="0 0 16 16"><g fill="none"><path fill="url(#SVGyspx1cjV)" d="M14 12.5C14 14 11.314 15 8 15s-6-1-6-2.5S4.686 10 8 10s6 1 6 2.5"></path><path fill="url(#SVGLx4gDddK)" d="M8 1a5 5 0 0 0-5 5c0 1.144.65 2.35 1.393 3.372c.757 1.043 1.677 1.986 2.346 2.62a1.824 1.824 0 0 0 2.522 0c.669-.634 1.589-1.577 2.346-2.62C12.349 8.35 13 7.144 13 6a5 5 0 0 0-5-5"></path><path fill="url(#SVGd9SP9cVI)" d="M9.5 6a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0"></path><defs><linearGradient id="SVGLx4gDddK" x1={0.813} x2={8.969} y1={-2.285} y2={10.735} gradientUnits="userSpaceOnUse"><stop stopColor="#f97dbd"></stop><stop offset={1} stopColor="#d7257d"></stop></linearGradient><linearGradient id="SVGd9SP9cVI" x1={6.674} x2={8.236} y1={6.133} y2={7.757} gradientUnits="userSpaceOnUse"><stop stopColor="#fdfdfd"></stop><stop offset={1} stopColor="#fecbe6"></stop></linearGradient><radialGradient id="SVGyspx1cjV" cx={0} cy={0} r={1} gradientTransform="matrix(9.42857 -1.66667 .69566 3.93547 7.571 11.667)" gradientUnits="userSpaceOnUse"><stop stopColor="#7b7bff"></stop><stop offset={0.502} stopColor="#a3a3ff"></stop><stop offset={1} stopColor="#ceb0ff"></stop></radialGradient></defs></g></svg>
+                        موقعیت مبدا مسافر</span>
+                </CardHeader>
+                <CardBody className="gap-1" >
+                    <div className="flex flex-col gap-3" dir="rtl">
+                        {trip.Location && typeof trip.Location.Latitude === 'number' && typeof trip.Location.Longitude === 'number' ? (
+                            <PassengerMap latitude={trip.Location.Latitude} longitude={trip.Location.Longitude} />
+                        ) : (
+                            <span className="text-default-500 mb-3 text-center">موقعیت مکانی هنوز ثبت نشده است.</span>
+                        )}
+                    </div>
+                    <div>
+                        <div className="flex justify-between mt-2" dir="rtl">
+                            <textarea
+                                className="w-full mx-1 text-sm text-default-700 bg-default-100 rounded-lg border border-default-200 p-2 resize-none"
+                                rows={2}
+                                value={typeof trip.Location?.TextAddress === 'string' ? trip.Location.TextAddress : 'آدرس ثبت نشده است.'}
+                                disabled
+                                readOnly
+                                style={{ direction: 'rtl' }}
+                            />
+                        </div>
+                    </div>
+                    {/* Direction Button at the bottom of the card */}
+                    {trip.Location && typeof trip.Location.Latitude === 'number' && typeof trip.Location.Longitude === 'number' && (
+                        <Button startContent={(
+                            <Icon icon="solar:route-outline" className="" width={24} />
+                        )} className="w-full mt-3 px-3 font-md" color="primary" variant="solid" onClick={onOpen} size="lg">
+                            مسیریابی
+                        </Button>
+                    )}
+                </CardBody>
+            </Card>
+
+            <Drawer isOpen={isOpen} placement="bottom" onOpenChange={onOpenChange} dir="rtl">
                 <DrawerContent>
                     {(onClose) => (
                         <>

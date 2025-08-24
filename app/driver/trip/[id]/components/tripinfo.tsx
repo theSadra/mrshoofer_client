@@ -24,14 +24,6 @@ type TripInfoProps = {
 };
 
 function TripInfo({ trip }: TripInfoProps) {
-    // Prevent body scroll when this component is mounted
-    React.useEffect(() => {
-        const originalOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = originalOverflow;
-        };
-    }, []);
     const [currentStep, setCurrentStep] = React.useState(-1);
 
     // Handle case where trip is null or undefined
@@ -102,10 +94,10 @@ function TripInfo({ trip }: TripInfoProps) {
     // Show canceled chip and message if trip is canceled
     if (trip.status === TripStatus.canceled) {
         return (
-            <div className="w-full h-screen min-h-0 bg-white flex flex-col overflow-hidden">
-                <div className="flex-1 p-4 overflow-y-auto">
+            <div className="w-full bg-white flex flex-col">
+                <div className="p-4">
                     <div className="flex justify-between align-center">
-                        <h1 className="text-xl font-semibold">اطلاعات سفر</h1>
+                        <h1 className="text-lgfont-semibold">اطلاعات سفر</h1>
                         <Chip variant="bordered" color="default">
                             <span className="font-light text-sm self-center">
                                 رفرنس
@@ -139,10 +131,10 @@ function TripInfo({ trip }: TripInfoProps) {
     }
 
     return (
-        <div className="w-full h-screen min-h-0 bg-white flex flex-col overflow-hidden">
-            <div className="flex-1 p-4 overflow-y-auto">
+        <div className="w-full bg-white flex flex-col">
+            <div className="p-4">
                 <div className="flex justify-between align-center">
-                    <h1 className="text-2xl font-semibold">اطلاعات سفر</h1>
+                    <h1 className="text-xl font-semibold">اطلاعات سفر</h1>
                     <Chip variant="bordered" color="default">
                         <span className="font-light text-sm self-center">
                             رفرنس
@@ -204,10 +196,9 @@ function TripInfo({ trip }: TripInfoProps) {
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-0 flex flex-col justify-between py-2 px-0 rounded-2xl">
+                            <div className="mt-0 flex flex-col justify-between py-2 px-0 rounded-xl">
                                 <div className="flex flex-row  justify-center pe-7 py-0 align-baseline">
                                     <Chip color="warning" className="text-gray-700" variant="bordered">
-                                        <span className="pe-1 text-lg">🚖</span>
                                         {trip.CarName}
                                     </Chip>
                                 </div>
@@ -216,9 +207,9 @@ function TripInfo({ trip }: TripInfoProps) {
                     </div>
                 </Card>
             </div>
-            <div className="w-full bg-white border-t p-4 flex justify-center">
+            {/* <div className="w-full bg-white border-t p-4 flex justify-center">
                 <button className="w-full max-w-md bg-blue-600 text-white py-3 rounded-xl shadow-lg text-lg font-bold">پایان سفر</button>
-            </div>
+            </div> */}
         </div>
     );
 }

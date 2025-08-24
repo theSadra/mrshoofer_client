@@ -5,10 +5,9 @@ import React from 'react';
 const prisma = new PrismaClient();
 
 // This must be a server component to fetch from the DB
-export default async function DriverTripPage({ params }: { params: Promise<{ id: string }> }) {
-    const resolvedParams = await params;
+export default async function DriverTripPage({ params }: { params: { id: string } }) {
     const trip = await prisma.trip.findUnique({
-        where: { SecureToken: resolvedParams.id },
+        where: { SecureToken: params.id },
         include: { Driver: true, Passenger: true, Location: true },
     });
 
@@ -17,6 +16,10 @@ export default async function DriverTripPage({ params }: { params: Promise<{ id:
     }
 
     return (
-        <TripPage trip={trip} />
+
+        <>
+            <TripPage trip={trip} />
+            <div className='mt-16'></div>
+        </>
     );
 }

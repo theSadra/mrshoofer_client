@@ -6,11 +6,10 @@ const prisma = new PrismaClient();
 // GET /api/trip/[tripId] - Get trip information by SecureToken
 export async function GET(
     req: NextRequest,
-    { params }: { params: Promise<{ tripId: string }> }
+    { params }: { params: { tripId: string } }
 ) {
     try {
-        const resolvedParams = await params;
-        const tripId = resolvedParams.tripId;
+        const tripId = params.tripId;
 
         const trip = await prisma.trip.findUnique({
             where: { SecureToken: tripId },
