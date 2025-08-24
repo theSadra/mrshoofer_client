@@ -223,6 +223,8 @@ function LocationSelectorPage({ tripId, tripData }) {
   const currentSearchRef = useRef(null); // Track current search to prevent race conditions
   const isProgrammaticSearch = useRef(false); // Flag to prevent auto-search when setting programmatically
   const abortControllerRef = useRef(null); // For canceling previous requests
+  // Recenter control: ensure we don't recenter on interval updates
+  const hasCenteredRef = useRef(false);
 
   // Define optimized searchNeshan with useCallback and request cancellation
   const searchNeshan = useCallback(async (query) => {
@@ -817,8 +819,13 @@ function LocationSelectorPage({ tripId, tripData }) {
         setIsLoadingLocation(false);
         currentLocationRef.current = immediateLocation;
 
-        // Center map and show blue dot immediately
-        centerMapAndAddDot(immediateLocation);
+        // Center map once per user action; afterwards only move the blue dot
+        if (!hasCenteredRef.current) {
+          centerMapAndAddDot(immediateLocation);
+          hasCenteredRef.current = true;
+        } else {
+          updateLocationDisplay(immediateLocation);
+        }
         setIsContinuousTracking(true);
         setIsTrackingLocation(false);
       },
@@ -863,15 +870,14 @@ function LocationSelectorPage({ tripId, tripData }) {
         setLocationError(null);
         currentLocationRef.current = newLocation;
 
-        // Only center map on first location or if user clicked the button again
-        if (!isContinuousTracking) {
-          // First time getting location - center the map
-          console.log('🎯 First location - centering map');
+        // Only center map once; subsequent updates move the blue dot only
+        if (!hasCenteredRef.current) {
+          console.log('🎯 First location for this request - centering map');
           centerMapAndAddDot(newLocation);
+          hasCenteredRef.current = true;
           setIsContinuousTracking(true);
         } else {
-          // Subsequent updates - just update the blue dot position
-          console.log('🎯 Updating location display for continuous tracking at', new Date().toLocaleTimeString());
+          console.log('🎯 Continuous update - updating dot only at', new Date().toLocaleTimeString());
           updateLocationDisplay(newLocation);
         }
 
@@ -981,6 +987,7 @@ function LocationSelectorPage({ tripId, tripData }) {
     setIsContinuousTracking(false);
     setIsLoadingLocation(false);
     console.log('🎯 Location tracking completely stopped');
+  hasCenteredRef.current = false;
     
     // Remove accuracy circle
     if (accuracyCircleRef.current) {
@@ -1530,7 +1537,10 @@ function LocationSelectorPage({ tripId, tripData }) {
       locationDisplayTimeoutRef.current = null;
     }
 
-    // Always start/restart tracking when user clicks the button
+  // Reset centering guard so we'll center once after the next fresh fix
+  hasCenteredRef.current = false;
+
+  // Always start/restart tracking when user clicks the button
     // This ensures the interval updates begin
     console.log('🎯 Starting location tracking with continuous updates');
     startLocationTracking();
