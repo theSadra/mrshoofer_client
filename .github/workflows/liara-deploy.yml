@@ -9,6 +9,8 @@ jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
+    env:
+      LIARA_APP: mrshoofer-client
 
     steps:
     - name: Checkout Code
@@ -27,9 +29,9 @@ jobs:
         IMAGE_BASE="sadradorostkar/mrshoofer-client"
         PREFERRED_TAG="sha-${FULL_SHA}"
         echo "Attempting deploy with tag: ${PREFERRED_TAG}"
-        if npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG} --account ci; then
+        if npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG} --account ci; then
           echo "Deployed ${IMAGE_BASE}:${PREFERRED_TAG}"
         else
           echo "SHA-tag deploy failed; falling back to :latest"
-          npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest --account ci
+          npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --account ci
         fi

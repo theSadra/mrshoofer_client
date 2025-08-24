@@ -8,6 +8,8 @@ on:
 jobs:
   build-push:
     runs-on: ubuntu-latest
+    env:
+      LIARA_APP: mrshoofer-client
 
     steps:
     - name: Checkout Code
@@ -60,6 +62,8 @@ jobs:
     needs: build-push
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      LIARA_APP: mrshoofer-client
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -77,9 +81,9 @@ jobs:
           set -e
           COMMIT_HASH=$(git rev-parse --short HEAD)
           echo "Attempting deploy with tag: ${COMMIT_HASH}"
-          if npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH} --account ci; then
+          if npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH} --account ci; then
             echo "Deployed ${IMAGE_BASE}:${COMMIT_HASH}"
           else
             echo "Commit tag not available; falling back to :latest"
-            npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest --account ci
+            npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --account ci
           fi

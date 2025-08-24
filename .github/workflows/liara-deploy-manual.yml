@@ -10,6 +10,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      LIARA_APP: mrshoofer-client
     steps:
       - name: Log in to Liara (API Token)
         run: |
@@ -22,4 +24,4 @@ jobs:
         run: |
           set -e
           echo "Deploying ${IMAGE_BASE}:${{ inputs.image_tag }}"
-          npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }} --account ci
+          npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }} --account ci
