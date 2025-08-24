@@ -16,11 +16,6 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Log in to Liara (API Token)
-      run: |
-        echo "Logging in to Liara as account: ci"
-        npx @liara/cli login --api-token "${{ secrets.LIARA_API_TOKEN }}" --account "ci"
-
     - name: Deploy Docker Image to Liara (prefer SHA tag)
       env:
         FULL_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -29,9 +24,9 @@ jobs:
         IMAGE_BASE="sadradorostkar/mrshoofer-client"
         PREFERRED_TAG="sha-${FULL_SHA}"
         echo "Attempting deploy with tag: ${PREFERRED_TAG}"
-        if npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG} --account ci; then
+        if npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}"; then
           echo "Deployed ${IMAGE_BASE}:${PREFERRED_TAG}"
         else
           echo "SHA-tag deploy failed; falling back to :latest"
-          npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --account ci
+          npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}"
         fi

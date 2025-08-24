@@ -13,15 +13,10 @@ jobs:
     env:
       LIARA_APP: mrshoofer-client
     steps:
-      - name: Log in to Liara (API Token)
-        run: |
-          echo "Logging in to Liara as account: ci"
-          npx @liara/cli login --api-token "${{ secrets.LIARA_API_TOKEN }}" --account "ci"
-
       - name: Deploy selected image to Liara
         env:
           IMAGE_BASE: sadradorostkar/mrshoofer-client
         run: |
           set -e
           echo "Deploying ${IMAGE_BASE}:${{ inputs.image_tag }}"
-          npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }} --account ci
+          npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}"
