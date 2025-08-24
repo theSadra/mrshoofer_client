@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Trip, Passenger, Driver } from '@prisma/client';
-import { Button } from '@heroui/react';
+import { Button, useDisclosure, Image, Divider, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import TripInfo from './tripinfo';
 import { Card, CardBody, CardHeader } from '@heroui/card';
 import { Chip } from '@heroui/chip';
@@ -11,9 +11,6 @@ import CountdownTimer from './CountdownTimer';
 import dynamic from 'next/dynamic';
 
 import DirectionSheet from './DirectionSheet';
-import { useDisclosure, Image, Divider } from '@heroui/react';
-
-import { Drawer, DrawerHeader, DrawerBody, DrawerFooter, DrawerContent } from '@heroui/drawer';
 import NeshanLogo from './NeshanLogo';
 import GoogleMapsLogo from './GoogleMapsLogo';
 
@@ -86,7 +83,7 @@ function TripPage({ trip }: TripPageProps) {
         let url = '';
         switch (platform) {
             case 'neshan':
-                url = `https://neshan.org/maps?lat=${lat}&lng=${lng}`;
+                url = `https://nshn.ir/?lat=${lat}&lng=${lng}`;
                 break;
             case 'google':
                 url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
@@ -225,19 +222,19 @@ function TripPage({ trip }: TripPageProps) {
                     {trip.Location && typeof trip.Location.Latitude === 'number' && typeof trip.Location.Longitude === 'number' && (
                         <Button startContent={(
                             <Icon icon="solar:route-outline" className="" width={24} />
-                        )} className="w-full mt-3 px-3 font-md" color="primary" variant="solid" onClick={onOpen} size="lg">
+                        )} className="w-full mt-3 px-3 font-md" color="primary" variant="solid" onPress={onOpen} size="lg">
                             مسیریابی
                         </Button>
                     )}
                 </CardBody>
             </Card>
 
-            <Drawer isOpen={isOpen} placement="bottom" onOpenChange={onOpenChange} dir="rtl">
-                <DrawerContent>
+            <Modal isOpen={isOpen} placement="bottom" onOpenChange={onOpenChange} backdrop="transparent" dir="rtl">
+                <ModalContent>
                     {(onClose) => (
                         <>
-                            <DrawerHeader className="flex flex-col gap-1">مسیریابی</DrawerHeader>
-                            <DrawerBody className="mt-3">
+                            <ModalHeader className="flex flex-col gap-1">مسیریابی</ModalHeader>
+                            <ModalBody className="mt-1">
                                 <div className="flex justify-around flex-wrap gap-3">
                                     <div className="flex flex-col items-center">
                                         <Button size="lg" isIconOnly={true} variant='bordered' onPress={() => handleDirection('neshan', onClose)}>
@@ -258,16 +255,16 @@ function TripPage({ trip }: TripPageProps) {
                                         <p className="text-center mt-2 font-md text-sm">گوگل‌مپس</p>
                                     </div>
                                 </div>
-                            </DrawerBody>
-                            <DrawerFooter>
+                            </ModalBody>
+                            <ModalFooter>
                                 <Button className='w-full' color="danger" variant="light" onPress={onClose}>
                                     بستن
                                 </Button>
-                            </DrawerFooter>
+                            </ModalFooter>
                         </>
                     )}
-                </DrawerContent>
-            </Drawer>
+                </ModalContent>
+            </Modal>
         </div>
     );
 }

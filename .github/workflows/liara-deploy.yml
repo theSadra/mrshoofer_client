@@ -1,12 +1,14 @@
 name: Deploy to Liara
 
 on:
-  push:
-    branches:
-      - main # Trigger on pushes to the main branch
+  workflow_run:
+  workflows: ["Build and Push MrShoofer Docker Image", "Build and Push Docker Image to Docker Hub"]
+    types:
+      - completed
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -17,10 +19,21 @@ jobs:
       run: |
         curl -s https://liara.ir/install.sh | bash
 
-    - name: Log in to Liara
+    - name: Log in to Liara (API Token)
       run: |
-        liara login --email ${{ secrets.LIARA_EMAIL }} --password ${{ secrets.LIARA_PASSWORD }}
+        liara login --api-token ${{ secrets.LIARA_API_TOKEN }}
 
-    - name: Deploy Latest Docker Image to Liara
+    - name: Deploy Docker Image to Liara (prefer SHA tag)
+      env:
+        FULL_SHA: ${{ github.event.workflow_run.head_sha }}
       run: |
-        liara deploy --platform docker --app mrshoofer-client --port 3000 --image sadradorostkar/mrshoofer-client:latest
+        set -e
+        IMAGE_BASE="sadradorostkar/mrshoofer-client"
+        PREFERRED_TAG="sha-${FULL_SHA}"
+        echo "Attempting deploy with tag: ${PREFERRED_TAG}"
+        if liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG}; then
+          echo "Deployed ${IMAGE_BASE}:${PREFERRED_TAG}"
+        else
+          echo "SHA-tag deploy failed; falling back to :latest"
+          liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest
+        fi
