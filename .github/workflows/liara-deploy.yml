@@ -16,7 +16,8 @@ jobs:
 
     - name: Log in to Liara (API Token)
       run: |
-        npx @liara/cli login --api-token ${{ secrets.LIARA_API_TOKEN }}
+        echo "Logging in to Liara as account: ci"
+        npx @liara/cli login --api-token "${{ secrets.LIARA_API_TOKEN }}" --account "ci"
 
     - name: Deploy Docker Image to Liara (prefer SHA tag)
       env:
@@ -26,9 +27,9 @@ jobs:
         IMAGE_BASE="sadradorostkar/mrshoofer-client"
         PREFERRED_TAG="sha-${FULL_SHA}"
         echo "Attempting deploy with tag: ${PREFERRED_TAG}"
-        if npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG}; then
+        if npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG} --account ci; then
           echo "Deployed ${IMAGE_BASE}:${PREFERRED_TAG}"
         else
           echo "SHA-tag deploy failed; falling back to :latest"
-          npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest
+          npx @liara/cli deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest --account ci
         fi
