@@ -96,6 +96,7 @@ function TripPage({ trip }: TripPageProps) {
                 break;
         }
         window.open(url, '_blank');
+        // test
         if (onClose) onClose();
     };
 
