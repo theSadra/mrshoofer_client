@@ -1,0 +1,28 @@
+name: Manual Deploy Specific Image to Liara
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy (e.g., v1.0-7487205)"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Liara CLI
+        run: |
+          curl -s https://liara.ir/install.sh | bash
+
+      - name: Log in to Liara (API Token)
+        run: |
+          liara login --api-token ${{ secrets.LIARA_API_TOKEN }}
+
+      - name: Deploy selected image to Liara
+        env:
+          IMAGE_BASE: sadradorostkar/mrshoofer-client
+        run: |
+          set -e
+          echo "Deploying ${IMAGE_BASE}:${{ inputs.image_tag }}"
+          liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }}

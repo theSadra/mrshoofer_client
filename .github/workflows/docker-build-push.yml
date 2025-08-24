@@ -54,3 +54,34 @@ jobs:
         echo "  📌 sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.timestamp }}"
         echo "  📌 sadradorostkar/mrshoofer-client:v1.0-${{ steps.meta.outputs.commit_hash }}"
         echo "🔗 You can now manually deploy any of these images to Liara"
+
+  deploy-liara:
+    name: Deploy to Liara (after Docker Hub push)
+    needs: build-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Liara CLI
+        run: |
+          curl -s https://liara.ir/install.sh | bash
+
+      - name: Log in to Liara (API Token)
+        run: |
+          liara login --api-token ${{ secrets.LIARA_API_TOKEN }}
+
+      - name: Deploy pushed image to Liara
+        env:
+          IMAGE_BASE: sadradorostkar/mrshoofer-client
+        run: |
+          set -e
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          echo "Attempting deploy with tag: ${COMMIT_HASH}"
+          if liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH}; then
+            echo "Deployed ${IMAGE_BASE}:${COMMIT_HASH}"
+          else
+            echo "Commit tag not available; falling back to :latest"
+            liara deploy --platform docker --app mrshoofer-client --port 3000 --image ${IMAGE_BASE}:latest
+          fi

@@ -2,9 +2,8 @@ name: Deploy to Liara
 
 on:
   workflow_run:
-  workflows: ["Build and Push MrShoofer Docker Image", "Build and Push Docker Image to Docker Hub"]
-    types:
-      - completed
+  workflows: ["Build and Push MrShoofer Docker Image"]
+  types: [completed]
 
 jobs:
   deploy:
