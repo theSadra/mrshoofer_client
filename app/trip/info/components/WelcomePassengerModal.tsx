@@ -13,9 +13,10 @@ import { Image } from '@heroui/react';
 
 interface WelcomePassengerModalProps {
     tripId: string;
+    showOneTime: boolean;
 }
 
-export const WelcomePassengerModal: React.FC<WelcomePassengerModalProps> = ({ tripId }) => {
+export const WelcomePassengerModal: React.FC<WelcomePassengerModalProps> = ({ tripId, showOneTime }) => {
     const [shouldShow, setShouldShow] = useState(false);
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -31,14 +32,20 @@ export const WelcomePassengerModal: React.FC<WelcomePassengerModalProps> = ({ tr
     }, [tripId, onOpen]);
 
     const handleClose = () => {
-        // Mark this modal as shown for this trip - PERMANENTLY
-        const key = `welcome-modal-shown-${tripId}`;
-        localStorage.setItem(key, 'true');
+
+
+        // Only store flag in database if should be shown one time 
+        if (showOneTime) {
+            // Mark this modal as shown for this trip - PERMANENTLY
+            const key = `welcome-modal-shown-${tripId}`;
+            localStorage.setItem(key, 'true');
+        }
         onOpenChange(); // Close the modal
     };
 
     // Don't render anything if we shouldn't show the modal
-    if (!shouldShow) {
+    // If should be shown onetime and shown once
+    if (showOneTime && !shouldShow) {
         return null;
     }
 
@@ -61,50 +68,26 @@ export const WelcomePassengerModal: React.FC<WelcomePassengerModalProps> = ({ tr
 
 
                                 <Image
-                                    className='align-center pt-2'
+                                    className='align-center pt-3'
                                     alt="TaxiImage"
-                                    src="/taxicheck.png"
-                                    width={75}
+                                    src="/suitcase.png"
+                                    width={105}
                                 />
 
-                                <p className="text-center text-lg font-extrabold mb-0">
-                                    سفر جدید برای شما ثبت شد
+                                <p className="text-center text-lg font-bold mb-0">
+                                    چمدونتو بستی؟
                                 </p>
 
 
-                                <p className="text-center text-sm leading-relaxed  font-light text-default-700">
-                                    راننده گرامی، سفر جدیدی برای شما ثبت شده است و
-                                    <span className="font-bold text-default-700 px-1">
-                                        اطلاعات مسافر
-                                    </span>
-
-
-                                    و
-                                    <span className="font-bold text-default-700 px-1">
-                                        مبدا
-                                    </span>
-                                    ایشان
-
-                                    ، در این صفحه قابل مشاهده می‌باشد.
+                                <p className="text-center text-sm leading-relaxed font-light text-default-700" dir="rtl">
+                                    مسافر عزیز، سفر سواری شما با موفقیت ثبت شده و برای شروع سفر، فقط <span className="font-bold text-default-700">یک مرحله</span> باقی مونده
                                 </p>
                                 <p>
 
                                 </p>
-                                <p className="text-start text-sm leading-relaxed  font-light text-default-700">
+                                <p className="text-center text-sm leading-relaxed font-light text-default-700" dir="rtl">
                                     <svg xmlns="http://www.w3.org/2000/svg" className='inline me-1' width={18} height={18} viewBox="0 0 48 48"><circle cx={24} cy={24} r={21} fill="#2196f3"></circle><path fill="#fff" d="M22 22h4v11h-4z"></path><circle cx={24} cy={16.5} r={2.5} fill="#fff"></circle></svg>
-                                    خواهش‌مند است برای تجربه سفری خوب و ارائه حرفه‌ای خدمات، به‌
-                                    <span className="font-bold text-default-700 mx-1">
-                                        قوانین سفر
-                                    </span>
-                                    و
-                                    <span className="font-bold text-default-700 px-1">
-                                        ‌حضور به موقع‌
-                                    </span>
-                                    <br></br>
-                                    در مکان مبدا برای شروع سفر توجه فرمایید.
-
-                                    <br></br>
-
+                                    برای تکمیل مراحل سفر، کافیست مشخصات <span className="font-bold text-default-700">مبدا</span> را در این صفحه وارد کنید تا راننده در زمان شروع سفرتون، در مبدا شما حاضر باشه
                                 </p>
                                 <Image
                                     src='/mrshoofer_logo_full.png'

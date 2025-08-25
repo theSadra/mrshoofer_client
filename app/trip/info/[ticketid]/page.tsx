@@ -15,6 +15,7 @@ import {
   ModalFooter,
   Button
 } from "@heroui/react";
+import WelcomePassengerModal from "../components/WelcomePassengerModal";
 
 
 
@@ -124,6 +125,11 @@ export default function Upcoming({ params }: { params: Promise<{ ticketid: strin
         isOpen={showUpdatedModal}
         onOpenChange={setShowUpdatedModal}
       />
+
+
+
+      <WelcomePassengerModal tripId={resolvedParams.ticketid} showOneTime={true} />
+
     </div>
   );
 }
