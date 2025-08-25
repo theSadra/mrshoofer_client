@@ -28,14 +28,14 @@ const PassengerMap: React.FC<PassengerMapProps> = ({ latitude, longitude }) => {
     }, [latitude, longitude]);
 
     return (
-        <div className="w-full h-32 rounded-xl overflow-hidden border border-default-200 flex flex-col items-center" style={{ maxWidth: 320, margin: '0 auto' }}>
-            <div className="relative w-full h-32">
+        <div className="w-full  rounded-xl overflow-hidden border border-default-200 flex flex-col items-center" style={{ maxWidth: 320, margin: '0 auto' }}>
+            <div className="relative w-full h-80">
                 <MapComponent
                     options={{
                         mapKey: MAP_KEY,
                         mapType: MapTypes.neshanVector,
                         center: [longitude, latitude],
-                        zoom: 15,
+                        zoom: 12,
                         poi: false,
                         mapTypeControllerOptions: {
                             show: false,
@@ -49,8 +49,7 @@ const PassengerMap: React.FC<PassengerMapProps> = ({ latitude, longitude }) => {
                         doubleClickZoom: false,
                         keyboard: false,
                         boxZoom: false,
-
-                        // interactive: false, // Uncomment if supported by Neshan SDK
+                        interactive: false, // Uncomment if supported by Neshan SDK
                     }}
                     mapSetter={() => { }}
                 />

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Trip, Passenger, Driver } from '@prisma/client';
-import { Button, useDisclosure, Image, Divider, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+import { Button, useDisclosure, Image, Divider, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
 import TripInfo from './tripinfo';
 import { Card, CardBody, CardHeader } from '@heroui/card';
 import { Chip } from '@heroui/chip';
@@ -13,6 +13,7 @@ import dynamic from 'next/dynamic';
 import DirectionSheet from './DirectionSheet';
 import NeshanLogo from './NeshanLogo';
 import GoogleMapsLogo from './GoogleMapsLogo';
+import WelcomeDriverModal from './modals/WelcomeDriverModal';
 
 // Dynamically import the map component to avoid SSR issues
 const PassengerMap = dynamic(() => import('./PassengerMap'), { ssr: false });
@@ -75,8 +76,8 @@ function TripPage({ trip }: TripPageProps) {
     ];
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
-    // Helper to open navigation app with correct URL and close drawer
-    const handleDirection = (platform: 'neshan' | 'google' | 'waze' | 'balad', onClose?: () => void) => {
+    // Helper to open navigation app with correct URL and close popover
+    const handleDirection = (platform: 'neshan' | 'google' | 'waze' | 'balad') => {
         if (!trip.Location || typeof trip.Location.Latitude !== 'number' || typeof trip.Location.Longitude !== 'number') return;
         const lat = trip.Location.Latitude;
         const lng = trip.Location.Longitude;
@@ -96,8 +97,6 @@ function TripPage({ trip }: TripPageProps) {
                 break;
         }
         window.open(url, '_blank');
-        // test
-        if (onClose) onClose();
     };
 
     return (
@@ -195,9 +194,10 @@ function TripPage({ trip }: TripPageProps) {
 
             <Card className="mx-2 mt-4 p-1.5" dir="rtl">
                 <CardHeader>
-                    <span className="font-md text-default-700">
+                    <span className="font-md text-default-900">
                         <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} className='inline me-1' viewBox="0 0 16 16"><g fill="none"><path fill="url(#SVGyspx1cjV)" d="M14 12.5C14 14 11.314 15 8 15s-6-1-6-2.5S4.686 10 8 10s6 1 6 2.5"></path><path fill="url(#SVGLx4gDddK)" d="M8 1a5 5 0 0 0-5 5c0 1.144.65 2.35 1.393 3.372c.757 1.043 1.677 1.986 2.346 2.62a1.824 1.824 0 0 0 2.522 0c.669-.634 1.589-1.577 2.346-2.62C12.349 8.35 13 7.144 13 6a5 5 0 0 0-5-5"></path><path fill="url(#SVGd9SP9cVI)" d="M9.5 6a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0"></path><defs><linearGradient id="SVGLx4gDddK" x1={0.813} x2={8.969} y1={-2.285} y2={10.735} gradientUnits="userSpaceOnUse"><stop stopColor="#f97dbd"></stop><stop offset={1} stopColor="#d7257d"></stop></linearGradient><linearGradient id="SVGd9SP9cVI" x1={6.674} x2={8.236} y1={6.133} y2={7.757} gradientUnits="userSpaceOnUse"><stop stopColor="#fdfdfd"></stop><stop offset={1} stopColor="#fecbe6"></stop></linearGradient><radialGradient id="SVGyspx1cjV" cx={0} cy={0} r={1} gradientTransform="matrix(9.42857 -1.66667 .69566 3.93547 7.571 11.667)" gradientUnits="userSpaceOnUse"><stop stopColor="#7b7bff"></stop><stop offset={0.502} stopColor="#a3a3ff"></stop><stop offset={1} stopColor="#ceb0ff"></stop></radialGradient></defs></g></svg>
-                        موقعیت مبدا مسافر</span>
+                        موقعیت مبدا
+                    </span>
                 </CardHeader>
                 <CardBody className="gap-1" >
                     <div className="flex flex-col gap-3" dir="rtl">
@@ -208,7 +208,12 @@ function TripPage({ trip }: TripPageProps) {
                         )}
                     </div>
                     <div>
-                        <div className="flex justify-between mt-2" dir="rtl">
+                        <div className="mt-2" dir="rtl">
+
+
+                            <p className="font-light text-xs text-right pb-2">
+                                آدرس مبدا
+                            </p>
                             <textarea
                                 className="w-full mx-1 text-sm text-default-700 bg-default-100 rounded-lg border border-default-200 p-2 resize-none"
                                 rows={2}
@@ -221,53 +226,78 @@ function TripPage({ trip }: TripPageProps) {
                     </div>
                     {/* Direction Button at the bottom of the card */}
                     {trip.Location && typeof trip.Location.Latitude === 'number' && typeof trip.Location.Longitude === 'number' && (
-                        <Button startContent={(
-                            <Icon icon="solar:route-outline" className="" width={24} />
-                        )} className="w-full mt-3 px-3 font-md" color="primary" variant="solid" onPress={onOpen} size="lg">
-                            مسیریابی
-                        </Button>
+                        <Popover placement="top" isOpen={isOpen} onOpenChange={onOpenChange}>
+                            <PopoverTrigger>
+
+
+                                <Button endContent={(
+                                    <Icon icon="solar:route-outline" className="" width={24} />
+                                )} className="w-full mt-3 px-3 font-md" color="primary" variant="solid" size="lg">
+                                    مسیریابی
+                                </Button>
+
+                            </PopoverTrigger>
+                            <PopoverContent dir="rtl" className="p-4">
+                                <div className="flex flex-col gap-3">
+                                    <h4 className="text-sm font-semibold mb-2">انتخاب برنامه مسیریابی</h4>
+                                    <div className="flex justify-around gap-4">
+                                        <div className="flex flex-col items-center">
+                                            <Button
+                                                size="md"
+                                                isIconOnly={true}
+                                                variant='bordered'
+                                                onPress={() => handleDirection('neshan')}
+                                                className="w-12 h-12" z
+                                            >
+                                                <Image src="/neshanlogo.png" height={39} width={39} alt="Neshan Logo" className="object-contain" />
+                                            </Button>
+                                            <p className="text-center mt-1 text-xs">نشان</p>
+                                        </div>
+                                        <div className="flex flex-col items-center">
+                                            <Button
+                                                size="md"
+                                                isIconOnly={true}
+                                                variant='bordered'
+                                                onPress={() => handleDirection('waze')}
+                                                className="w-12 h-12"
+                                            >
+                                                <Image src="/wazelogo.png" height={34} width={34} alt="Waze Logo" className="object-contain" />
+                                            </Button>
+                                            <p className="text-center mt-1 text-xs">waze</p>
+                                        </div>
+                                        <div className="flex flex-col items-center">
+                                            <Button
+                                                size="md"
+                                                variant='bordered'
+                                                isIconOnly={true}
+                                                onPress={() => handleDirection('google')}
+                                                className="w-12 h-12"
+                                            >
+                                                <GoogleMapsLogo size={34} className="object-contain" />
+                                            </Button>
+                                            <p className="text-center mt-1 text-xs">گوگل‌مپس</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     )}
+
+
+                    <div className="text-xs px-3 font-light text-center color-gray-700 mt-1">
+
+                        <span className='text-danger-400 me-1'>*</span>
+                        برای مشاهده مقصد دقیق مسافر و مسیریابی، از گزینه بالا استفاده کنید.
+                    </div>
+
                 </CardBody>
             </Card>
 
-            <Modal isOpen={isOpen} placement="bottom" onOpenChange={onOpenChange} backdrop="transparent" dir="rtl">
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="flex flex-col gap-1">مسیریابی</ModalHeader>
-                            <ModalBody className="mt-1">
-                                <div className="flex justify-around flex-wrap gap-3">
-                                    <div className="flex flex-col items-center">
-                                        <Button size="lg" isIconOnly={true} variant='bordered' onPress={() => handleDirection('neshan', onClose)}>
-                                            <Image src="/neshanlogo.png" height={41} width={41} alt="Neshan Logo" className="mx-auto" />
-                                        </Button>
-                                        <p className="text-center mt-2 font-md text-sm">نشان</p>
-                                    </div>
-                                    <div className="flex flex-col items-center">
-                                        <Button className='rounded-2xl' size="lg" variant='light' isIconOnly={true} onPress={() => handleDirection('waze', onClose)}>
-                                            <NeshanLogo size={44} className="mx-auto" />
-                                        </Button>
-                                        <p className="text-center mt-2 font-md text-sm">waze</p>
-                                    </div>
-                                    <div className="flex flex-col items-center">
-                                        <Button size="lg" variant='bordered' isIconOnly={true} onPress={() => handleDirection('google', onClose)}>
-                                            <GoogleMapsLogo size={34} className="mx-auto" />
-                                        </Button>
-                                        <p className="text-center mt-2 font-md text-sm">گوگل‌مپس</p>
-                                    </div>
-                                </div>
-                            </ModalBody>
-                            <ModalFooter>
-                                <Button className='w-full' color="danger" variant="light" onPress={onClose}>
-                                    بستن
-                                </Button>
-                            </ModalFooter>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
-        </div>
+
+            <WelcomeDriverModal tripId={trip.id.toString()} />
+        </div >
     );
 }
+
 
 export default TripPage;
