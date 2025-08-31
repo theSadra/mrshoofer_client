@@ -1,4 +1,4 @@
-name: Manual Deploy Specific Image to Liara
+name: Manual Deploy to Liara via API
 
 on:
   workflow_dispatch:
@@ -12,11 +12,28 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LIARA_APP: mrshoofer-client
+      LIARA_API_BASE: https://api.iran.liara.ir
+      TEAM_ID: 67d91aeb2c70acbe880d3592
+    
     steps:
-      - name: Deploy selected image to Liara
+      - name: Deploy to Liara via REST API
         env:
           IMAGE_BASE: sadradorostkar/mrshoofer-client
         run: |
           set -e
-          echo "Deploying ${IMAGE_BASE}:${{ inputs.image_tag }}"
-          npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}" --team-id "67d91aeb2c70acbe880d3592"
+          echo "Deploying ${IMAGE_BASE}:${{ inputs.image_tag }} via Liara API"
+          
+          curl -X POST "${LIARA_API_BASE}/v1/projects/${LIARA_APP}/deployments" \
+            -H "Authorization: Bearer ${{ secrets.LIARA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -H "X-Team-ID: ${TEAM_ID}" \
+            -d '{
+              "type": "image",
+              "image": "'${IMAGE_BASE}:${{ inputs.image_tag }}'",
+              "port": 3000,
+              "message": "Manual deployment from GitHub Actions - tag: ${{ inputs.image_tag }}"
+            }' \
+            --fail-with-body
+          
+          echo "✅ Deployment request sent successfully!"
+          echo "Check status at: https://console.liara.ir/"
