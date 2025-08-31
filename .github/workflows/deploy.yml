@@ -1,0 +1,21 @@
+name: Deploy to Liara (Team App)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Liara CLI
+        run: npm install -g @liara/cli
+
+      - name: Deploy with Liara
+        env:
+          LIARA_TOKEN: ${{ secrets.LIARA_TOKEN }}
+        run: liara deploy --api-token $LIARA_TOKEN --detach --message "Automated deployment from GitHub Actions"

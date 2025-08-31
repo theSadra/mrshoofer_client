@@ -1,6 +1,7 @@
 {
   "platform": "docker",
-  "app": "mrshoofer-client", 
+  "app": "mrshoofer-client",
+  "teamId": "67d91aeb2c70acbe880d3592",
   "port": 3000,
   "image": "sadradorostkar/mrshoofer-client:latest",
   "healthCheck": {
