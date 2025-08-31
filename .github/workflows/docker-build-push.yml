@@ -83,9 +83,9 @@ jobs:
           set -e
           COMMIT_HASH=$(git rev-parse --short HEAD)
           echo "Attempting deploy with tag: ${COMMIT_HASH}"
-          if liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}" --team "67d91aeb2c70acbe880d3592"; then
+          if liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}" --team-id "67d91aeb2c70acbe880d3592"; then
             echo "Deployed ${IMAGE_BASE}:${COMMIT_HASH}"
           else
             echo "Commit tag not available; falling back to :latest"
-            liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}" --team "67d91aeb2c70acbe880d3592"
+            liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}" --team-id "67d91aeb2c70acbe880d3592"
           fi

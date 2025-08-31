@@ -19,4 +19,4 @@ jobs:
         run: |
           set -e
           echo "Deploying ${IMAGE_BASE}:${{ inputs.image_tag }}"
-          npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}" --team "67d91aeb2c70acbe880d3592"
+          npx @liara/cli deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${{ inputs.image_tag }} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}" --team-id "67d91aeb2c70acbe880d3592"
