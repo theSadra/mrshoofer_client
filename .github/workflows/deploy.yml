@@ -17,5 +17,4 @@ jobs:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
         run: |
           npm i -g @liara/cli@7
-          echo "Testing API token (first 10 chars): ${LIARA_TOKEN:0:10}..."
-          liara deploy --app=mrshoofer-client --api-token=$LIARA_TOKEN --team-id=67d91aeb2c70acbe880d3592 --no-app-logs --debug
+          liara deploy --app=mrshoofer-client --api-token=$LIARA_TOKEN --team-id=67d91aeb2c70acbe880d3592 --no-app-logs
