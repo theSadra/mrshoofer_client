@@ -51,7 +51,7 @@ export default function LocationUpdatedModal({ isOpen, onOpenChange }: LocationU
                         <ModalFooter className="justify-center pt-2">
                             <Button
                                 variant="solid"
-                                className="shadow-md transition-all duration-300  rounded-xl"
+                                className="shadow-md w-100 mt-2 transition-all duration-300  rounded-xl"
                                 color="primary"
                                 size="md"
                                 onPress={onClose}

@@ -5,6 +5,22 @@ import { requireORSAuth } from "@/lib/ors-auth-middleware";
 
 const prisma = new PrismaClient();
 
+// Helper to safely get property case-insensitively
+function getProperty(obj: any, ...possibleNames: string[]) {
+    if (!obj || typeof obj !== 'object') return undefined;
+    
+    for (const name of possibleNames) {
+        // Try exact match first
+        if (obj[name] !== undefined) return obj[name];
+        
+        // Try case-insensitive match
+        const keys = Object.keys(obj);
+        const matchedKey = keys.find(key => key.toLowerCase() === name.toLowerCase());
+        if (matchedKey) return obj[matchedKey];
+    }
+    return undefined;
+}
+
 // Helper to generate a unique alphanumeric token
 function generateSecureToken(length = 5) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -37,41 +53,62 @@ export async function POST(req: NextRequest) {
 
     try {
         const body = await req.json();
-        const { passenger, trip } = body;
+        
+        const passenger = getProperty(body, 'passenger', 'Passenger');
+        const trip = getProperty(body, 'trip', 'Trip');
 
         if (!passenger || !trip) {
             return NextResponse.json({ error: "Missing passenger or trip object" }, { status: 400 });
         }
-        if (!passenger.NumberPhone) {
+
+        // Case-insensitive property access for passenger
+        const numberPhone = getProperty(passenger, 'NumberPhone', 'numberPhone', 'numberphone');
+        const firstName = getProperty(passenger, 'Firstname', 'firstName', 'firstname');
+        const lastName = getProperty(passenger, 'Lastname', 'lastName', 'lastname');
+        const naCode = getProperty(passenger, 'NaCode', 'naCode', 'nacode');
+
+        if (!numberPhone || numberPhone.trim() === '') {
             return NextResponse.json({ error: "شماره تماس مسافر الزامی است" }, { status: 400 });
         }
 
         // Upsert passenger by NumberPhone
         const upsertedPassenger = await prisma.passenger.upsert({
-            where: { NumberPhone: passenger.NumberPhone },
+            where: { NumberPhone: numberPhone },
             update: {
-                Firstname: passenger.Firstname,
-                Lastname: passenger.Lastname,
-                NaCode: passenger.NaCode ?? undefined,
+                Firstname: firstName,
+                Lastname: lastName,
+                NaCode: naCode ?? undefined,
             },
             create: {
-                Firstname: passenger.Firstname,
-                Lastname: passenger.Lastname,
-                NumberPhone: passenger.NumberPhone,
-                NaCode: passenger.NaCode ?? undefined,
+                Firstname: firstName,
+                Lastname: lastName,
+                NumberPhone: numberPhone,
+                NaCode: naCode ?? undefined,
             },
         });
 
         // Generate unique TicketCode
         const uniqueTicketCode = await generateUniqueTicketCode(prisma);
 
+        // Case-insensitive trip properties
+        const tripData = {
+            TicketCode: getProperty(trip, 'TicketCode', 'ticketCode', 'ticketcode'),
+            TripCode: getProperty(trip, 'TripCode', 'tripCode', 'tripcode'),
+            Origin_id: getProperty(trip, 'Origin_id', 'origin_id', 'originId'),
+            Destination_id: getProperty(trip, 'Destination_id', 'destination_id', 'destinationId'),
+            OriginCity: getProperty(trip, 'OriginCity', 'originCity', 'origincity'),
+            DestinationCity: getProperty(trip, 'DestinationCity', 'destinationCity', 'destinationcity'),
+            CarName: getProperty(trip, 'CarName', 'carName', 'carname'),
+            ServiceName: getProperty(trip, 'ServiceName', 'serviceName', 'servicename'),
+            StartsAt: getProperty(trip, 'StartsAt', 'startsAt', 'startsat'),
+        };
+
         // Create trip and relate to passenger
         const newTrip = await prisma.trip.create({
             data: {
-                ...trip,
-                TicketCode: uniqueTicketCode, // Use unique generated code
+                ...tripData,
+                TicketCode: uniqueTicketCode, // Override with unique generated code
                 passengerId: upsertedPassenger.id,
-                // Ensure all required fields are present
                 PassengerSmsSent: false,
                 AdminApproved: false,
                 status: 'wating_info',

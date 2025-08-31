@@ -58,7 +58,7 @@ export default function LocationAddedModal({ isOpen, onOpenChange }: LocationAdd
                         <ModalFooter className="justify-center pt-2 ">
                             <Button
                                 variant="solid"
-                                className="shadow-md transition-all duration-300  rounded-xl"
+                                className="shadow-md w-100 mt-2 transition-all duration-300  rounded-xl"
                                 color="primary"
                                 onPress={onClose}
                             >
