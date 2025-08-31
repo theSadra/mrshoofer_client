@@ -32,9 +32,9 @@ jobs:
         IMAGE_BASE="sadradorostkar/mrshoofer-client"
         PREFERRED_TAG="sha-${FULL_SHA}"
         echo "Attempting deploy with tag: ${PREFERRED_TAG}"
-        if liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}"; then
+        if liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG} --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}" --team-id "67d91aeb2c70acbe880d3592" --build-location iran; then
           echo "Deployed ${IMAGE_BASE}:${PREFERRED_TAG}"
         else
           echo "SHA-tag deploy failed; falling back to :latest"
-          liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}"
+          liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --no-app-logs --api-token "${{ secrets.LIARA_API_TOKEN }}" --team-id "67d91aeb2c70acbe880d3592" --build-location iran
         fi
