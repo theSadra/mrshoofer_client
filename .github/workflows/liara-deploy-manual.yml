@@ -1,14 +1,62 @@
-name: Manual Deploy to Liara via API
+name: Manual Deploy to Liara (CLI + API)
 
 on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Docker image tag to deploy (e.g., v1.0-7487205)"
+        description: "Docker image tag to deploy (e.g., v1.0-7487205, latest)"
         required: true
+        default: "latest"
+      deployment_method:
+        description: "Deployment method"
+        required: true
+        default: "cli"
+        type: choice
+        options:
+          - cli
+          - api
 
 jobs:
-  deploy:
+  deploy-cli:
+    if: ${{ github.event.inputs.deployment_method == 'cli' }}
+    runs-on: ubuntu-latest
+    env:
+      LIARA_APP: mrshoofer-client
+    
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install Liara CLI (latest version)
+        run: npm i -g @liara/cli
+
+      - name: Deploy to Liara via CLI
+        env:
+          IMAGE_BASE: sadradorostkar/mrshoofer-client
+          LIARA_API_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+        run: |
+          set -e
+          echo "🚀 Deploying ${IMAGE_BASE}:${{ inputs.image_tag }} via Liara CLI"
+          
+          liara deploy \
+            --platform docker \
+            --app ${LIARA_APP} \
+            --port 3000 \
+            --image ${IMAGE_BASE}:${{ inputs.image_tag }} \
+            --no-app-logs \
+            --api-token "${LIARA_API_TOKEN}" \
+            --team-id "67d91aeb2c70acbe880d3592" \
+            --build-location iran \
+            --detach \
+            --message "Manual CLI deployment from GitHub Actions - tag: ${{ inputs.image_tag }}"
+          
+          echo "✅ CLI deployment completed successfully!"
+          echo "🔗 Check status at: https://console.liara.ir/"
+
+  deploy-api:
+    if: ${{ github.event.inputs.deployment_method == 'api' }}
     runs-on: ubuntu-latest
     env:
       LIARA_APP: mrshoofer-client
@@ -21,9 +69,9 @@ jobs:
           IMAGE_BASE: sadradorostkar/mrshoofer-client
         run: |
           set -e
-          echo "Deploying ${IMAGE_BASE}:${{ inputs.image_tag }} via Liara API"
+          echo "🚀 Deploying ${IMAGE_BASE}:${{ inputs.image_tag }} via Liara API"
           
-          curl -X POST "${LIARA_API_BASE}/v1/projects/${LIARA_APP}/deployments" \
+          RESPONSE=$(curl -X POST "${LIARA_API_BASE}/v1/projects/${LIARA_APP}/deployments" \
             -H "Authorization: Bearer ${{ secrets.LIARA_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             -H "X-Team-ID: ${TEAM_ID}" \
@@ -31,9 +79,21 @@ jobs:
               "type": "image",
               "image": "'${IMAGE_BASE}:${{ inputs.image_tag }}'",
               "port": 3000,
-              "message": "Manual deployment from GitHub Actions - tag: ${{ inputs.image_tag }}"
+              "message": "Manual API deployment from GitHub Actions - tag: ${{ inputs.image_tag }}"
             }' \
-            --fail-with-body
+            -w "%{http_code}" \
+            --silent)
           
-          echo "✅ Deployment request sent successfully!"
-          echo "Check status at: https://console.liara.ir/"
+          HTTP_CODE="${RESPONSE: -3}"
+          BODY="${RESPONSE%???}"
+          
+          if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
+            echo "✅ API deployment request sent successfully!"
+            echo "📄 Response: $BODY"
+          else
+            echo "❌ API deployment failed with HTTP $HTTP_CODE"
+            echo "📄 Response: $BODY"
+            exit 1
+          fi
+          
+          echo "🔗 Check status at: https://console.liara.ir/"
