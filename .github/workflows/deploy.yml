@@ -4,17 +4,43 @@ on:
     branches:
       - main
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
+      
       - uses: actions/setup-node@v3
         with:
           node-version: "22"
-      - name: update-liara
+
+      - name: Generate Docker tags
+        id: meta
+        run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            sadradorostkar/mrshoofer-client:latest
+            sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.commit_hash }}
+            sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.timestamp }}
+
+      - name: Deploy to Liara from Docker Hub
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
         run: |
           npm i -g @liara/cli@7
-          liara deploy --app=mrshoofer-client --api-token=$LIARA_TOKEN --team-id=67d91aeb2c70acbe880d3592 --no-app-logs
+          liara deploy --image=sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.commit_hash }} --api-token=$LIARA_TOKEN --no-app-logs

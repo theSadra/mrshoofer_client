@@ -1,0 +1,46 @@
+name: Deploy to Liara
+
+on:
+  workflow_run:
+  workflows: ["Build and Push MrShoofer Docker Image"]
+  types: ["completed"]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    env:
+      LIARA_APP: mrshoofer-client
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: '22'
+
+    - name: Install Liara CLI (latest version)
+      run: npm i -g @liara/cli
+
+    - name: Deploy Docker Image to Liara (prefer SHA tag)
+      env:
+        FULL_SHA: ${{ github.event.workflow_run.head_sha }}
+        LIARA_API_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+      run: |
+        set -e
+        IMAGE_BASE="sadradorostkar/mrshoofer-client"
+        PREFERRED_TAG="sha-${FULL_SHA}"
+        echo "Attempting deploy with tag: ${PREFERRED_TAG}"
+        if liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${PREFERRED_TAG} --no-app-logs --api-token "${LIARA_API_TOKEN}" --team-id "67d91aeb2c70acbe880d3592" --build-location iran --detach; then
+          echo "✅ Successfully deployed ${IMAGE_BASE}:${PREFERRED_TAG}"
+        else
+          echo "⚠️  SHA-tag deployment failed; falling back to :latest"
+          if liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --no-app-logs --api-token "${LIARA_API_TOKEN}" --team-id "67d91aeb2c70acbe880d3592" --build-location iran --detach; then
+            echo "✅ Successfully deployed ${IMAGE_BASE}:latest"
+          else
+            echo "❌ Both deployments failed"
+            exit 1
+          fi
+        fi

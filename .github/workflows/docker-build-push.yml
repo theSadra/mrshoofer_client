@@ -1,0 +1,97 @@
+name: Build and Push Docker Image to Docker Hub
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the main branch
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    env:
+      LIARA_APP: mrshoofer-client
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Generate Tags
+      id: meta
+      run: |
+        # Get short commit hash
+        COMMIT_HASH=$(git rev-parse --short HEAD)
+        # Get current timestamp
+        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+        # Get branch name
+        BRANCH_NAME=${GITHUB_REF#refs/heads/}
+        
+        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+        echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+        echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: |
+          sadradorostkar/mrshoofer-client:latest
+          sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.commit_hash }}
+          sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.timestamp }}
+          sadradorostkar/mrshoofer-client:v1.0-${{ steps.meta.outputs.commit_hash }}
+
+    - name: Docker Push Success
+      run: |
+        echo "✅ Docker image successfully built and pushed to Docker Hub"
+        echo "🐳 Images created with the following tags:"
+        echo "  📌 sadradorostkar/mrshoofer-client:latest"
+        echo "  📌 sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.commit_hash }}"
+        echo "  📌 sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.timestamp }}"
+        echo "  📌 sadradorostkar/mrshoofer-client:v1.0-${{ steps.meta.outputs.commit_hash }}"
+        echo "🔗 You can now manually deploy any of these images to Liara"
+
+  deploy-liara:
+    name: Deploy to Liara (after Docker Hub push)
+    needs: build-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      LIARA_APP: mrshoofer-client
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install Liara CLI (latest version)
+        run: npm i -g @liara/cli
+
+      - name: Deploy pushed image to Liara
+        env:
+          IMAGE_BASE: sadradorostkar/mrshoofer-client
+          LIARA_API_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+        run: |
+          set -e
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          echo "Attempting deploy with tag: ${COMMIT_HASH}"
+          if liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:${COMMIT_HASH} --no-app-logs --api-token "${LIARA_API_TOKEN}" --team-id "67d91aeb2c70acbe880d3592" --build-location iran --detach; then
+            echo "✅ Successfully deployed ${IMAGE_BASE}:${COMMIT_HASH}"
+          else
+            echo "⚠️  Commit tag deployment failed; falling back to :latest"
+            if liara deploy --platform docker --app ${LIARA_APP} --port 3000 --image ${IMAGE_BASE}:latest --no-app-logs --api-token "${LIARA_API_TOKEN}" --team-id "67d91aeb2c70acbe880d3592" --build-location iran --detach; then
+              echo "✅ Successfully deployed ${IMAGE_BASE}:latest"
+            else
+              echo "❌ Both deployments failed"
+              exit 1
+            fi
+          fi

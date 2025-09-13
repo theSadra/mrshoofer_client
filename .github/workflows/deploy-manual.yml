@@ -1,0 +1,32 @@
+name: Deploy to Liara (Manual Trigger)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Liara CLI
+        run: npm install -g @liara/cli
+
+      - name: Deploy with Liara
+        env:
+          LIARA_TOKEN: ${{ secrets.LIARA_TOKEN }}
+        run: |
+          echo "🚀 Deploying to ${{ inputs.environment }} environment..."
+          liara deploy --api-token $LIARA_TOKEN --message "Manual deployment to ${{ inputs.environment }} from GitHub Actions"
+          echo "✅ Deployment completed!"

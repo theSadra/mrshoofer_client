@@ -1,0 +1,91 @@
+name: Deploy to Liara via API
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: true
+        default: 'latest'
+        type: string
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      LIARA_APP: mrshoofer-client
+      LIARA_API_BASE: https://api.iran.liara.ir
+      TEAM_ID: 67d91aeb2c70acbe880d3592
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Get commit info
+      id: commit
+      run: |
+        COMMIT_HASH=$(git rev-parse --short HEAD)
+        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+        echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+        echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          sadradorostkar/mrshoofer-client:latest
+          sadradorostkar/mrshoofer-client:${{ steps.commit.outputs.commit_hash }}
+
+    - name: Deploy to Liara via API
+      run: |
+        set -e
+        
+        # Use provided tag or commit hash
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          IMAGE_TAG="${{ inputs.image_tag }}"
+        else
+          IMAGE_TAG="${{ steps.commit.outputs.commit_hash }}"
+        fi
+        
+        echo "Deploying image: sadradorostkar/mrshoofer-client:${IMAGE_TAG}"
+        
+        # Deploy using Liara API
+        curl -X POST "${LIARA_API_BASE}/v1/projects/${LIARA_APP}/deployments" \
+          -H "Authorization: Bearer ${{ secrets.LIARA_API_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -H "X-Team-ID: ${TEAM_ID}" \
+          -d '{
+            "type": "image",
+            "image": "sadradorostkar/mrshoofer-client:'${IMAGE_TAG}'",
+            "port": 3000,
+            "message": "Deployment from GitHub Actions - commit: '${IMAGE_TAG}'"
+          }' \
+          --fail-with-body || {
+            echo "Primary deployment failed, trying with latest tag"
+            curl -X POST "${LIARA_API_BASE}/v1/projects/${LIARA_APP}/deployments" \
+              -H "Authorization: Bearer ${{ secrets.LIARA_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -H "X-Team-ID: ${TEAM_ID}" \
+              -d '{
+                "type": "image",
+                "image": "sadradorostkar/mrshoofer-client:latest",
+                "port": 3000,
+                "message": "Fallback deployment from GitHub Actions - latest"
+              }' \
+              --fail-with-body
+          }
+
+    - name: Check deployment status
+      run: |
+        echo "Deployment initiated successfully!"
+        echo "You can check the status in Liara Console: https://console.liara.ir/"
