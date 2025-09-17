@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 
 // Move this page to (protected) so it is protected by session check
-"use client";
+("use client");
 export default function Page() {
   return (
     <>

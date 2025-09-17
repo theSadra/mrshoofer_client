@@ -1,6 +1,7 @@
 "use server";
 import { PrismaClient, TripStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+
 import { sendDriverLocationAdded } from "@/lib/SmsService/DriverSMSSender";
 
 const prisma = new PrismaClient();
@@ -21,6 +22,7 @@ export async function UpdateLocation(formData: FormData) {
 
   if (!trip) {
     console.error("Trip not found");
+
     return;
   }
 
@@ -48,6 +50,7 @@ export async function UpdateLocation(formData: FormData) {
         passengerId: trip.passengerId, // from Trip
       },
     });
+
     // Link new location to trip
     await prisma.trip.update({
       where: { id: tripId },

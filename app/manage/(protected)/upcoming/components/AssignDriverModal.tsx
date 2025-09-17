@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Input, Button, Spinner } from "@heroui/react";
-import { addToast } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import {
   Modal,
@@ -11,6 +10,7 @@ import {
   ModalFooter,
 } from "@heroui/modal";
 import { Driver } from "@prisma/client";
+
 import carnamesRaw from "./carnames.json";
 
 const carnames: string[] = Array.isArray(carnamesRaw) ? carnamesRaw : [];
@@ -72,10 +72,12 @@ export default function AssignDriverModal({
   // Handle search input change (client-side filtering)
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
     setSearch(value);
 
     if (!value.trim()) {
       setDrivers(allDrivers);
+
       return;
     }
 
@@ -85,8 +87,9 @@ export default function AssignDriverModal({
         driver.Firstname?.toLowerCase().includes(searchValue) ||
         driver.Lastname?.toLowerCase().includes(searchValue) ||
         driver.PhoneNumber?.toLowerCase().includes(searchValue) ||
-        driver.CarName?.toLowerCase().includes(searchValue)
+        driver.CarName?.toLowerCase().includes(searchValue),
     );
+
     setDrivers(filtered);
   };
 
@@ -95,7 +98,7 @@ export default function AssignDriverModal({
     setAssigningDriverId(driverId);
     setError("");
     try {
-      console.log('Assigning driver:', { driverId, tripId });
+      console.log("Assigning driver:", { driverId, tripId });
 
       const res = await fetch(`/manage/api/drivers/assign-driver`, {
         method: "POST",
@@ -104,21 +107,24 @@ export default function AssignDriverModal({
       });
 
       const data = await res.json();
-      console.log('API Response:', { status: res.status, ok: res.ok, data });
+
+      console.log("API Response:", { status: res.status, ok: res.ok, data });
 
       if (!res.ok) {
-        throw new Error(data.error || `HTTP ${res.status}: خطا در انتساب راننده`);
+        throw new Error(
+          data.error || `HTTP ${res.status}: خطا در انتساب راننده`,
+        );
       }
 
       if (data.success) {
-        console.log('Driver assigned successfully');
+        console.log("Driver assigned successfully");
         if (onAssigned) onAssigned(driverId);
         onClose();
       } else {
         throw new Error(data.error || "خطا در انتساب راننده");
       }
     } catch (error) {
-      console.error('Error assigning driver:', error);
+      console.error("Error assigning driver:", error);
       setError(error instanceof Error ? error.message : "خطا در انتساب راننده");
     }
     setAssigningDriverId(null);
@@ -126,17 +132,17 @@ export default function AssignDriverModal({
 
   return (
     <Modal
-      isOpen={open}
-      onClose={onClose}
-      scrollBehavior="inside"
       className="z-[9999]"
+      isOpen={open}
+      scrollBehavior="inside"
+      onClose={onClose}
     >
       <ModalContent className="overflow-visible z-[9999]">
         <ModalHeader className="flex flex-col gap-2 items-start min-h-20">
           <div className="flex items-center gap-2 w-full">
             <Icon
-              icon="solar:user-check-rounded-bold-duotone"
               className="text-secondary-400"
+              icon="solar:user-check-rounded-bold-duotone"
               width={32}
             />
             <span className="font-bold text-lg text-center ms-1">
@@ -145,26 +151,26 @@ export default function AssignDriverModal({
           </div>
           <div className="relative w-full">
             <Input
+              className=""
+              placeholder="جستجو راننده (نام، نام خانوادگی، شماره، خودرو)"
               startContent={
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
                   className="size-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
+                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
                   />
                 </svg>
               }
-              placeholder="جستجو راننده (نام، نام خانوادگی، شماره، خودرو)"
               value={search}
               onChange={handleSearch}
-              className=""
             />
           </div>
         </ModalHeader>
@@ -179,9 +185,9 @@ export default function AssignDriverModal({
             <div className="flex flex-col items-center justify-center h-full min-h-[250px]">
               {!showAddCard ? (
                 <Button
+                  className="mt-4"
                   color="primary"
                   variant="flat"
-                  className="mt-4"
                   onClick={() => setShowAddCard(true)}
                 >
                   افزودن راننده جدید
@@ -191,8 +197,8 @@ export default function AssignDriverModal({
                   <div className="bg-white border border-default-200 rounded-xl shadow p-4 w-full">
                     <div className="flex items-center gap-2 mb-3">
                       <Icon
-                        icon="solar:user-plus-rounded-bold-duotone"
                         className="text-primary-500"
+                        icon="solar:user-plus-rounded-bold-duotone"
                         width={28}
                       />
                       <span className="font-bold text-base">
@@ -200,6 +206,7 @@ export default function AssignDriverModal({
                       </span>
                     </div>
                     <form
+                      className="space-y-3"
                       onSubmit={async (e) => {
                         e.preventDefault();
                         const form = e.target as HTMLFormElement;
@@ -207,8 +214,10 @@ export default function AssignDriverModal({
                         const Lastname = form["Lastname"].value;
                         const PhoneNumber = form["PhoneNumber"].value;
                         const CarName = form["CarName"].value; // Use the input value directly
+
                         if (!CarName) {
                           alert("لطفا یک خودرو انتخاب کنید");
+
                           return;
                         }
                         try {
@@ -223,8 +232,11 @@ export default function AssignDriverModal({
                             }),
                           });
                           const data = await res.json();
+
                           if (!res.ok)
-                            throw new Error(data.error || "خطا در ایجاد راننده جدید");
+                            throw new Error(
+                              data.error || "خطا در ایجاد راننده جدید",
+                            );
                           setAllDrivers((prev) => [...prev, data]);
                           setDrivers((prev) => [...prev, data]);
                           setShowAddCard(false);
@@ -232,48 +244,47 @@ export default function AssignDriverModal({
                           alert(err.message || "خطا در ایجاد راننده جدید");
                         }
                       }}
-                      className="space-y-3"
                     >
                       <Input
-                        name="Firstname"
+                        required
+                        className="w-full"
                         label="نام راننده"
-                        required
-                        className="w-full"
+                        name="Firstname"
                       />
                       <Input
-                        name="Lastname"
+                        required
+                        className="w-full"
                         label="نام خانوادگی راننده"
-                        required
-                        className="w-full"
+                        name="Lastname"
                       />
                       <Input
-                        name="PhoneNumber"
+                        required
+                        className="w-full"
                         label="شماره تماس"
-                        required
-                        className="w-full"
-                        type="tel"
+                        name="PhoneNumber"
                         pattern="[0-9]+"
+                        type="tel"
                       />
                       <Input
-                        name="CarName"
-                        label="نام خودرو"
                         required
                         className="w-full"
+                        label="نام خودرو"
+                        name="CarName"
                       />
                       <div className="flex gap-2 mt-2">
                         <Button
+                          className="w-full"
+                          color="danger"
                           type="button"
                           variant="light"
-                          color="danger"
                           onClick={() => setShowAddCard(false)}
-                          className="w-full"
                         >
                           انصراف
                         </Button>
                         <Button
-                          type="submit"
-                          color="primary"
                           className="w-full"
+                          color="primary"
+                          type="submit"
                         >
                           افزودن راننده
                         </Button>
@@ -293,8 +304,8 @@ export default function AssignDriverModal({
                   <div className="flex items-center gap-3">
                     <span className="flex items-center justify-center w-9 h-9 rounded-full border bg-white border-default-300 shadow">
                       <Icon
-                        icon="solar:user-id-line-duotone"
                         className="text-yellow-600"
+                        icon="solar:user-id-line-duotone"
                         width={26}
                       />
                     </span>
@@ -317,10 +328,10 @@ export default function AssignDriverModal({
                     </div>
                   </div>
                   <Button
-                    size="sm"
                     color="primary"
-                    variant="flat"
                     isLoading={assigningDriverId === driver.id}
+                    size="sm"
+                    variant="flat"
                     onClick={() => assignDriver(driver.id)}
                   >
                     انتخاب
@@ -331,7 +342,7 @@ export default function AssignDriverModal({
           )}
         </ModalBody>
         <ModalFooter>
-          <Button variant="light" color="danger" onClick={onClose}>
+          <Button color="danger" variant="light" onClick={onClose}>
             بستن
           </Button>
         </ModalFooter>

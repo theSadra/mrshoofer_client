@@ -1,5 +1,3 @@
-import { Badge } from "@heroui/badge";
-import { Chip } from "@heroui/chip";
 import { Prisma, TripStatus } from "@prisma/client";
 import React from "react";
 
@@ -14,6 +12,7 @@ function tripinfotext({ trip }: TripInfoProps) {
   }
 
   let statusContent;
+
   switch (trip.status) {
     case TripStatus.wating_info:
       statusContent = (

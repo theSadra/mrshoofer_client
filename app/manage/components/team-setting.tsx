@@ -127,7 +127,7 @@ const TeamSetting = React.forwardRef<HTMLDivElement, TeamSettingCardProps>(
       {/* Team management table */}
       <TeamManageTable />
     </div>
-  )
+  ),
 );
 
 TeamSetting.displayName = "TeamSetting";

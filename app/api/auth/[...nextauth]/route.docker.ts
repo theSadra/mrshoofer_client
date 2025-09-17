@@ -1,10 +1,12 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+
 import prisma from "@/lib/prisma";
 
 // Hardcoded secret for Docker - DO NOT USE IN PRODUCTION WITHOUT PROPER ENV VARS
-const SECRET = "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
+const SECRET =
+  "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
 
 // Force the secret to be available - this ensures NextAuth doesn't throw NO_SECRET error
 process.env.NEXTAUTH_SECRET = SECRET;
@@ -26,7 +28,11 @@ export const authOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        username: { label: "ایمیل", type: "text", placeholder: "admin@example.com" },
+        username: {
+          label: "ایمیل",
+          type: "text",
+          placeholder: "admin@example.com",
+        },
         password: { label: "رمز عبور", type: "password" },
       },
       async authorize(credentials: Record<string, string> | undefined) {
@@ -36,6 +42,7 @@ export const authOptions = {
           // Validate that both username and password are provided
           if (!credentials?.username || !credentials?.password) {
             console.log("❌ Missing username or password");
+
             return null;
           }
 
@@ -45,34 +52,38 @@ export const authOptions = {
 
           if (!username || !password) {
             console.log("❌ Empty username or password after trimming");
+
             return null;
           }
 
           // Try to find user by email first
           let user = await prisma.user.findUnique({
-            where: { email: username }
+            where: { email: username },
           });
 
           // If not found by email, try by name
           if (!user) {
             user = await prisma.user.findFirst({
-              where: { name: username }
+              where: { name: username },
             });
           }
 
           if (!user) {
             console.log("❌ User not found in database:", username);
+
             return null;
           }
 
           if (!user.password) {
             console.log("❌ User has no password set");
+
             return null;
           }
 
           // Check if user is admin
           if (!user.isAdmin) {
             console.log("❌ User is not admin:", username);
+
             return null;
           }
 
@@ -81,10 +92,12 @@ export const authOptions = {
             console.log("❌ Invalid password for:", username);
             console.log("🔍 Expected:", user.password);
             console.log("🔍 Received:", password);
+
             return null;
           }
 
           console.log("✅ Login successful for admin:", user.email);
+
           return {
             id: user.id,
             name: user.name,
@@ -93,6 +106,7 @@ export const authOptions = {
           };
         } catch (error) {
           console.error("🚨 Authentication error:", error);
+
           return null;
         }
       },
@@ -107,32 +121,45 @@ export const authOptions = {
     signIn: "/manage/login",
   },
   callbacks: {
-    async session({ session, token, user }: { session: any; token: any; user: any }) {
+    async session({
+      session,
+      token,
+      user,
+    }: {
+      session: any;
+      token: any;
+      user: any;
+    }) {
       if (session.user && token) {
         session.user.id = token.sub;
         session.user.isAdmin = token.isAdmin;
       }
+
       return session;
     },
     async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
         token.isAdmin = user.isAdmin;
       }
+
       return token;
     },
     async signIn({ user }: { user: any }) {
       // Only allow sign in if user exists and is admin
       if (!user) {
         console.log("❌ SignIn callback: No user");
+
         return false;
       }
 
       if (!user.isAdmin) {
         console.log("❌ SignIn callback: User is not admin");
+
         return false;
       }
 
       console.log("✅ SignIn callback: Allowing admin login for", user.email);
+
       return true;
     },
   },
@@ -149,8 +176,8 @@ export const authOptions = {
       name: `__Secure-next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
+        sameSite: "lax",
+        path: "/",
         secure: true,
       },
     },
@@ -159,4 +186,5 @@ export const authOptions = {
 
 // Use NextAuth with explicit authOptions
 const handler = NextAuth(authOptions);
+
 export { handler as GET, handler as POST };

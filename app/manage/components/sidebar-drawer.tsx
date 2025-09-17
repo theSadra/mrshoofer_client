@@ -26,7 +26,7 @@ const SidebarDrawer = React.forwardRef<
       motionProps: drawerMotionProps,
       ...props
     },
-    ref
+    ref,
   ) => {
     const motionProps = React.useMemo(() => {
       if (!!drawerMotionProps && typeof drawerMotionProps === "object") {
@@ -77,7 +77,7 @@ const SidebarDrawer = React.forwardRef<
                   sidebarPlacement === "left",
                 "inset-y-0 right-0 max-h-[none] rounded-r-none !justify-end":
                   sidebarPlacement === "right",
-              }
+              },
             ),
             body: cn("p-0", classNames?.body),
             closeButton: cn("z-50", classNames?.closeButton),
@@ -99,14 +99,14 @@ const SidebarDrawer = React.forwardRef<
         <div
           className={cn(
             "hidden h-full max-w-[var(--sidebar-width)] overflow-x-hidden overflow-y-scroll sm:flex",
-            className
+            className,
           )}
         >
           {children}
         </div>
       </>
     );
-  }
+  },
 );
 
 SidebarDrawer.displayName = "SidebarDrawer";

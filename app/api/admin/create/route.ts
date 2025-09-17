@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -10,28 +10,28 @@ export async function POST(request: NextRequest) {
     // Security check - only allow admin creation with secret
     if (adminSecret !== process.env.ADMIN_SECRET) {
       return NextResponse.json(
-        { error: 'Unauthorized - Invalid admin secret' },
-        { status: 401 }
+        { error: "Unauthorized - Invalid admin secret" },
+        { status: 401 },
       );
     }
 
     // Validate required fields
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: 'Name, email, and password are required' },
-        { status: 400 }
+        { error: "Name, email, and password are required" },
+        { status: 400 },
       );
     }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
+        { error: "User with this email already exists" },
+        { status: 400 },
       );
     }
 
@@ -42,23 +42,23 @@ export async function POST(request: NextRequest) {
         email,
         password: password, // Store password as raw text
         isAdmin: true,
-        emailVerified: new Date()
-      }
+        emailVerified: new Date(),
+      },
     });
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = adminUser;
 
     return NextResponse.json({
-      message: 'Admin user created successfully with raw password',
-      user: userWithoutPassword
+      message: "Admin user created successfully with raw password",
+      user: userWithoutPassword,
     });
-
   } catch (error) {
-    console.error('Error creating admin user:', error);
+    console.error("Error creating admin user:", error);
+
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
@@ -74,16 +74,17 @@ export async function GET() {
         email: true,
         emailVerified: true,
         isAdmin: true,
-        image: true
-      }
+        image: true,
+      },
     });
 
     return NextResponse.json({ admins });
   } catch (error) {
-    console.error('Error fetching admin users:', error);
+    console.error("Error fetching admin users:", error);
+
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

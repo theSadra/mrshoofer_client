@@ -1,8 +1,9 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+
 import prisma from "@/lib/prisma";
-I
+I;
 // Securely load secrets based on environment
 const SECRET = process.env.NEXTAUTH_SECRET;
 // Removed default fallback for production security
@@ -28,11 +29,8 @@ export const authOptions = {
 
           const user = await prisma.user.findFirst({
             where: {
-              OR: [
-                { email: username },
-                { name: username }
-              ]
-            }
+              OR: [{ email: username }, { name: username }],
+            },
           });
 
           if (!user || !user.isAdmin || user.password !== password) return null;
@@ -41,10 +39,11 @@ export const authOptions = {
             id: user.id,
             name: user.name,
             email: user.email,
-            isAdmin: true
+            isAdmin: true,
           };
         } catch (error) {
           console.error("Auth error:", error);
+
           return null;
         }
       },
@@ -52,14 +51,15 @@ export const authOptions = {
   ],
   session: {
     strategy: "jwt" as const, // Explicitly cast to 'const' for type compatibility
-    maxAge: 60 * 60 * 24 * 365 * 10
+    maxAge: 60 * 60 * 24 * 365 * 10,
   },
   pages: {
-    signIn: "/manage/login"
+    signIn: "/manage/login",
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) token.isAdmin = user.isAdmin;
+
       return token;
     },
     async session({ session, token }) {
@@ -67,6 +67,7 @@ export const authOptions = {
         session.user.id = token.sub;
         session.user.isAdmin = token.isAdmin;
       }
+
       return session;
     },
     async signIn({ user }) {
@@ -76,4 +77,5 @@ export const authOptions = {
 };
 
 const handler = NextAuth(authOptions);
+
 export { handler as GET, handler as POST };

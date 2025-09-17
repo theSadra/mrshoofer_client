@@ -1,10 +1,13 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+
 import prisma from "@/lib/prisma";
 
 // DOCKER FIX: Ensure secret is always available
-const SECRET = process.env.NEXTAUTH_SECRET || "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
+const SECRET =
+  process.env.NEXTAUTH_SECRET ||
+  "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
 
 // Force the secret to be available for NextAuth
 if (!process.env.NEXTAUTH_SECRET) {
@@ -18,7 +21,11 @@ export const authOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        username: { label: "ایمیل", type: "text", placeholder: "admin@example.com" },
+        username: {
+          label: "ایمیل",
+          type: "text",
+          placeholder: "admin@example.com",
+        },
         password: { label: "رمز عبور", type: "password" },
       },
       async authorize(credentials: Record<string, string> | undefined) {
@@ -38,13 +45,13 @@ export const authOptions = {
 
           // Try to find user by email first
           let user = await prisma.user.findUnique({
-            where: { email: username }
+            where: { email: username },
           });
 
           // If not found by email, try by name
           if (!user) {
             user = await prisma.user.findFirst({
-              where: { name: username }
+              where: { name: username },
             });
           }
 
@@ -74,6 +81,7 @@ export const authOptions = {
           };
         } catch (error) {
           console.error("Authentication error:", error);
+
           return null;
         }
       },
@@ -88,32 +96,45 @@ export const authOptions = {
     signIn: "/manage/login",
   },
   callbacks: {
-    async session({ session, token, user }: { session: any; token: any; user: any }) {
+    async session({
+      session,
+      token,
+      user,
+    }: {
+      session: any;
+      token: any;
+      user: any;
+    }) {
       if (session.user && token) {
         session.user.id = token.sub;
         session.user.isAdmin = token.isAdmin;
       }
+
       return session;
     },
     async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
         token.isAdmin = user.isAdmin;
       }
+
       return token;
     },
     async signIn({ user }: { user: any }) {
       // Only allow sign in if user exists and is admin
       if (!user) {
         console.log("❌ SignIn callback: No user");
+
         return false;
       }
 
       if (!user.isAdmin) {
         console.log("❌ SignIn callback: User is not admin");
+
         return false;
       }
 
       console.log("✅ SignIn callback: Allowing admin login for", user.email);
+
       return true;
     },
   },
@@ -124,15 +145,15 @@ export const authOptions = {
     },
   },
   // Add this for production
-  ...(process.env.NODE_ENV === 'production' && {
+  ...(process.env.NODE_ENV === "production" && {
     useSecureCookies: true,
     cookies: {
       sessionToken: {
         name: `__Secure-next-auth.session-token`,
         options: {
           httpOnly: true,
-          sameSite: 'lax',
-          path: '/',
+          sameSite: "lax",
+          path: "/",
           secure: true,
         },
       },
@@ -142,4 +163,5 @@ export const authOptions = {
 
 // Use NextAuth with explicit authOptions
 const handler = NextAuth(authOptions);
+
 export { handler as GET, handler as POST };

@@ -1,5 +1,4 @@
 import { Chip } from "@heroui/react";
-import { Icon } from "@iconify/react";
 
 import { type SidebarItem } from "./sidebar";
 
@@ -10,14 +9,14 @@ import { type SidebarItem } from "./sidebar";
 export const items: SidebarItem[] = [
   {
     key: "home",
-    href: "/manage",
+    href: "/manage/home",
     icon: "solar:home-2-linear",
     title: "خانه",
   },
 
   {
     key: "upcoming",
-    href: "/manage/upcoming",
+    href: "/manage/upcomings",
     icon: "solar:checklist-minimalistic-outline",
     title: "سفرها",
   },

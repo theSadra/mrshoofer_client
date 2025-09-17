@@ -38,7 +38,7 @@ const SwitchCell = React.forwardRef<HTMLInputElement, SwitchCellProps>(
         base: cn(
           "inline-flex bg-content2 flex-row-reverse w-full max-w-full items-center",
           "justify-between cursor-pointer rounded-medium gap-2 p-4",
-          classNames?.base
+          classNames?.base,
         ),
       }}
       {...props}
@@ -52,7 +52,7 @@ const SwitchCell = React.forwardRef<HTMLInputElement, SwitchCellProps>(
         </p>
       </div>
     </CustomSwitch>
-  )
+  ),
 );
 
 SwitchCell.displayName = "SwitchCell";

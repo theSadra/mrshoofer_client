@@ -1,1 +1,1 @@
-declare module 'persian-date';
+declare module "persian-date";

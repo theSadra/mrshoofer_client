@@ -1,12 +1,10 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React from "react";
 import {
   Avatar,
   Button,
   Spacer,
-  Tab,
-  Tabs,
   Tooltip,
   useDisclosure,
   AvatarIcon,
@@ -18,18 +16,14 @@ import {
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useMediaQuery } from "usehooks-ts";
-import { usePathname, useSelectedLayoutSegment } from "next/navigation";
+import { useSelectedLayoutSegment } from "next/navigation";
 
-import { AcmeLogo } from "./acme";
-import ProfileSetting from "./profile-setting";
-import AppearanceSetting from "./appearance-setting";
 // import AccountSetting from "./account-setting";
-import BillingSetting from "./billing-setting";
-import TeamSetting from "./team-setting";
+import { Image } from "@heroui/react";
+
 import SidebarDrawer from "./sidebar-drawer";
 import Sidebar from "./sidebar";
 import { cn } from "./cn";
-import { Image } from "@heroui/react";
 import { items } from "./items";
 
 /**
@@ -52,11 +46,7 @@ import { items } from "./items";
  * <Sidebar defaultSelectedKey="home" selectedKeys={[currentPath]} />
  * ```
  */
-export default function App({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function App({ children }: { children: React.ReactNode }) {
   const { isOpen, onOpenChange } = useDisclosure();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -79,15 +69,15 @@ export default function App({
         })}
         hideCloseButton={true}
         isOpen={isOpen}
-        onOpenChange={onOpenChange}
         sidebarPlacement="right"
+        onOpenChange={onOpenChange}
       >
         <div
           className={cn(
             "will-change relative flex h-full w-72 flex-col bg-[#F1F5F9] p-6 transition-width text-gray-900", // compromise: slightly darker but still light
             {
               "w-[83px] items-center px-[6px] py-6": isCollapsed,
-            }
+            },
           )}
         >
           <div
@@ -97,11 +87,11 @@ export default function App({
           >
             <div className="flex items-center justify-center rounded-2xl py-1">
               <Image
-                src="/mrshoofer_logo_full.png"
                 alt="Logo"
-                height={60}
-                width={1050}
                 className="object-contain" // or object-scale-down
+                height={60}
+                src="/mrshoofer_logo_full.png"
+                width={1050}
               />
             </div>
             <span
@@ -109,9 +99,9 @@ export default function App({
                 "w-full text-small font-bold uppercase opacity-100",
                 {
                   "w-0 opacity-0": isCollapsed,
-                }
+                },
               )}
-            ></span>
+            />
             <div className={cn("flex-end flex", { hidden: isCollapsed })}>
               <Icon
                 className="cursor-pointer dark:text-primary-foreground/60 [&>g]:stroke-[1px]"
@@ -148,7 +138,6 @@ export default function App({
 
           <Sidebar
             defaultSelectedKey={currentKey}
-            selectedKeys={[currentKey]}
             iconClassName="group-data-[selected=true]:text-default-50"
             isCompact={isCollapsed}
             itemClasses={{
@@ -156,6 +145,7 @@ export default function App({
               title: "group-data-[selected=true]:text-default-50",
             }}
             items={items}
+            selectedKeys={[currentKey]}
           />
 
           <Spacer y={8} />
@@ -192,7 +182,7 @@ export default function App({
                   "justify-start truncate text-default-600 data-[hover=true]:text-foreground",
                   {
                     "justify-center": isCollapsed,
-                  }
+                  },
                 )}
                 isIconOnly={isCollapsed}
                 startContent={
@@ -223,7 +213,7 @@ export default function App({
                   "justify-start text-danger-500 data-[hover=true]:text-danger-600",
                   {
                     "justify-center": isCollapsed,
-                  }
+                  },
                 )}
                 isIconOnly={isCollapsed}
                 startContent={
@@ -235,8 +225,8 @@ export default function App({
                     />
                   )
                 }
-                onClick={() => setShowLogoutModal(true)}
                 variant="light"
+                onClick={() => setShowLogoutModal(true)}
               >
                 {isCollapsed ? (
                   <Icon
@@ -249,23 +239,33 @@ export default function App({
                 )}
               </Button>
             </Tooltip>
-            <Modal isOpen={showLogoutModal} onOpenChange={setShowLogoutModal} hideCloseButton>
+            <Modal
+              hideCloseButton
+              isOpen={showLogoutModal}
+              onOpenChange={setShowLogoutModal}
+            >
               <ModalContent>
                 {(onClose) => (
                   <>
                     <ModalHeader>تایید خروج</ModalHeader>
                     <ModalBody>
-                      <div className="text-center text-lg text-default-700 py-2">آیا مطمئن هستید که می‌خواهید خارج شوید؟</div>
+                      <div className="text-center text-lg text-default-700 py-2">
+                        آیا مطمئن هستید که می‌خواهید خارج شوید؟
+                      </div>
                     </ModalBody>
                     <ModalFooter>
                       <Button color="default" variant="light" onClick={onClose}>
                         انصراف
                       </Button>
-                      <Button color="danger" onClick={async () => {
-                        const { signOut } = await import("next-auth/react");
-                        signOut({ callbackUrl: "/manage/login" });
-                        onClose();
-                      }}>
+                      <Button
+                        color="danger"
+                        onClick={async () => {
+                          const { signOut } = await import("next-auth/react");
+
+                          signOut({ callbackUrl: "/manage/login" });
+                          onClose();
+                        }}
+                      >
                         خروج
                       </Button>
                     </ModalFooter>

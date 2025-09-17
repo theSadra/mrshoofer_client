@@ -4,17 +4,14 @@ import type { ComponentProps } from "react";
 import type { ButtonProps } from "@heroui/react";
 
 import React from "react";
-import { Spacer } from "@heroui/react";
 import { useControlledState } from "@react-stately/utils";
-import { m, LazyMotion, domAnimation } from "framer-motion";
+import { m } from "framer-motion";
 import { cn } from "@heroui/react";
-import PaymentAndInfo from "./steps/selectandpayment";
-
-import PassnegerInfo from "./steps/passnegerinfo";
-
-import LocationCardInfo from "./steps/locationcardinfo";
 import { Prisma } from "@prisma/client";
 
+import PaymentAndInfo from "./steps/selectandpayment";
+import PassnegerInfo from "./steps/passnegerinfo";
+import LocationCardInfo from "./steps/locationcardinfo";
 import TripDone from "./steps/tripdone";
 
 // export type VerticalCollapsibleStepProps = {
@@ -106,12 +103,12 @@ const VerticalCollapsibleSteps = React.forwardRef<
       trip,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [currentStep, setCurrentStep] = useControlledState(
       currentStepProp,
       defaultStep,
-      onStepChange
+      onStepChange,
     );
 
     const colors = React.useMemo(() => {
@@ -171,24 +168,24 @@ const VerticalCollapsibleSteps = React.forwardRef<
           <PaymentAndInfo
             currentStep={currentStep}
             setCurrentStep={setCurrentStep}
-          ></PaymentAndInfo>
+          />
 
           <PassnegerInfo
             currentStep={currentStep}
             setCurrentStep={setCurrentStep}
-          ></PassnegerInfo>
+          />
 
           <LocationCardInfo
             currentStep={currentStep}
-            setCurrentStep={setCurrentStep}
+            setCurrentStepAction={setCurrentStep}
             trip={trip}
-          ></LocationCardInfo>
+          />
 
           <TripDone
             currentStep={currentStep}
             setCurrentStep={setCurrentStep}
             trip={trip}
-          ></TripDone>
+          />
 
           {/* {steps?.map((step, stepIdx) => {
             let status =
@@ -335,7 +332,7 @@ const VerticalCollapsibleSteps = React.forwardRef<
         </ol>
       </nav>
     );
-  }
+  },
 );
 
 VerticalCollapsibleSteps.displayName = "VerticalCollapsibleSteps";

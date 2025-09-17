@@ -1,6 +1,8 @@
 // app/components/Sidebar.tsx
 "use client";
 
+import type { SidebarItem } from "./sidebar";
+
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -16,8 +18,8 @@ import {
   ListboxSection,
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
+
 import { cn } from "./cn";
-import type { SidebarItem } from "./sidebar";
 
 export type SidebarProps = Omit<ListboxProps<SidebarItem>, "children"> & {
   items: SidebarItem[];
@@ -45,7 +47,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
       className,
       ...props
     },
-    ref
+    ref,
   ) => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -55,6 +57,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
     // Build map of key -> href for navigation
     const keyHrefMap = React.useMemo(() => {
       const map = new Map<string, string>();
+
       function walk(list: SidebarItem[]) {
         for (const it of list) {
           if (it.href) map.set(it.key, it.href);
@@ -62,6 +65,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
         }
       }
       walk(items);
+
       return map;
     }, [items]);
 
@@ -82,6 +86,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
     const renderNestItem = React.useCallback(
       (item: SidebarItem) => {
         const isNestType = item.items?.length && item.type === "nest";
+
         return (
           <ListboxItem
             {...item}
@@ -89,7 +94,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
             classNames={{
               base: cn(
                 { "h-auto p-0": !isCompact && isNestType },
-                { "inline-block w-11": isCompact && isNestType }
+                { "inline-block w-11": isCompact && isNestType },
               ),
             }}
             endContent={
@@ -102,7 +107,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                 <Icon
                   className={cn(
                     "text-default-500 group-data-[selected=true]:text-foreground",
-                    iconClassName
+                    iconClassName,
                   )}
                   icon={item.icon}
                   width={24}
@@ -120,7 +125,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                     <Icon
                       className={cn(
                         "text-default-500 group-data-[selected=true]:text-foreground",
-                        iconClassName
+                        iconClassName,
                       )}
                       icon={item.icon}
                       width={24}
@@ -147,7 +152,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                         <Icon
                           className={cn(
                             "text-default-500 group-data-[selected=true]:text-foreground",
-                            iconClassName
+                            iconClassName,
                           )}
                           icon={item.icon}
                           width={24}
@@ -181,13 +186,15 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           </ListboxItem>
         );
       },
-      [hideEndContent, iconClassName, isCompact]
+      [hideEndContent, iconClassName, isCompact],
     );
 
     const renderItem = React.useCallback(
       (item: SidebarItem) => {
         const isNestType = item.items?.length && item.type === "nest";
+
         if (isNestType) return renderNestItem(item);
+
         return (
           <ListboxItem
             {...item}
@@ -200,7 +207,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                 <Icon
                   className={cn(
                     "text-default-500 group-data-[selected=true]:text-foreground",
-                    iconClassName
+                    iconClassName,
                   )}
                   icon={item.icon}
                   width={24}
@@ -219,7 +226,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                     <Icon
                       className={cn(
                         "text-default-500 group-data-[selected=true]:text-foreground",
-                        iconClassName
+                        iconClassName,
                       )}
                       icon={item.icon}
                       width={24}
@@ -233,7 +240,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           </ListboxItem>
         );
       },
-      [hideEndContent, iconClassName, isCompact]
+      [hideEndContent, iconClassName, isCompact],
     );
 
     return (
@@ -259,11 +266,11 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
             ...itemClasses,
             base: cn(
               "px-3 min-h-11 rounded-large h-[44px] data-[selected=true]:bg-default-100",
-              itemClasses.base
+              itemClasses.base,
             ),
             title: cn(
               "text-small font-medium text-default-500 group-data-[selected=true]:text-foreground",
-              itemClasses.title
+              itemClasses.title,
             ),
           }}
           items={items}
@@ -273,6 +280,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           onSelectionChange={(keys) => {
             const key = Array.from(keys)[0] as string;
             const href = keyHrefMap.get(key);
+
             if (!href || key === selected) return;
             // 1) immediately update URL
             router.replace(href);
@@ -303,7 +311,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
         </Listbox>
       </nav>
     );
-  }
+  },
 );
 
 Sidebar.displayName = "Sidebar";

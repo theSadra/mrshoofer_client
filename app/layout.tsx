@@ -7,34 +7,39 @@ import clsx from "clsx";
 import { Providers } from "./providers";
 
 import { fontSans, fontMono } from "@/config/fonts";
-import ClientNavbarWrapper from "@/components/ClientNavbarWrapper";
-
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fa" dir="rtl" suppressHydrationWarning>
-      <body className={clsx(
-        "min-h-screen bg-background font-sans antialiased",
-        fontSans.variable,
-        fontMono.variable
-      )}>
-        <Providers themeProps={{
-          attribute: "class",
-          defaultTheme: "light",
-          forcedTheme: "light",
-          enableSystem: false,
-          enableColorScheme: false
-        }}>
+    <html suppressHydrationWarning dir="rtl" lang="fa">
+      <body
+        className={clsx(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable,
+          fontMono.variable,
+        )}
+      >
+        <Providers
+          themeProps={{
+            attribute: "class",
+            defaultTheme: "light",
+            forcedTheme: "light",
+            enableSystem: false,
+            enableColorScheme: false,
+          }}
+        >
           <div className="relative flex flex-col h-screen">
             {/* <ClientNavbarWrapper /> */}
-            <main className="container mx-auto max-w-7xl pt-4 px-3.5 flex-grow">
+            <main className="container mx-auto max-w-screen-2xl pt-4 px-3.5 xl:px-6 2xl:px-8 flex-grow">
               {children}
             </main>
-            <footer className="w-full flex items-center justify-center py-5 mt-5" style={{ zIndex: 1 }}>
+            <footer
+              className="w-full flex items-center justify-center py-5 mt-5"
+              style={{ zIndex: 1 }}
+            >
               <img
-                src="/mrshoofer_logo_full.png"
                 alt="mrshoofer"
                 className="h-5 w-auto object-contain mx-1"
+                src="/mrshoofer_logo_full.png"
               />
               <Link
                 isExternal

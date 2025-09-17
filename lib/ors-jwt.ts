@@ -1,10 +1,12 @@
 import jwt from "jsonwebtoken";
 
-const ORS_API_SECRET = process.env.ORS_API_SECRET || "your-static-ors-api-secret";
+const ORS_API_SECRET =
+  process.env.ORS_API_SECRET || "your-static-ors-api-secret";
 
 export function verifyORSJWT(token: string) {
   try {
     const decoded = jwt.verify(token, ORS_API_SECRET);
+
     return decoded;
   } catch (e) {
     return null;

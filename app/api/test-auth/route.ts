@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -14,20 +14,20 @@ export async function GET(request: NextRequest) {
         email: true,
         isAdmin: true,
         emailVerified: true,
-      }
+      },
     });
 
     return NextResponse.json({
-      message: 'Admin users found',
+      message: "Admin users found",
       count: admins.length,
-      admins: admins
+      admins: admins,
     });
-
   } catch (error) {
-    console.error('Error fetching admin users:', error);
+    console.error("Error fetching admin users:", error);
+
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email and password required' },
-        { status: 400 }
+        { error: "Email and password required" },
+        { status: 400 },
       );
     }
 
@@ -52,14 +52,14 @@ export async function POST(request: NextRequest) {
         email: true,
         password: true,
         isAdmin: true,
-      }
+      },
     });
 
     if (!user) {
       return NextResponse.json({
         success: false,
-        message: 'User not found',
-        email: email
+        message: "User not found",
+        email: email,
       });
     }
 
@@ -74,15 +74,15 @@ export async function POST(request: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
-        isAdmin: user.isAdmin
-      }
+        isAdmin: user.isAdmin,
+      },
     });
-
   } catch (error) {
-    console.error('Error testing credentials:', error);
+    console.error("Error testing credentials:", error);
+
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

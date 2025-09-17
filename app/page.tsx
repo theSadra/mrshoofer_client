@@ -32,9 +32,7 @@ export default function Home() {
             variant: "shadow",
           })}
           href={siteConfig.links.docs}
-        >
-
-        </Link>
+        />
         <Link
           isExternal
           className={buttonStyles({ variant: "bordered", radius: "full" })}
@@ -55,11 +53,13 @@ export default function Home() {
       {/* TEST TOAST BUTTON */}
       <button
         className="mt-8 px-4 py-2 bg-primary text-white rounded"
-        onClick={() => addToast({
-          title: "Test Toast",
-          description: "This is a test toast from the homepage.",
-          color: "primary"
-        })}
+        onClick={() =>
+          addToast({
+            title: "Test Toast",
+            description: "This is a test toast from the homepage.",
+            color: "primary",
+          })
+        }
       >
         Show Test Toast
       </button>

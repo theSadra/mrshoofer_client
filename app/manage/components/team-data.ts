@@ -1,10 +1,10 @@
-import {isEqual, uniqWith} from "lodash";
+import { isEqual, uniqWith } from "lodash";
 
 const columns = [
-  {name: "NAME", uid: "name", sortable: true},
-  {name: "ROLE", uid: "role", sortable: true},
-  {name: "STATUS", uid: "status", sortable: true},
-  {name: "ACTIONS", uid: "actions"},
+  { name: "NAME", uid: "name", sortable: true },
+  { name: "ROLE", uid: "role", sortable: true },
+  { name: "STATUS", uid: "status", sortable: true },
+  { name: "ACTIONS", uid: "actions" },
 ];
 
 const users = [
@@ -62,4 +62,4 @@ const statusOptions = uniqWith(
   isEqual,
 );
 
-export {columns, users, rolesOptions, statusOptions};
+export { columns, users, rolesOptions, statusOptions };

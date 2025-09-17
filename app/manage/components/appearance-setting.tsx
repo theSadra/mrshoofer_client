@@ -1,11 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { RadioGroup, Select, SelectItem, Spacer } from "@heroui/react";
+import { RadioGroup, Spacer } from "@heroui/react";
 
 import { cn } from "./cn";
 import { ThemeCustomRadio } from "./theme-custom-radio";
-
 import SwitchCell from "./switch-cell";
 
 interface AppearanceSettingCardProps {

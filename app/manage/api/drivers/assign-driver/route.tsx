@@ -1,29 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { sendDriverSMS } from '@/lib/SmsService/DriverSMSSender';
+
+import { sendDriverSMS } from "@/lib/SmsService/DriverSMSSender";
 
 export async function POST(req: NextRequest) {
   const prisma = new PrismaClient();
 
   try {
     const { tripId, driverId } = await req.json();
-    console.log('🚀 Driver assignment started:', { tripId, driverId });
+
+    console.log("🚀 Driver assignment started:", { tripId, driverId });
 
     if (!tripId || !driverId) {
-      console.log('❌ Missing required fields:', { tripId, driverId });
+      console.log("❌ Missing required fields:", { tripId, driverId });
+
       return NextResponse.json(
         { success: false, error: "tripId and driverId are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    console.log('🔄 Updating trip with driver assignment...');
+    console.log("🔄 Updating trip with driver assignment...");
     const updatedTrip = await prisma.trip.update({
       where: { id: Number(tripId) },
       data: { driverId: Number(driverId) },
       include: { Driver: true },
     });
-    console.log('✅ Trip updated successfully:', { tripId: updatedTrip.id, driverId: updatedTrip.driverId });
+
+    console.log("✅ Trip updated successfully:", {
+      tripId: updatedTrip.id,
+      driverId: updatedTrip.driverId,
+    });
 
     // Send SMS to the assigned driver (optional - NEVER fail the assignment if SMS fails)
     let smsStatus = "not_sent";
@@ -31,23 +38,33 @@ export async function POST(req: NextRequest) {
 
     if (updatedTrip.Driver?.PhoneNumber) {
       try {
-        console.log('📱 Attempting to send SMS to driver:', updatedTrip.Driver.PhoneNumber);
-        const smsResult = await sendDriverSMS(updatedTrip.Driver.PhoneNumber, updatedTrip);
+        console.log(
+          "📱 Attempting to send SMS to driver:",
+          updatedTrip.Driver.PhoneNumber,
+        );
+        const smsResult = await sendDriverSMS(
+          updatedTrip.Driver.PhoneNumber,
+          updatedTrip,
+        );
+
         if (smsResult) {
           smsStatus = "sent";
-          console.log('✅ SMS sent successfully');
+          console.log("✅ SMS sent successfully");
         } else {
           smsStatus = "failed";
-          console.log('⚠️ SMS sending returned false for driver:', updatedTrip.Driver.PhoneNumber);
+          console.log(
+            "⚠️ SMS sending returned false for driver:",
+            updatedTrip.Driver.PhoneNumber,
+          );
         }
       } catch (error) {
         smsStatus = "failed";
         smsError = error?.toString();
-        console.log('⚠️ SMS failed but assignment continues:', error);
+        console.log("⚠️ SMS failed but assignment continues:", error);
         // Don't throw here - SMS failure should not prevent assignment
       }
     } else {
-      console.log('⚠️ No phone number for driver, skipping SMS');
+      console.log("⚠️ No phone number for driver, skipping SMS");
     }
 
     const response = {
@@ -57,23 +74,28 @@ export async function POST(req: NextRequest) {
       sms: {
         status: smsStatus,
         error: smsError,
-        phoneNumber: updatedTrip.Driver?.PhoneNumber
-      }
+        phoneNumber: updatedTrip.Driver?.PhoneNumber,
+      },
     };
-    console.log('✅ Assignment completed, returning response:', response);
+
+    console.log("✅ Assignment completed, returning response:", response);
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('❌ Database error in assign-driver:', error);
+    console.error("❌ Database error in assign-driver:", error);
+
     return NextResponse.json(
-      { success: false, error: "Failed to assign driver", details: error?.toString() },
-      { status: 500 }
+      {
+        success: false,
+        error: "Failed to assign driver",
+        details: error?.toString(),
+      },
+      { status: 500 },
     );
   } finally {
     await prisma.$disconnect();
   }
 }
-
 
 // TODO : Sending SMS TO driver after driver assigned
 //TODO : adding driver changed message to the previus driver

@@ -18,11 +18,13 @@ export default function AdminLoginPage() {
   useEffect(() => {
     const checkSession = async () => {
       const session = await getSession();
+
       if (session?.user) {
         console.log("User already logged in, redirecting to manage");
         router.push("/manage");
       }
     };
+
     checkSession();
   }, [router]);
 
@@ -37,6 +39,7 @@ export default function AdminLoginPage() {
     if (!username.trim() || !password.trim()) {
       setError("لطفاً نام کاربری و رمز عبور را وارد کنید");
       setLoading(false);
+
       return;
     }
 
@@ -75,74 +78,76 @@ export default function AdminLoginPage() {
           {/* Logo */}
           <div className="flex justify-center mb-2">
             <Image
-              height={80}
-              width={150}
-              src="/mrshoofer_logo_full.png"
               alt="MrShoofer Logo"
               className="object-contain"
+              height={80}
+              src="/mrshoofer_logo_full.png"
+              width={150}
             />
           </div>
 
           {/* Welcome Text */}
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">خوش آمدید
-              👋
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+              خوش آمدید 👋
             </h1>
             <p className="text-gray-600">برای ادامه وارد حساب مدیریت شوید</p>
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <Input
-              label="نام کاربری یا ایمیل"
-              placeholder="نام کاربری خود را وارد کنید"
-              type="text"
-              variant="bordered"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
               isRequired
               className="mb-4"
+              label="نام کاربری یا ایمیل"
+              placeholder="نام کاربری خود را وارد کنید"
               startContent={
                 <Icon
-                  icon="solar:user-linear"
                   className="text-xl text-default-400 pointer-events-none flex-shrink-0"
+                  icon="solar:user-linear"
                 />
               }
+              type="text"
+              value={username}
+              variant="bordered"
+              onChange={(e) => setUsername(e.target.value)}
             />
 
             <Input
-              label="رمز عبور"
-              placeholder="رمز عبور خود را وارد کنید"
-              type={isVisible ? "text" : "password"}
-              variant="bordered"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               isRequired
               className="mb-4"
-              startContent={
-                <Icon
-                  icon="solar:lock-linear"
-                  className="text-xl text-default-400 pointer-events-none flex-shrink-0"
-                />
-              }
               endContent={
                 <button
-                  type="button"
-                  onClick={toggleVisibility}
                   className="focus:outline-none"
                   tabIndex={-1}
+                  type="button"
+                  onClick={toggleVisibility}
                 >
                   <Icon
-                    icon={isVisible ? "solar:eye-closed-linear" : "solar:eye-linear"}
                     className="text-xl text-default-400 pointer-events-none"
+                    icon={
+                      isVisible ? "solar:eye-closed-linear" : "solar:eye-linear"
+                    }
                   />
                 </button>
               }
+              label="رمز عبور"
+              placeholder="رمز عبور خود را وارد کنید"
+              startContent={
+                <Icon
+                  className="text-xl text-default-400 pointer-events-none flex-shrink-0"
+                  icon="solar:lock-linear"
+                />
+              }
+              type={isVisible ? "text" : "password"}
+              value={password}
+              variant="bordered"
+              onChange={(e) => setPassword(e.target.value)}
             />
 
             {/* Remember Me */}
             <div className="flex items-center justify-between py-2">
-              <Checkbox size="sm" disabled>
+              <Checkbox disabled size="sm">
                 مرا به خاطر بسپار
               </Checkbox>
               <span className="text-sm text-gray-500 cursor-pointer hover:text-blue-600">
@@ -152,18 +157,16 @@ export default function AdminLoginPage() {
 
             {/* Error Message - Positioned above submit button */}
             {error && (
-              <p className="text-danger text-sm text-center mb-2 ">
-                {error}
-              </p>
+              <p className="text-danger text-sm text-center mb-2 ">{error}</p>
             )}
 
             {/* Submit Button */}
             <Button
-              color="primary"
-              type="submit"
-              isLoading={loading}
               className="w-full py-3 text-md font-md"
+              color="primary"
+              isLoading={loading}
               size="lg"
+              type="submit"
             >
               {loading ? "در حال ورود..." : "ورود به پنل مدیریت"}
             </Button>

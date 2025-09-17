@@ -1,15 +1,16 @@
 "use client";
 
 import React from "react";
-import { Card, CardHeader, Divider, Progress, Spacer } from "@heroui/react";
-import { Trip } from "@prisma/client";
-import VerticalCollapsibleSteps from "./vertical-collapsible-steps";
+import { Spacer } from "@heroui/react";
 import { Prisma } from "@prisma/client";
 
+import VerticalCollapsibleSteps from "./vertical-collapsible-steps";
 import TripInfoText from "./tripinfotext";
 
 type StepsProps = {
-  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }> | null;
+  trip: Prisma.TripGetPayload<{
+    include: { Location: true; Passenger: true };
+  }> | null;
   currentStep?: number;
   setCurrentStep?: (step: number) => void;
 };
@@ -138,7 +139,7 @@ export default function Component({
     <section className="max-w-sm mt-4 rounded-2xl">
       <TripInfoText trip={trip} />
 
-      <Spacer className="py-2"></Spacer>
+      <Spacer className="py-2" />
 
       <VerticalCollapsibleSteps
         currentStep={currentStep}

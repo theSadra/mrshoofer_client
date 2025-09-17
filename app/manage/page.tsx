@@ -10,6 +10,10 @@ export default function Page() {
       <Link href="/manage/upcoming" prefetch={false}>
         Go to upcoming
       </Link>
+      <br />
+      <Link href="/manage/upcomings" prefetch={false}>
+        Go to upcomings (new mobile cards)
+      </Link>
     </>
   );
 }

@@ -1,1 +1,1 @@
-declare module 'react-multi-date-picker';
+declare module "react-multi-date-picker";

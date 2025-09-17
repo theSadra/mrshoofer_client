@@ -1,48 +1,30 @@
 "use client";
 
 import React from "react";
-import { Prisma, Trip, TripStatus } from "@prisma/client";
-
-const PersianDate = require("persian-date");
-
+import { Prisma, TripStatus } from "@prisma/client";
 import { format } from "date-fns";
-
-import { Snippet } from "@heroui/snippet";
-
 import { Card } from "@heroui/card";
-
 import { Image } from "@heroui/react";
-
 import { Divider } from "@heroui/divider";
-
 import { Chip } from "@heroui/chip";
-
-import { Badge } from "@heroui/badge";
 
 import Steps from "./steps";
 
+const PersianDate = require("persian-date");
+
 type TripInfoProps = {
-  trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }> | null;
+  trip: Prisma.TripGetPayload<{
+    include: { Location: true; Passenger: true };
+  }> | null;
 };
 
 function TripInfo({ trip }: TripInfoProps) {
   const [currentStep, setCurrentStep] = React.useState(-1);
 
-  // Handle case where trip is null or undefined
-  if (!trip) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-          <span className="mt-2 block">در حال بارگذاری اطلاعات سفر...</span>
-        </div>
-      </div>
-    );
-  }
-
-  const persianStartDate = new PersianDate(trip.StartsAt);
+  const persianStartDate = trip ? new PersianDate(trip.StartsAt) : null;
 
   React.useEffect(() => {
+    if (!trip) return;
     switch (trip.status) {
       case TripStatus.wating_info:
         setCurrentStep(2);
@@ -54,7 +36,7 @@ function TripInfo({ trip }: TripInfoProps) {
         setCurrentStep(3);
         break;
     }
-  }, [trip.status]);
+  }, [trip?.status]);
 
   let status_content;
   let status_color:
@@ -65,7 +47,8 @@ function TripInfo({ trip }: TripInfoProps) {
     | "warning"
     | "danger"
     | undefined;
-  switch (trip.status) {
+
+  switch (trip?.status) {
     case TripStatus.wating_info:
       status_content = "موقعیت مبدا را وارد کنید";
       status_color = "warning";
@@ -93,10 +76,10 @@ function TripInfo({ trip }: TripInfoProps) {
       <div className="flex justify-between align-center">
         <h1 className="text-2xl font-semibold">اطلاعات سفر</h1>
 
-        <Chip variant="bordered" color="default">
+        <Chip color="default" variant="bordered">
           <span className="font-light text-sm self-center">
             رفرنس
-            <span className="ps-1">{trip.TicketCode}</span>
+            <span className="ps-1">{trip?.TicketCode}</span>
           </span>
         </Chip>
       </div>
@@ -111,13 +94,13 @@ function TripInfo({ trip }: TripInfoProps) {
       <Card className="mt-4 flex flex-col justify-between pt-2 pb-3 px-0 rounded-3xl">
         <div className="flex flex-col mt-3">
           <div className="flex justify-between px-7">
-            <label className="font-light text-sm">📍مبدا</label>
+            <span className="font-light text-sm">📍مبدا</span>
 
-            <label className="font-light text-sm">📍مقصد</label>
+            <span className="font-light text-sm">📍مقصد</span>
           </div>
 
           <div className="flex justify-around py-1 px-8 font-bold align-center ">
-            <label className="font-semibold text-lg">{trip.OriginCity}</label>
+            <span className="font-semibold text-lg">{trip?.OriginCity}</span>
 
             <span className="text-gray-400 text-lg">
               ......
@@ -125,9 +108,9 @@ function TripInfo({ trip }: TripInfoProps) {
               ......
             </span>
 
-            <label className="font-semibold text-lg">
-              {trip.DestinationCity}
-            </label>
+            <span className="font-semibold text-lg">
+              {trip?.DestinationCity}
+            </span>
           </div>
         </div>
 
@@ -142,11 +125,11 @@ function TripInfo({ trip }: TripInfoProps) {
                 <div className="flex justify-between gap-2">
                   <div className="self-center bg-gray-100 p-1  rounded-2xl">
                     <Image
-                      src="/icons8-calendar-48.png" // Make sure the file is in public/icons8-calendar.png
                       alt="Calendar"
-                      width={40}
-                      height={40}
                       className="cursor-pointer"
+                      height={40}
+                      src="/icons8-calendar-48.png" // Make sure the file is in public/icons8-calendar.png
+                      width={40}
                     />
                   </div>
                 </div>
@@ -156,21 +139,21 @@ function TripInfo({ trip }: TripInfoProps) {
                     <div className="flex justify-between">
                       <span className="text-sm font-medium block ">
                         <span className="ms-1">
-                          {persianStartDate.format("DD")}
+                          {persianStartDate?.format("DD")}
                         </span>
                         <span className="ms-1">
-                          {persianStartDate.format("MMMM")}
+                          {persianStartDate?.format("MMMM")}
                         </span>
 
                         <span className="ms-1  font-light text-sm">
-                          {persianStartDate.format("YYYY")}
+                          {persianStartDate?.format("YYYY")}
                         </span>
                       </span>
                     </div>
 
-                    <label className="font-light text-sm text-start align-middle ">
-                      {persianStartDate.format("dddd")}
-                    </label>
+                    <span className="font-light text-sm text-start align-middle ">
+                      {persianStartDate?.format("dddd")}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -188,14 +171,23 @@ function TripInfo({ trip }: TripInfoProps) {
 
                     <label className="font-left text-sm text-start align-middle ">
                       <span className="ms-1 font-light text-xs">
-                        {format(trip.StartsAt, "HH:mm").replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[parseInt(d)])}
+                        {trip
+                          ? format(trip.StartsAt, "HH:mm").replace(
+                              /\d/g,
+                              (d) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(d)],
+                            )
+                          : "--:--"}
                       </span>
                       <span className="ms-1 font-light text-xs">
                         {(() => {
-                          const hour = new Date(trip.StartsAt).getHours();
+                          const hour = trip
+                            ? new Date(trip.StartsAt).getHours()
+                            : 0;
+
                           if (hour >= 5 && hour < 12) return "صبح";
                           if (hour >= 12 && hour < 16) return "ظهر";
                           if (hour >= 16 && hour < 20) return "بعدازظهر";
+
                           return "شب";
                         })()}
                       </span>
@@ -210,19 +202,19 @@ function TripInfo({ trip }: TripInfoProps) {
 
           <div className="flex justify-between px-6">
             <Chip color="warning" variant="shadow">
-              {trip.ServiceName}
+              {trip?.ServiceName}
             </Chip>
 
-            <Chip color="warning" className="text-gray-700" variant="bordered">
+            <Chip className="text-gray-700" color="warning" variant="bordered">
               {/* <span className="pe-1 text-lg">🚖</span> */}
 
-              {trip.CarName}
+              {trip?.CarName}
             </Chip>
           </div>
         </div>
       </Card>
 
-      {trip.status == TripStatus.canceled && (
+      {trip?.status == TripStatus.canceled && (
         <div className="mt-4">
           <h1
             className="mb-2 font-md font-light text-center py-2 bg-default-100 border-solid border rounded-2xl"
@@ -241,10 +233,10 @@ function TripInfo({ trip }: TripInfoProps) {
 
       <div className="flex justify-center">
         <Steps
-          trip={trip}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}
-        ></Steps>
+          trip={trip}
+        />
       </div>
     </div>
   );

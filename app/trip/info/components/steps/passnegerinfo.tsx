@@ -1,8 +1,9 @@
+import type { ComponentProps } from "react";
+
 import React from "react";
 import { LazyMotion, m, domAnimation } from "framer-motion";
 import { Spacer } from "@heroui/react";
 import { cn } from "@heroui/react";
-import type { ComponentProps } from "react";
 
 export default function StepItem({
   currentStep,
@@ -48,17 +49,17 @@ export default function StepItem({
       <>
         <>
           <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
             className="inline size-5 me-2 text-pink-700"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
           >
             <path
+              d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
             />
           </svg>
           اطلاعات مسافر
@@ -78,7 +79,7 @@ export default function StepItem({
     <li
       className={cn(
         "group shadow-md bg-white relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
-        stepClassName
+        stepClassName,
       )}
       data-status={status}
     >
@@ -87,7 +88,7 @@ export default function StepItem({
           ref={ref}
           aria-current={undefined}
           className={cn(
-            "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5"
+            "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5",
           )}
           onClick={() => setCurrentStep(1)}
           {...props}
@@ -97,7 +98,7 @@ export default function StepItem({
               <div
                 className={cn(
                   "text-medium font-medium text-default-foreground transition-[color,opacity] duration-300 group-active:opacity-80",
-                  {}
+                  {},
                 )}
               >
                 {content.title}
@@ -105,7 +106,7 @@ export default function StepItem({
               <div
                 className={cn(
                   "text-sm text-default-700 transition-[color,opacity] duration-300 group-active:opacity-80 lg:text-small",
-                  {}
+                  {},
                 )}
               >
                 {content.description}
@@ -119,7 +120,7 @@ export default function StepItem({
                   " relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold bg-green-500",
                   {
                     "shadow-lg": status === "complete",
-                  }
+                  },
                 )}
               >
                 <div className="fle x items-center justify-center">
@@ -132,11 +133,11 @@ export default function StepItem({
                   >
                     <path
                       d="M5 13l4 4L19 7"
+                      pathLength={1}
+                      strokeDasharray="1px 1px"
+                      strokeDashoffset="0px"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      pathLength={1}
-                      strokeDashoffset="0px"
-                      strokeDasharray="1px 1px"
                     />
                   </svg>
                 </div>

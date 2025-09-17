@@ -7,6 +7,7 @@ import { HeroUIProvider } from "@heroui/system";
 import { useRouter } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ToastProvider } from "@heroui/toast";
+
 import { SessionProvider } from "./session-provider";
 import { TripProvider } from "./contexts/TripContext";
 

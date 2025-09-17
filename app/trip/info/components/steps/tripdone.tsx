@@ -2,8 +2,6 @@ import React from "react";
 import { LazyMotion, m, domAnimation } from "framer-motion";
 import { Spacer } from "@heroui/react";
 import { cn } from "@heroui/react";
-import type { ComponentProps } from "react";
-
 import { Prisma, TripStatus } from "@prisma/client";
 
 export default function StepItem({
@@ -25,17 +23,17 @@ export default function StepItem({
     title: (
       <>
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
           className="size-5 inline me-2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
         >
           <path
+            d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"
           />
         </svg>
         انجام سفر
@@ -87,12 +85,12 @@ export default function StepItem({
     <li
       className={cn(
         "group shadow-md bg-white relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
-        stepClassName
+        stepClassName,
       )}
       data-status={
         trip.status == TripStatus.done ||
-          trip.status == TripStatus.intrip ||
-          trip.status == TripStatus.wating_start
+        trip.status == TripStatus.intrip ||
+        trip.status == TripStatus.wating_start
           ? "complete"
           : "active"
       }
@@ -102,7 +100,7 @@ export default function StepItem({
           ref={ref}
           aria-current={undefined}
           className={cn(
-            "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5"
+            "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5",
           )}
           onClick={() => setCurrentStep(3)}
           {...props}
@@ -112,7 +110,7 @@ export default function StepItem({
               <div
                 className={cn(
                   "text-medium font-medium text-default-foreground transition-[color,opacity] duration-300 group-active:opacity-80",
-                  {}
+                  {},
                 )}
               >
                 {content.title}
@@ -120,7 +118,7 @@ export default function StepItem({
               <div
                 className={cn(
                   "text-tiny text-default-600 transition-[color,opacity] duration-300 group-active:opacity-80 lg:text-small",
-                  {}
+                  {},
                 )}
               >
                 {content.description}
@@ -138,7 +136,7 @@ export default function StepItem({
                   },
                   {
                     "border-yellow-600": status === "active",
-                  }
+                  },
                 )}
               >
                 <div className="fle x items-center justify-center align-center">

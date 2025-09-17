@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import { LazyMotion, m, domAnimation } from "framer-motion";
-import { Button, Card, Spacer, Spinner } from "@heroui/react";
+import { Button, Card } from "@heroui/react";
 import { cn } from "@heroui/react";
-import type { ComponentProps } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { Prisma } from "@prisma/client";
 
 const TripStatus = {
@@ -14,14 +13,14 @@ const TripStatus = {
 
 export default function StepItem({
   currentStep,
-  setCurrentStep,
+  setCurrentStepAction,
   trip,
   stepClassName,
   ref,
   ...props
 }: {
   currentStep: number;
-  setCurrentStep: (stepIdx: number) => void;
+  setCurrentStepAction: (stepIdx: number) => void;
   trip: Prisma.TripGetPayload<{ include: { Location: true; Passenger: true } }>;
   stepClassName?: string;
   ref?: React.Ref<HTMLButtonElement>;
@@ -39,22 +38,22 @@ export default function StepItem({
     title: (
       <>
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
           className="size-5 inline me-2 text-black"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
         >
           <path
+            d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
           />
           <path
+            d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
           />
         </svg>
         اطلاعات مبدا
@@ -66,17 +65,17 @@ export default function StepItem({
           <>
             <span className="ms-1 me-1">
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
                 className="size-6 text-yellow-400 inline"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
                 />
               </svg>
             </span>
@@ -89,17 +88,17 @@ export default function StepItem({
             <span className="text-black me-1">آدرس ثبت شده:</span>
             {trip.Location?.TextAddress}
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
               className="size-4 inline ms-1 text-purple-300"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
               <path
+                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
               />
             </svg>
           </span>
@@ -119,7 +118,7 @@ export default function StepItem({
     <li
       className={cn(
         "group shadow-md bg-white  relative gap-4 rounded-large border border-default-200 data-[status=active]:bg-default-100 dark:border-default-50 dark:data-[status=active]:bg-default-50",
-        stepClassName
+        stepClassName,
       )}
       data-status={status}
     >
@@ -128,9 +127,9 @@ export default function StepItem({
           ref={ref}
           aria-current={undefined}
           className={cn(
-            "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5"
+            "flex w-full cursor-pointer items-center justify-center gap-x-4 rounded-large px-3 py-2.5",
           )}
-          onClick={() => setCurrentStep(2)}
+          onClick={() => setCurrentStepAction(2)}
           {...props}
         >
           <div className="flex-1 text-right">
@@ -138,7 +137,7 @@ export default function StepItem({
               <div
                 className={cn(
                   "text-medium font-medium text-default-foreground transition-[color,opacity] duration-300 group-active:opacity-80",
-                  {}
+                  {},
                 )}
               >
                 {content.title}
@@ -146,7 +145,7 @@ export default function StepItem({
               <div
                 className={cn(
                   "text-tiny text-default-600 transition-[color,opacity] duration-300 group-active:opacity-80 lg:text-small",
-                  {}
+                  {},
                 )}
               >
                 {content.description}
@@ -165,7 +164,7 @@ export default function StepItem({
                   {
                     "border-primary-300 bg-primary-100 text-primary-700 shadow-lg":
                       status === "active",
-                  }
+                  },
                 )}
               >
                 {status === "complete" && (
@@ -176,9 +175,9 @@ export default function StepItem({
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                       clipRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      fillRule="evenodd"
                     />
                   </svg>
                 )}
@@ -199,36 +198,122 @@ export default function StepItem({
           }}
           exit={{ height: 0, opacity: 0 }}
           initial={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.25, ease: "easeInOut" }}
           style={{ overflow: "hidden" }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
         >
           <Card className="m-4 mt-0 pt-2">
             <Button
-              size="lg"
               className=""
               color="primary"
+              disabled={isLoading}
+              size="lg"
               variant="solid"
               onClick={handleLocationSelection}
-              disabled={isLoading}
             >
               {isLoading ? (
-                <label>درحال بارگذاری
-                  <svg xmlns="http://www.w3.org/2000/svg" className="animate-spinner inline ms-1" width={30} height={30} viewBox="0 0 50 50"><circle cx={25} cy={10} r={2} fill="currentColor"></circle><circle cx={25} cy={40} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={32.5} cy={12} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={17.5} cy={38} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={17.5} cy={12} r={2} fill="currentColor" opacity={0.93}></circle><circle cx={32.5} cy={38} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={10} cy={25} r={2} fill="currentColor" opacity={0.65}></circle><circle cx={40} cy={25} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={12} cy={17.5} r={2} fill="currentColor" opacity={0.86}></circle><circle cx={38} cy={32.5} r={2} fill="currentColor" opacity={0.3}></circle><circle cx={12} cy={32.5} r={2} fill="currentColor" opacity={0.44}></circle><circle cx={38} cy={17.5} r={2} fill="currentColor" opacity={0.3}></circle></svg>
-                </label>
+                <span>
+                  درحال بارگذاری
+                  <svg
+                    className="animate-spinner inline ms-1"
+                    height={30}
+                    viewBox="0 0 50 50"
+                    width={30}
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle cx={25} cy={10} fill="currentColor" r={2} />
+                    <circle
+                      cx={25}
+                      cy={40}
+                      fill="currentColor"
+                      opacity={0.3}
+                      r={2}
+                    />
+                    <circle
+                      cx={32.5}
+                      cy={12}
+                      fill="currentColor"
+                      opacity={0.3}
+                      r={2}
+                    />
+                    <circle
+                      cx={17.5}
+                      cy={38}
+                      fill="currentColor"
+                      opacity={0.3}
+                      r={2}
+                    />
+                    <circle
+                      cx={17.5}
+                      cy={12}
+                      fill="currentColor"
+                      opacity={0.93}
+                      r={2}
+                    />
+                    <circle
+                      cx={32.5}
+                      cy={38}
+                      fill="currentColor"
+                      opacity={0.3}
+                      r={2}
+                    />
+                    <circle
+                      cx={10}
+                      cy={25}
+                      fill="currentColor"
+                      opacity={0.65}
+                      r={2}
+                    />
+                    <circle
+                      cx={40}
+                      cy={25}
+                      fill="currentColor"
+                      opacity={0.3}
+                      r={2}
+                    />
+                    <circle
+                      cx={12}
+                      cy={17.5}
+                      fill="currentColor"
+                      opacity={0.86}
+                      r={2}
+                    />
+                    <circle
+                      cx={38}
+                      cy={32.5}
+                      fill="currentColor"
+                      opacity={0.3}
+                      r={2}
+                    />
+                    <circle
+                      cx={12}
+                      cy={32.5}
+                      fill="currentColor"
+                      opacity={0.44}
+                      r={2}
+                    />
+                    <circle
+                      cx={38}
+                      cy={17.5}
+                      fill="currentColor"
+                      opacity={0.3}
+                      r={2}
+                    />
+                  </svg>
+                </span>
               ) : trip.Location == null ? (
                 <>
                   <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
                     className="size-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
+                      d="M12 4.5v15m7.5-7.5h-15"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
                     />
                   </svg>
                   ثبت مبدأ
@@ -236,17 +321,17 @@ export default function StepItem({
               ) : (
                 <>
                   <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
                     className="size-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
+                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
                     />
                   </svg>
                   مشاهده لوکیشن و تغییر
