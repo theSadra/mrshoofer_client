@@ -22,7 +22,15 @@ export default function ClientRootLayout({
         )}
         dir="rtl"
       >
-        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+        <Providers
+          themeProps={{
+            attribute: "class",
+            defaultTheme: "light",
+            forcedTheme: "light",
+            enableSystem: false,
+            enableColorScheme: false,
+          }}
+        >
           <div className="relative flex flex-col h-screen">
             <ClientNavbarWrapper />
             <main className="container mx-auto max-w-7xl pt-4 px-3.5 flex-grow">
