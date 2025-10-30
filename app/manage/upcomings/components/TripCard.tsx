@@ -33,10 +33,11 @@ export type Trip = {
 
 export type TripCardProps = {
   trip: Trip;
-  onOpenAssign: () => void;
-  onOpenLocation?: (lat?: number, lng?: number, addressText?: string) => void;
-  onOpenCall?: (driverName?: string, driverPhone?: string) => void;
-  onOpenLocationDesc?: (description?: string) => void;
+  onOpenAssignAction: () => void;
+  onOpenLocationAction?: (lat?: number, lng?: number, addressText?: string) => void;
+  onOpenCallAction?: (driverName?: string, driverPhone?: string) => void;
+  onOpenLocationDescAction?: (description?: string) => void;
+  onOpenPovLinkAction?: (token?: string) => void;
 };
 
 const assignChip = (assigned: boolean) => (
@@ -62,10 +63,11 @@ const assignChip = (assigned: boolean) => (
 
 export default function TripCard({
   trip,
-  onOpenAssign,
-  onOpenLocation,
-  onOpenCall,
-  onOpenLocationDesc,
+  onOpenAssignAction,
+  onOpenLocationAction,
+  onOpenCallAction,
+  onOpenLocationDescAction,
+  onOpenPovLinkAction,
 }: TripCardProps) {
   const assigned = !!trip.assignedDriverId;
   const URGENT_MIN = 30;
@@ -152,7 +154,7 @@ export default function TripCard({
           <button
             className="inline-flex items-center"
             disabled={
-              !onOpenLocation ||
+              !onOpenLocationAction ||
               typeof trip.originLat !== "number" ||
               typeof trip.originLng !== "number"
             }
@@ -162,11 +164,11 @@ export default function TripCard({
             type="button"
             onClick={() => {
               if (
-                onOpenLocation &&
+                onOpenLocationAction &&
                 typeof trip.originLat === "number" &&
                 typeof trip.originLng === "number"
               ) {
-                onOpenLocation(
+                onOpenLocationAction(
                   trip.originLat,
                   trip.originLng,
                   trip.originAddress || trip.pickup,
@@ -199,11 +201,11 @@ export default function TripCard({
           {trip.originDescription ? (
             <button
               className="inline-flex items-center"
-              disabled={!onOpenLocationDesc}
+              disabled={!onOpenLocationDescAction}
               title="نمایش توضیح مبدا"
               type="button"
               onClick={() =>
-                onOpenLocationDesc && onOpenLocationDesc(trip.originDescription)
+                onOpenLocationDescAction && onOpenLocationDescAction(trip.originDescription)
               }
             >
               <Chip
@@ -217,6 +219,16 @@ export default function TripCard({
               </Chip>
             </button>
           ) : null}
+          { (trip as any).secureToken ? (
+            <button
+              className="inline-flex items-center justify-center rounded-full p-1 hover:bg-default-200 transition"
+              title="لینک مسافر"
+              type="button"
+              onClick={() => onOpenPovLinkAction && onOpenPovLinkAction((trip as any).secureToken)}
+            >
+              <Icon className="text-default-500" icon="solar:link-circle-linear" width={18} />
+            </button>
+          ) : null }
         </div>
         {assignChip(assigned)}
       </CardHeader>
@@ -302,12 +314,12 @@ export default function TripCard({
                     isIconOnly
                     aria-label="تماس با راننده"
                     className="text-green-700"
-                    isDisabled={!onOpenCall}
+                    isDisabled={!onOpenCallAction}
                     size="sm"
                     variant="light"
                     onPress={() =>
-                      onOpenCall &&
-                      onOpenCall(trip.driverName, trip.driverPhone)
+                      onOpenCallAction &&
+                      onOpenCallAction(trip.driverName, trip.driverPhone)
                     }
                   >
                     <Icon icon="ion:call" width={18} />
@@ -327,7 +339,7 @@ export default function TripCard({
                 <Icon className="" icon="fa7-regular:edit" width={16} />
               }
               variant={assigned ? "flat" : "solid"}
-              onPress={onOpenAssign}
+              onPress={onOpenAssignAction}
             >
               {assigned ? "تغییر راننده" : "انتخاب راننده"}
             </Button>

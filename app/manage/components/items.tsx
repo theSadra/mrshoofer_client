@@ -1,12 +1,14 @@
+"use client";
 import { Chip } from "@heroui/react";
-
+import React from "react";
+import { useSession } from "next-auth/react";
 import { type SidebarItem } from "./sidebar";
 
 /**
  * Please check the https://nextui.org/docs/guide/routing to have a seamless router integration
  */
 
-export const items: SidebarItem[] = [
+export const baseItems: SidebarItem[] = [
   {
     key: "home",
     href: "/manage/home",
@@ -60,3 +62,21 @@ export const items: SidebarItem[] = [
     ),
   },
 ];
+
+// Hook to get final items depending on role
+export function useManageSidebarItems(): SidebarItem[] {
+  const { data: session } = useSession();
+  const isSuper = Boolean((session?.user as any)?.isSuperAdmin);
+  return React.useMemo(() => {
+    if (!isSuper) return baseItems;
+    return [
+      ...baseItems,
+      {
+        key: "superadmin-trips",
+        href: "/superadmin/trips",
+        icon: "solar:shield-check-outline",
+        title: "سوپر ادمین: همه سفرها",
+      },
+    ];
+  }, [isSuper]);
+}

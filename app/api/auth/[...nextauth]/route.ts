@@ -78,6 +78,8 @@ export const authOptions = {
             name: user.name,
             email: user.email,
             isAdmin: user.isAdmin,
+            // Cast for forward-compatibility; field will exist after migration
+            isSuperAdmin: (user as any).isSuperAdmin,
           };
         } catch (error) {
           console.error("Authentication error:", error);
@@ -108,6 +110,7 @@ export const authOptions = {
       if (session.user && token) {
         session.user.id = token.sub;
         session.user.isAdmin = token.isAdmin;
+        session.user.isSuperAdmin = token.isSuperAdmin;
       }
 
       return session;
@@ -115,6 +118,7 @@ export const authOptions = {
     async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
         token.isAdmin = user.isAdmin;
+        token.isSuperAdmin = user.isSuperAdmin;
       }
 
       return token;
@@ -122,18 +126,15 @@ export const authOptions = {
     async signIn({ user }: { user: any }) {
       // Only allow sign in if user exists and is admin
       if (!user) {
-        console.log("❌ SignIn callback: No user");
+
 
         return false;
       }
 
       if (!user.isAdmin) {
-        console.log("❌ SignIn callback: User is not admin");
 
         return false;
       }
-
-      console.log("✅ SignIn callback: Allowing admin login for", user.email);
 
       return true;
     },

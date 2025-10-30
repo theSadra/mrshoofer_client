@@ -130,15 +130,44 @@ export default function AssignDriverModal({
     setAssigningDriverId(null);
   };
 
+  // Handle mobile viewport height issues
+  useEffect(() => {
+    if (open) {
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+      // Fix mobile viewport height
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+      
+      const handleResize = () => {
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => {
+        document.body.style.overflow = 'unset';
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [open]);
+
   return (
     <Modal
       className="z-[9999]"
       isOpen={open}
       scrollBehavior="inside"
       onClose={onClose}
+      size="full"
+      classNames={{
+        base: "m-0 sm:m-6",
+        wrapper: "w-full h-[100dvh] sm:w-auto sm:h-auto",
+        body: "overflow-y-auto max-h-none sm:max-h-[60vh]"
+      }}
+      style={{
+        '--modal-height': 'calc(var(--vh, 1vh) * 100)'
+      } as React.CSSProperties}
     >
-      <ModalContent className="overflow-visible z-[9999]">
-        <ModalHeader className="flex flex-col gap-2 items-start min-h-20">
+      <ModalContent className="overflow-visible z-[9999] h-full sm:h-auto modal-content-full">
+        <ModalHeader className="flex flex-col gap-2 items-start min-h-20 flex-shrink-0">
           <div className="flex items-center gap-2 w-full">
             <Icon
               className="text-secondary-400"
@@ -174,7 +203,7 @@ export default function AssignDriverModal({
             />
           </div>
         </ModalHeader>
-        <ModalBody className="h-auto max-h-[60vh] overflow-y-auto overflow-x-visible">
+        <ModalBody className="flex-1 overflow-y-auto overflow-x-visible sm:max-h-[60vh] sm:flex-none modal-body-full">
           {loading ? (
             <div className="flex justify-center items-center h-full min-h-[250px]">
               <Spinner />

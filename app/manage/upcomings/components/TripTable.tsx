@@ -9,10 +9,11 @@ import { Icon } from "@iconify/react";
 export type TripTableProps = {
   trips: Trip[];
   groupBreakIndex?: number; // optional index to insert a separator row (e.g., between unassigned and assigned)
-  onOpenAssign: (tripId: string) => void;
-  onOpenLocation?: (lat?: number, lng?: number, addressText?: string) => void;
-  onOpenCall?: (driverName?: string, driverPhone?: string) => void;
-  onOpenLocationDesc?: (description?: string) => void;
+  onOpenAssignAction: (tripId: string) => void;
+  onOpenLocationAction?: (lat?: number, lng?: number, addressText?: string) => void;
+  onOpenCallAction?: (driverName?: string, driverPhone?: string) => void;
+  onOpenLocationDescAction?: (description?: string) => void;
+  onOpenPovLinkAction?: (token?: string) => void;
 };
 
 const assignStatusChip = (assigned: boolean) => (
@@ -67,10 +68,11 @@ const locationStatusChip = (
 export default function TripTable({
   trips,
   groupBreakIndex,
-  onOpenAssign,
-  onOpenLocation,
-  onOpenCall,
-  onOpenLocationDesc,
+  onOpenAssignAction,
+  onOpenLocationAction,
+  onOpenCallAction,
+  onOpenLocationDescAction,
+  onOpenPovLinkAction,
 }: TripTableProps) {
   const URGENT_MIN = 30;
   const toFaDigits = (s: string) =>
@@ -157,11 +159,11 @@ export default function TripTable({
                         {assignStatusChip(!!t.assignedDriverId)}
                         {locationStatusChip(
                           (t as any).hasLocation,
-                          onOpenLocation &&
+                          onOpenLocationAction &&
                             typeof (t as any).originLat === "number" &&
                             typeof (t as any).originLng === "number"
                             ? () =>
-                                onOpenLocation(
+                                onOpenLocationAction(
                                   (t as any).originLat,
                                   (t as any).originLng,
                                   (t as any).originAddress || t.pickup,
@@ -171,12 +173,12 @@ export default function TripTable({
                         {(t as any).originDescription ? (
                           <button
                             className="inline-flex items-center"
-                            disabled={!onOpenLocationDesc}
+                            disabled={!onOpenLocationDescAction}
                             title="نمایش توضیح مبدا"
                             type="button"
                             onClick={() =>
-                              onOpenLocationDesc &&
-                              onOpenLocationDesc((t as any).originDescription)
+                              onOpenLocationDescAction &&
+                              onOpenLocationDescAction((t as any).originDescription)
                             }
                           >
                             <Chip
@@ -192,6 +194,20 @@ export default function TripTable({
                                 width={16}
                               />
                             </Chip>
+                          </button>
+                        ) : null}
+                        {(t as any).secureToken ? (
+                          <button
+                            className="inline-flex items-center justify-center rounded-full p-1 hover:bg-default-200 transition"
+                            title="لینک مسافر"
+                            type="button"
+                            onClick={() => onOpenPovLinkAction && onOpenPovLinkAction((t as any).secureToken)}
+                          >
+                            <Icon
+                              className="text-default-500"
+                              icon="solar:link-circle-linear"
+                              width={18}
+                            />
                           </button>
                         ) : null}
                       </div>
@@ -290,12 +306,12 @@ export default function TripTable({
                           isIconOnly
                           aria-label="تماس با راننده"
                           className="text-green-700"
-                          isDisabled={!onOpenCall}
+                          isDisabled={!onOpenCallAction}
                           size="sm"
                           variant="light"
                           onPress={() =>
-                            onOpenCall &&
-                            onOpenCall(
+                            onOpenCallAction &&
+                            onOpenCallAction(
                               (t as any).driverName,
                               (t as any).driverPhone,
                             )
@@ -314,7 +330,7 @@ export default function TripTable({
                             />
                           }
                           variant="flat"
-                          onPress={() => onOpenAssign(t.id)}
+                          onPress={() => onOpenAssignAction(t.id)}
                         >
                           تغییر راننده
                         </Button>
@@ -325,7 +341,7 @@ export default function TripTable({
                           color="primary"
                           size="sm"
                           variant="solid"
-                          onPress={() => onOpenAssign(t.id)}
+                          onPress={() => onOpenAssignAction(t.id)}
                         >
                           انتخاب راننده
                         </Button>

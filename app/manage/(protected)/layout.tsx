@@ -12,7 +12,7 @@ export default function ProtectedManageLayout({
   return (
     <AuthGuard>
       <div className="flex items-center justify-center bg-background">
-        <div className="lg:container sm:mx-0 sm:px-1 mx-auto w-full md:px-0 ">
+        <div className="lg:container mx-auto w-full px-0 sm:px-2 md:px-4">
           <Layout>{children}</Layout>
         </div>
       </div>

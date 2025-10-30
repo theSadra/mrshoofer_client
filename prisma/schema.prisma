@@ -54,7 +54,6 @@ model Trip {
   AdminApproved    Boolean
   status           TripStatus @default(wating_info)
   SecureToken      String     @unique
-
   driverId Int?
   Driver   Driver? @relation(fields: [driverId], references: [id])
 }
@@ -88,6 +87,7 @@ model User {
   emailVerified DateTime?
   password      String? // hashed password
   isAdmin       Boolean   @default(false)
+  isSuperAdmin  Boolean   @default(false)
   image         String?
   accounts      Account[]
   sessions      Session[]

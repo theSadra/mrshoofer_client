@@ -67,6 +67,8 @@
     "postcss": "8.4.49",
     "react": "^19.1.0",
     "react-countdown": "^2.3.6",
+    "react-date-object": "^2.1.0",
+    "react-datepicker2": "^3.3.13",
     "react-day-picker": "^9.7.0",
     "react-dom": "^19.1.0",
     "react-modal-sheet": "^4.4.0",

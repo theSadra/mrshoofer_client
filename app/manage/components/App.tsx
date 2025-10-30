@@ -16,7 +16,7 @@ import {
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useMediaQuery } from "usehooks-ts";
-import { useSelectedLayoutSegment } from "next/navigation";
+import { useSelectedLayoutSegment, usePathname } from "next/navigation";
 
 // import AccountSetting from "./account-setting";
 import { Image } from "@heroui/react";
@@ -24,7 +24,7 @@ import { Image } from "@heroui/react";
 import SidebarDrawer from "./sidebar-drawer";
 import Sidebar from "./sidebar";
 import { cn } from "./cn";
-import { items } from "./items";
+import { useManageSidebarItems } from "./items";
 
 /**
  * This example requires installing the `usehooks-ts` and `lodash` packages.
@@ -46,7 +46,7 @@ import { items } from "./items";
  * <Sidebar defaultSelectedKey="home" selectedKeys={[currentPath]} />
  * ```
  */
-export default function App({ children }: { children: React.ReactNode }) {
+export default function App({ children }) {
   const { isOpen, onOpenChange } = useDisclosure();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -55,8 +55,35 @@ export default function App({ children }: { children: React.ReactNode }) {
     setIsCollapsed((prev) => !prev);
   }, []);
 
+  // Sidebar items (depends on session / role)
+  const items = useManageSidebarItems();
+
+  // Path / segment information
   const segment = useSelectedLayoutSegment();
-  const currentKey = segment || "home";
+  const pathname = usePathname();
+
+  // Derive current (active) key:
+  // 1. Try exact href match first (e.g. /superadmin/trips)
+  // 2. Then fallback to longest prefix match
+  // 3. Finally fallback to segment key or "home"
+  let currentKey = "home";
+  if (pathname && items.length) {
+    const exact = items.find((i) => i.href === pathname);
+    if (exact) {
+      currentKey = exact.key;
+    } else {
+      // Longest prefix match (reverse iterate to give later items priority if needed)
+      const prefix = [...items]
+        .sort((a, b) => b.href.length - a.href.length)
+        .find((i) => pathname.startsWith(i.href));
+      if (prefix) currentKey = prefix.key;
+    }
+  }
+  // If still home and we have a segment that maps directly to an item key, use it
+  if (currentKey === "home" && segment) {
+    const bySegment = items.find((i) => i.key === segment);
+    if (bySegment) currentKey = bySegment.key;
+  }
 
   const [showLogoutModal, setShowLogoutModal] = React.useState(false);
 
@@ -277,7 +304,7 @@ export default function App({ children }: { children: React.ReactNode }) {
         </div>
       </SidebarDrawer>
       {/*  Settings Content */}
-      <div className="overflow-auto  flex-1 p-4 mt-5">
+      <div className="overflow-auto flex-1 p-2 sm:p-3 md:p-4 mt-3 sm:mt-4 md:mt-5">
         {/* Title */}
         <div className="inline-flex items-center gap-x-3">
           <Button

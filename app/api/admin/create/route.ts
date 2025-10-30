@@ -5,7 +5,8 @@ const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, adminSecret } = await request.json();
+    const { name, email, password, adminSecret, isSuperAdmin } =
+      await request.json();
 
     // Security check - only allow admin creation with secret
     if (adminSecret !== process.env.ADMIN_SECRET) {
@@ -37,13 +38,15 @@ export async function POST(request: NextRequest) {
 
     // Create the admin user with raw password (no hashing)
     const adminUser = await prisma.user.create({
-      data: {
+      data: ({
         name,
         email,
         password: password, // Store password as raw text
         isAdmin: true,
+        // @ts-ignore - available after migration
+        isSuperAdmin: Boolean(isSuperAdmin) || false,
         emailVerified: new Date(),
-      },
+      } as any),
     });
 
     // Remove password from response
@@ -68,14 +71,17 @@ export async function GET() {
     // List all admin users (without passwords)
     const admins = await prisma.user.findMany({
       where: { isAdmin: true },
-      select: {
+      // @ts-ignore - extend select after migration
+      select: ({
         id: true,
         name: true,
         email: true,
         emailVerified: true,
         isAdmin: true,
+        // @ts-ignore
+        isSuperAdmin: true,
         image: true,
-      },
+      } as any),
     });
 
     return NextResponse.json({ admins });

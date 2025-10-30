@@ -1,7 +1,16 @@
 // app/components/Sidebar.tsx
 "use client";
 
-import type { SidebarItem } from "./sidebar";
+export type SidebarItem = {
+  key: string;
+  href?: string;
+  icon?: string;
+  title: string;
+  endContent?: React.ReactNode;
+  startContent?: React.ReactNode;
+  items?: SidebarItem[];
+  type?: "nest";
+};
 
 import React from "react";
 import { useRouter } from "next/navigation";
