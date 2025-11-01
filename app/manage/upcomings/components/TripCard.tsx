@@ -298,7 +298,7 @@ export default function TripCard({
                       icon="heroicons-outline:user"
                       width={18}
                     />
-                    <span className="font-medium">
+                    <span className="font-medium text-right">
                       {trip.driverName ?? "راننده"}
                     </span>
                     {trip.driverCar ? (

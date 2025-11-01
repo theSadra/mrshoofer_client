@@ -6,7 +6,7 @@ import {
   Modal,
   ModalContent,
   ModalHeader,
-  ModalBody,
+  ModalBody,  
   ModalFooter,
 } from "@heroui/modal";
 import { Driver } from "@prisma/client";
@@ -211,14 +211,21 @@ export default function AssignDriverModal({
           ) : error ? (
             <div className="text-danger text-center">{error}</div>
           ) : drivers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full min-h-[250px]">
+            <div className="flex flex-col items-center justify-start h-full min-h-[250px]">
               {!showAddCard ? (
+                
                 <Button
                   className="mt-4"
                   color="primary"
                   variant="flat"
                   onClick={() => setShowAddCard(true)}
                 >
+
+                  <Icon
+                  icon="basil:add-outline"
+                  width={24}
+                  height={24}
+                />
                   افزودن راننده جدید
                 </Button>
               ) : (
@@ -277,27 +284,31 @@ export default function AssignDriverModal({
                       <Input
                         required
                         className="w-full"
-                        label="نام راننده"
+                        labelPlacement="outside"
+                        placeholder="نام"
                         name="Firstname"
                       />
                       <Input
                         required
                         className="w-full"
-                        label="نام خانوادگی راننده"
+                        labelPlacement="outside"
+                        placeholder="نام خانوادگی"
                         name="Lastname"
                       />
-                      <Input
+                        <Input
+                          required
+                          className="w-full text-right"
+                          labelPlacement="outside"
+                          placeholder="شماره تماس"  
+                          name="PhoneNumber"
+                          pattern="[0-9]+"
+                          type="tel"
+                        />
+                                            <Input
                         required
                         className="w-full"
-                        label="شماره تماس"
-                        name="PhoneNumber"
-                        pattern="[0-9]+"
-                        type="tel"
-                      />
-                      <Input
-                        required
-                        className="w-full"
-                        label="نام خودرو"
+                        labelPlacement="outside"
+                        placeholder="نام خودرو"
                         name="CarName"
                       />
                       <div className="flex gap-2 mt-2">
