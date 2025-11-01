@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           <div className="relative flex flex-col h-screen">
             {/* <ClientNavbarWrapper /> */}
-            <main className="container mx-auto pt-4 px-3.5 xl:px-1 flex-grow">
+            <main className="container p-1 mx-auto pt-4  xl:px-1 flex-grow">
               {children}
             </main>
             <footer
