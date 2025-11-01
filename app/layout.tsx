@@ -74,7 +74,7 @@ export const metadata = {
   openGraph: {
     type: "website",
     locale: "fa_IR",
-    url: "https://mrshoofer.com",
+    url: "https://mrshoofer.ir",
     title: "MrShoofer",
     description: "درخواست تاکسی آنلاین",
     siteName: "MrShoofer",

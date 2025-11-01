@@ -103,10 +103,10 @@ export default function DriverTable({
       )}
       <Table aria-label="جدول رانندگان" className="mb-4 relative">
         <TableHeader>
-          <TableColumn>نام و نام خانوادگی</TableColumn>
-          <TableColumn>شماره تماس</TableColumn>
-          <TableColumn>خودرو</TableColumn>
-          <TableColumn>عملیات</TableColumn>
+          <TableColumn className="w-2/5 min-w-[200px]">نام و نام خانوادگی</TableColumn>
+          <TableColumn className="w-1/4 min-w-[120px]">شماره تماس</TableColumn>
+          <TableColumn className="w-1/5 min-w-[100px]">خودرو</TableColumn>
+          <TableColumn className="w-1/6 min-w-[100px]">عملیات</TableColumn>
         </TableHeader>
         <TableBody>
           {loading ? (
@@ -118,20 +118,24 @@ export default function DriverTable({
           ) : drivers.length > 0 ? (
             drivers.map((driver) => (
               <TableRow key={driver.id}>
-                <TableCell className="font-semibold flex items-center gap-2">
+                <TableCell className="font-semibold flex items-center gap-2 min-w-0 flex-1">
                   <Icon
-                    className="text-zinc-500"
-                    height={34}
+                    className="text-zinc-500 flex-shrink-0"
+                    height={24}
                     icon="solar:user-circle-bold-duotone"
-                    width={34}
+                    width={24}
                   />
-                  {driver.Firstname} {driver.Lastname}
+                  <span className="truncate">
+                    {driver.Firstname} {driver.Lastname}
+                  </span>
                 </TableCell>
-                <TableCell className="text-blue-500">
-                  {driver.PhoneNumber}
+                <TableCell className="text-blue-500 min-w-0">
+                  <span className="truncate block">{driver.PhoneNumber}</span>
                 </TableCell>
-                <TableCell className="text-sm ">{driver.CarName}</TableCell>
-                <TableCell>
+                <TableCell className="text-sm min-w-0">
+                  <span className="truncate block">{driver.CarName}</span>
+                </TableCell>
+                <TableCell className="min-w-0">
                   <Button
                     color="primary"
                     size="sm"
