@@ -136,7 +136,7 @@ export default function OnboardingStep2() {
     <motion.div
       animate="visible"
       className="relative flex h-full min-h-[60vh] flex-col gap-4 rounded-3xl px-3 py-2 text-right sm:gap-6 sm:px-6 sm:py-6"
-      initial="hidden"  
+      initial="hidden"
       variants={contentVariants}
     >
       <div className="mx-auto flex h-full w-full max-w-3xl justify-around gap-7 flex-1 flex-col px-1.5 py-2 sm:px-4 sm:py-3">
@@ -227,14 +227,21 @@ export default function OnboardingStep2() {
               {/* Date/Time Card */}
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-md">
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon icon="solar:calendar-bold-duotone" width={18} className="text-primary-500" />
-                  <p className="text-[11px] text-slate-500 font-semibold">زمان حرکت</p>
+                  <Icon
+                    className="text-primary-500"
+                    icon="solar:calendar-bold-duotone"
+                    width={18}
+                  />
+                  <p className="text-[11px] text-slate-500 font-semibold">
+                    زمان حرکت
+                  </p>
                 </div>
                 <div className="space-y-1.5">
                   <div>
                     <p className="text-[10px] text-slate-400">تاریخ</p>
                     <p className="text-[12px] sm:text-[13px] text-slate-700 font-semibold">
-                      {scheduleWeekday && `${scheduleWeekday}، `}{scheduleDate}
+                      {scheduleWeekday && `${scheduleWeekday}، `}
+                      {scheduleDate}
                     </p>
                   </div>
                   <div>
@@ -249,15 +256,23 @@ export default function OnboardingStep2() {
               {/* Trip Type & Car Card */}
               <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon icon="solar:car-bold-duotone" width={18} className="text-blue-500" />
-                  <p className="text-[11px] text-slate-500 font-semibold">نوع سرویس</p>
+                  <Icon
+                    className="text-blue-500"
+                    icon="solar:car-bold-duotone"
+                    width={18}
+                  />
+                  <p className="text-[11px] text-slate-500 font-semibold">
+                    نوع سرویس
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm sm:text-base font-bold text-slate-900">
                       {tripData?.ServiceName || "سرویس نامشخص"}
                     </p>
-                    {(tripData?.ServiceName?.toUpperCase().includes("VIP") || tripData?.ServiceName?.includes("وی‌آی‌پی") || tripData?.ServiceName?.includes("ویژه")) && (
+                    {(tripData?.ServiceName?.toUpperCase().includes("VIP") ||
+                      tripData?.ServiceName?.includes("وی‌آی‌پی") ||
+                      tripData?.ServiceName?.includes("ویژه")) && (
                       <div className="flex items-center gap-0.5">
                         <Icon icon="fluent-color:star-16" width={16} />
                         <Icon icon="fluent-color:star-16" width={16} />
@@ -276,7 +291,8 @@ export default function OnboardingStep2() {
 
         {!tripData && !isLoading && (
           <div className="rounded-2xl border border-amber-100 bg-amber-50/80 px-3.5 py-2.5 text-sm sm:text-base text-amber-700">
-            هنوز اطلاعات سفری برای نمایش نداریم. لطفاً کد پیگیری معتبر وارد کنید یا کمی بعد دوباره تلاش کنید.
+            هنوز اطلاعات سفری برای نمایش نداریم. لطفاً کد پیگیری معتبر وارد کنید
+            یا کمی بعد دوباره تلاش کنید.
           </div>
         )}
       </div>

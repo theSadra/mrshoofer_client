@@ -60,7 +60,7 @@ export default function OnboardingStep1() {
     >
       <div />
       {/* Main Content Container - Top Section */}
-  <div className="flex flex-col items-center w-full max-w-lg mx-auto gap-4">
+      <div className="flex flex-col items-center w-full max-w-lg mx-auto gap-4">
         {/* Illustration Section */}
         <motion.div className="mb-6" variants={iconVariants}>
           <div className="relative">

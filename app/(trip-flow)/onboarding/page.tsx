@@ -401,8 +401,8 @@ export default function OnboardingPage() {
           </div>
         </header>
 
-  {/* Step Content */}
-  <div className="flex-1 px-3 sm:px-5 lg:px-8 min-h-0 py-2 sm:py-4 pb-20 sm:pb-24">
+        {/* Step Content */}
+        <div className="flex-1 px-3 sm:px-5 lg:px-8 min-h-0 py-2 sm:py-4 pb-20 sm:pb-24">
           <div className="grid h-full max-w-6xl mx-auto gap-3 lg:gap-5 lg:grid-cols-[300px,1fr]">
             <motion.aside
               animate={{ opacity: 1, y: 0 }}
@@ -476,11 +476,16 @@ export default function OnboardingPage() {
         {/* Navigation & Progress */}
         <div
           className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 sm:px-5"
-          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)" }}
+          style={{
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)",
+          }}
         >
           <div className="pointer-events-auto mx-auto w-full max-w-2xl rounded-2xl border border-slate-100/80 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm sm:px-4">
             <div className="flex flex-col gap-1.5">
-              <ProgressDots currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+              <ProgressDots
+                currentStep={currentStep}
+                totalSteps={TOTAL_STEPS}
+              />
 
               <AnimatePresence initial={false} mode="wait">
                 {currentStep === 1 ? (
@@ -499,7 +504,11 @@ export default function OnboardingPage() {
                     >
                       {isFinalStep ? "رفتن به صفحه سفر" : "ادامه"}
                       <Icon
-                        icon={isFinalStep ? "solar:arrow-left-linear" : "solar:arrow-left-linear"}
+                        icon={
+                          isFinalStep
+                            ? "solar:arrow-left-linear"
+                            : "solar:arrow-left-linear"
+                        }
                         width={20}
                       />
                     </Button>
@@ -507,8 +516,8 @@ export default function OnboardingPage() {
                 ) : (
                   <motion.div
                     key="dual-nav"
-                    className="flex items-center gap-1.5"
                     animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1.5"
                     exit={{ opacity: 0, y: -8 }}
                     initial={{ opacity: 0, y: 12 }}
                     transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
@@ -530,7 +539,11 @@ export default function OnboardingPage() {
                     >
                       {isFinalStep ? "رفتن به صفحه سفر" : "ادامه"}
                       <Icon
-                        icon={isFinalStep ? "solar:arrow-left-linear" : "solar:arrow-left-linear"}
+                        icon={
+                          isFinalStep
+                            ? "solar:arrow-left-linear"
+                            : "solar:arrow-left-linear"
+                        }
                         width={20}
                       />
                     </Button>

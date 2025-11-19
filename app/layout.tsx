@@ -4,8 +4,8 @@ import "@/styles/globals.css";
 import clsx from "clsx";
 
 import { Providers } from "./providers";
-import AppFooter from "@/components/layout/AppFooter";
 
+import AppFooter from "@/components/layout/AppFooter";
 import { fontSans, fontMono } from "@/config/fonts";
 
 export default function RootLayout({ children }: { children: ReactNode }) {

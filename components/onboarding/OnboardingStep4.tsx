@@ -150,7 +150,7 @@ export default function OnboardingStep4({ onSelectLocation }) {
             <div className="flex items-center justify-between">
               <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[11px] sm:text-xs font-semibold text-primary-600">
                 <span className="inline-block h-2 w-2 rounded-full bg-primary-500" />
-               مبدا و مقصد
+                مبدا و مقصد
               </span>
               <span className="text-[11px] sm:text-xs text-slate-400 font-medium">
                 {originSelected && destinationSelected
@@ -164,7 +164,8 @@ export default function OnboardingStep4({ onSelectLocation }) {
               🧭 مبدا و مقصد را دقیق مشخص کنید
             </h1>
             <p className="text-[12px] sm:text-sm leading-5 px-2 text-slate-600">
-              به منظور تکمیل اطلاعات سفر شما، نیاز داریم که مکان دقیق مبدا و مقصد خود را به منظور حضور یافتن تاکسی در آن مکان، مشخص نمایید
+              به منظور تکمیل اطلاعات سفر شما، نیاز داریم که مکان دقیق مبدا و
+              مقصد خود را به منظور حضور یافتن تاکسی در آن مکان، مشخص نمایید
             </p>
           </div>
         </motion.div>

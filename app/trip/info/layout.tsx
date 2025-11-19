@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import AppNavbar from "@/app/components/AppNavbar";
 import { TripProvider } from "@/app/contexts/TripContext";
 

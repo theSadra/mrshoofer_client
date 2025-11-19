@@ -83,8 +83,8 @@ export default function AddDriverModal({
         color: "success",
       });
       onClose();
-    } catch (err: any) {
-      setError(err.message || "خطا در ایجاد راننده جدید");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در ایجاد راننده جدید");
     }
     setLoading(false);
   };
@@ -93,21 +93,17 @@ export default function AddDriverModal({
     <Modal
       className="z-[9999]"
       classNames={{
-        base: "m-0 sm:m-6",
-        wrapper: "w-full h-[100dvh] sm:w-auto sm:h-auto",
-        body: "overflow-y-auto max-h-none sm:max-h-[60vh]",
+        base: "m-0 h-[100dvh] rounded-none sm:m-6 sm:h-auto sm:rounded-3xl",
+        wrapper: "w-full h-[100dvh] sm:h-auto sm:max-w-3xl",
+        body: "overflow-y-auto max-h-[calc(100dvh-220px)] sm:max-h-[70vh]",
       }}
       isOpen={open}
+      placement="center"
       scrollBehavior="inside"
-      size="full"
-      style={
-        {
-          "--modal-height": "calc(var(--vh, 1vh) * 100)",
-        } as React.CSSProperties
-      }
+      size="2xl"
       onClose={onClose}
     >
-      <ModalContent className="max-w-md w-full">
+      <ModalContent className="w-full h-full sm:h-auto sm:max-w-2xl">
         <ModalHeader className="flex flex-col gap-2 items-start">
           <div className="flex items-center gap-2 w-full">
             <Icon

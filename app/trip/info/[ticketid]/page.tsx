@@ -6,8 +6,9 @@ import { useSearchParams } from "next/navigation";
 import TripInfo from "../components/tripinfo-new";
 import LocationAddedModal from "../components/LocationAddedModal";
 import LocationUpdatedModal from "../components/LocationUpdatedModal";
-import { useTripContext } from "@/app/contexts/TripContext";
 import WelcomePassengerModal from "../components/WelcomePassengerModal";
+
+import { useTripContext } from "@/app/contexts/TripContext";
 
 export default function Upcoming({
   params,
@@ -103,7 +104,9 @@ export default function Upcoming({
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200" />
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent absolute top-0 left-0" />
           </div>
-          <span className="text-slate-600 font-medium animate-pulse">در حال بارگذاری اطلاعات سفر...</span>
+          <span className="text-slate-600 font-medium animate-pulse">
+            در حال بارگذاری اطلاعات سفر...
+          </span>
         </div>
       </div>
     );
@@ -114,7 +117,9 @@ export default function Upcoming({
       <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
         <div className="text-center">
           <div className="text-6xl mb-4">⚠️</div>
-          <div className="text-red-500 font-semibold text-lg">خطا در بارگذاری</div>
+          <div className="text-red-500 font-semibold text-lg">
+            خطا در بارگذاری
+          </div>
           <div className="text-slate-600 mt-2">{error}</div>
         </div>
       </div>
@@ -129,7 +134,7 @@ export default function Upcoming({
           <div className="absolute top-20 right-10 w-72 h-72 bg-blue-100/20 rounded-full blur-3xl" />
           <div className="absolute bottom-20 left-10 w-96 h-96 bg-purple-100/20 rounded-full blur-3xl" />
         </div>
-        
+
         <div className="relative z-10">
           <TripInfo trip={tripData} />
 

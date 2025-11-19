@@ -54,11 +54,11 @@ const checkIconVariants = {
 
 function getCallTimeText(startTime) {
   if (!startTime) return "به زودی";
-  
+
   const now = new Date();
   const tripStart = new Date(startTime);
   const deltaHours = (tripStart.getTime() - now.getTime()) / (1000 * 60 * 60);
-  
+
   if (deltaHours < 1) {
     return "تا دقایقی دیگر";
   } else if (deltaHours < 5) {
@@ -82,18 +82,14 @@ export default function OnboardingStep3() {
       variants={contentVariants}
     >
       <div className="mx-auto flex h-full w-full max-w-3xl justify-around gap-7 flex-1 flex-col px-1.5 py-2 sm:px-4 sm:py-3">
-        
         {/* Header Card */}
-        <div className="my-3"></div>
+        <div className="my-3" />
         {/* Success Icon and Message */}
         <motion.div
           className="flex flex-col items-center justify-center flex-1 gap-4"
           variants={itemVariants}
         >
-          <motion.div
-            variants={checkIconVariants}
-            className="relative"
-          >
+          <motion.div className="relative" variants={checkIconVariants}>
             <div className="absolute inset-0 animate-ping rounded-full bg-success-200 opacity-75" />
             <div className="relative flex h-24 w-24 sm:h-32 sm:w-32 items-center justify-center rounded-full bg-gradient-to-br from-success-400 to-success-600 shadow-2xl">
               <Icon
@@ -104,15 +100,14 @@ export default function OnboardingStep3() {
             </div>
           </motion.div>
 
-          <motion.div
-            className="text-center space-y-2"
-            variants={itemVariants}
-          >
+          <motion.div className="text-center space-y-2" variants={itemVariants}>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
               اطلاعات با موفقیت ثبت شد
             </h2>
             <p className="text-sm sm:text-base text-slate-600 max-w-md">
-              راننده‌ی <span className="font-bold text-slate-900">مسترشوفر</span> در مبدا مورد نظر شما، در زمان مقرر، حضور خواهد یافت.
+              راننده‌ی{" "}
+              <span className="font-bold text-slate-900">مسترشوفر</span> در مبدا
+              مورد نظر شما، در زمان مقرر، حضور خواهد یافت.
             </p>
           </motion.div>
 
@@ -123,15 +118,31 @@ export default function OnboardingStep3() {
           >
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center">
               <div className="flex justify-center">
-              <Icon icon="solar:phone-calling-bold-duotone" width={24} className="text-primary-500 mx-auto mb-2" />
+                <Icon
+                  className="text-primary-500 mx-auto mb-2"
+                  icon="solar:phone-calling-bold-duotone"
+                  width={24}
+                />
 
-              <Icon icon="solar:user-circle-line-duotone" width={24} className="text-yellow-600 mx-auto mb-2" />
+                <Icon
+                  className="text-yellow-600 mx-auto mb-2"
+                  icon="solar:user-circle-line-duotone"
+                  width={24}
+                />
               </div>
-              <p className="text-[11px] text-slate-500 font-medium">تماس راننده با شما</p>
-              <p className="text-sm font-bold text-slate-900 mt-1">{callTimeText}</p>
+              <p className="text-[11px] text-slate-500 font-medium">
+                تماس راننده با شما
+              </p>
+              <p className="text-sm font-bold text-slate-900 mt-1">
+                {callTimeText}
+              </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center">
-              <Icon icon="solar:document-text-bold-duotone" width={24} className="text-success-500 mx-auto mb-2" />
+              <Icon
+                className="text-success-500 mx-auto mb-2"
+                icon="solar:document-text-bold-duotone"
+                width={24}
+              />
               <p className="text-[11px] text-slate-500 font-medium">وضعیت</p>
               <p className="text-sm font-bold text-slate-900 mt-1">ثبت شده</p>
             </div>
@@ -145,16 +156,24 @@ export default function OnboardingStep3() {
         >
           <div className="flex items-start gap-2.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100">
-              <Icon icon="solar:phone-bold-duotone" width={18} className="text-blue-600" />
+              <Icon
+                className="text-blue-600"
+                icon="solar:phone-bold-duotone"
+                width={18}
+              />
             </div>
             <div className="flex-1">
               <p className="text-[11px] sm:text-[12px] text-slate-600 leading-snug mb-2">
-                در صورت وجود توضیحات درباره سفر، مانند <span className="font-bold text-slate-800">اضافه بار</span>، <span className="font-bold text-slate-800">اضافه مسیر</span>، وجود مقصد یا مبدا در <span className="font-bold text-slate-800">طرح ترافیک</span>،
-                با پشتیبانی مسترشوفر تماس حاصل فرمایید
+                در صورت وجود توضیحات درباره سفر، مانند{" "}
+                <span className="font-bold text-slate-800">اضافه بار</span>،{" "}
+                <span className="font-bold text-slate-800">اضافه مسیر</span>،
+                وجود مقصد یا مبدا در{" "}
+                <span className="font-bold text-slate-800">طرح ترافیک</span>، با
+                پشتیبانی مسترشوفر تماس حاصل فرمایید
               </p>
-              <a 
-                href="tel:+982128422243"
+              <a
                 className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] sm:text-xs font-semibold text-white transition-all hover:bg-blue-700 hover:shadow-md"
+                href="tel:+982128422243"
               >
                 <Icon icon="solar:phone-calling-bold" width={14} />
                 <span>۰۲۱-۲۸۴۲۲۲۴۳</span>
@@ -162,7 +181,6 @@ export default function OnboardingStep3() {
             </div>
           </div>
         </motion.div>
-
       </div>
     </motion.div>
   );
