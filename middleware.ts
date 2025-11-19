@@ -10,15 +10,10 @@ export default withAuth(
     // Helper to handle unauthorized consistently
     const deny = (reason: string) => {
       if (isApi) {
-        return NextResponse.json(
-          { error: "Forbidden", reason },
-          { status: 403 },
-        );
+        return NextResponse.json({ error: "Forbidden", reason }, { status: 403 });
       }
       const url = new URL("/403", req.url);
-
       url.searchParams.set("r", pathname); // keep reference
-
       return NextResponse.redirect(url);
     };
 

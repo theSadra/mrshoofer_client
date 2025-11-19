@@ -48,13 +48,8 @@ model Trip {
   StartsAt         DateTime
   Passenger        Passenger  @relation(fields: [passengerId], references: [id])
   passengerId      Int
-  // Legacy single-location relation kept for backward compatibility
-  Location               Location? @relation("TripLocation", fields: [locationId], references: [id])
-  locationId             Int?
-  OriginLocation         Location?  @relation("OriginLocation", fields: [originLocationId], references: [id])
-  DestinationLocation    Location?  @relation("DestinationLocation", fields: [destinationLocationId], references: [id])
-  originLocationId       Int?
-  destinationLocationId  Int?
+  Location         Location?  @relation(fields: [locationId], references: [id])
+  locationId       Int?
   PassengerSmsSent Boolean
   AdminApproved    Boolean
   status           TripStatus @default(wating_info)
@@ -74,18 +69,15 @@ model Driver {
 }
 
 model Location {
-  id               Int       @id @default(autoincrement())
-  Latitude         Float?
-  Longitude        Float?
-  Description      String?
-  TextAddress      String?
-  PhoneNumber      String?
-  Passenger        Passenger @relation(fields: [passengerId], references: [id])
-  passengerId      Int
-  // Legacy trips referencing a single combined location
-  LegacyTrips      Trip[]    @relation("TripLocation")
-  OriginTrips      Trip[]    @relation("OriginLocation")
-  DestinationTrips Trip[]    @relation("DestinationLocation")
+  id          Int       @id @default(autoincrement())
+  Latitude    Float?
+  Longitude   Float?
+  Description String?
+  TextAddress String?
+  PhoneNumber String?
+  Passenger   Passenger @relation(fields: [passengerId], references: [id])
+  passengerId Int
+  Trips       Trip[]
 }
 
 model User {

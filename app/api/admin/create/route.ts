@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Create the admin user with raw password (no hashing)
     const adminUser = await prisma.user.create({
-      data: {
+      data: ({
         name,
         email,
         password: password, // Store password as raw text
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         // @ts-ignore - available after migration
         isSuperAdmin: Boolean(isSuperAdmin) || false,
         emailVerified: new Date(),
-      } as any,
+      } as any),
     });
 
     // Remove password from response
@@ -72,7 +72,7 @@ export async function GET() {
     const admins = await prisma.user.findMany({
       where: { isAdmin: true },
       // @ts-ignore - extend select after migration
-      select: {
+      select: ({
         id: true,
         name: true,
         email: true,
@@ -81,7 +81,7 @@ export async function GET() {
         // @ts-ignore
         isSuperAdmin: true,
         image: true,
-      } as any,
+      } as any),
     });
 
     return NextResponse.json({ admins });

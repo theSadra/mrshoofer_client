@@ -9,18 +9,16 @@ export default function TripsPageHeader({ loading, rowsCount, error }) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">مدیریت سفرها</h1>
-          <p className="text-default-500 mt-1">
-            مشاهده و مدیریت تمام سفرهای سیستم
-          </p>
+          <p className="text-default-500 mt-1">مشاهده و مدیریت تمام سفرهای سیستم</p>
         </div>
         <div className="flex items-center gap-3">
           {loading && (
             <div className="flex items-center gap-2 text-primary">
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
               <span className="text-sm">بارگذاری...</span>
             </div>
           )}
-          <Chip color="primary" size="sm" variant="flat">
+          <Chip color="primary" variant="flat" size="sm">
             {rowsCount} سفر
           </Chip>
         </div>
@@ -37,10 +35,7 @@ export default function TripsPageHeader({ loading, rowsCount, error }) {
               <div>
                 <p className="font-medium">خطا در دریافت اطلاعات</p>
                 <p className="text-sm mt-1">
-                  {error}{" "}
-                  {error.includes("Unauthorized") || error.includes("401")
-                    ? " (احتمالا دسترسی سوپرادمین ندارید)"
-                    : ""}
+                  {error} {error.includes('Unauthorized') || error.includes('401') ? ' (احتمالا دسترسی سوپرادمین ندارید)' : ''}
                 </p>
               </div>
             </div>

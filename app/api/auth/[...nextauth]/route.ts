@@ -126,10 +126,13 @@ export const authOptions = {
     async signIn({ user }: { user: any }) {
       // Only allow sign in if user exists and is admin
       if (!user) {
+
+
         return false;
       }
 
       if (!user.isAdmin) {
+
         return false;
       }
 

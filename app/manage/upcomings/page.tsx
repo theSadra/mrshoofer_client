@@ -1,15 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Chip,
-} from "@heroui/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Chip } from "@heroui/react";
 import { Spacer, Spinner } from "@heroui/react";
 import { Select, SelectItem } from "@heroui/select";
 import { Icon } from "@iconify/react";
@@ -258,7 +250,6 @@ export default function UpcomingsPage() {
   const openPov = (token?: string) => {
     if (!token) return;
     const link = `/trip/info/${token}`;
-
     setPovLink(link);
     setPovOpen(true);
   };
@@ -647,17 +638,17 @@ export default function UpcomingsPage() {
           </div>
           {/* Desktop table */}
           <div className="hidden lg:block">
-            <TripTable
-              groupBreakIndex={
-                assignFilter === "all" ? groupBreakIndex : undefined
-              }
-              trips={displayTrips}
-              onOpenAssignAction={(id) => openAssign(id)}
-              onOpenCallAction={openCall}
-              onOpenLocationAction={openLocation}
-              onOpenLocationDescAction={openLocationDesc}
-              onOpenPovLinkAction={openPov}
-            />
+              <TripTable
+                groupBreakIndex={
+                  assignFilter === "all" ? groupBreakIndex : undefined
+                }
+                trips={displayTrips}
+                onOpenAssignAction={(id) => openAssign(id)}
+                onOpenCallAction={openCall}
+                onOpenLocationAction={openLocation}
+                onOpenLocationDescAction={openLocationDesc}
+                onOpenPovLinkAction={openPov}
+              />
           </div>
         </>
       )}
@@ -690,33 +681,22 @@ export default function UpcomingsPage() {
         }}
         onClose={() => setAssignModalOpen(false)}
       />
-      <Modal isOpen={povOpen} placement="center" onOpenChange={setPovOpen}>
+      <Modal isOpen={povOpen} onOpenChange={setPovOpen} placement="center">
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1 text-right">
-                لینک صفحه مسافر
-              </ModalHeader>
+              <ModalHeader className="flex flex-col gap-1 text-right">لینک صفحه مسافر</ModalHeader>
               <ModalBody>
                 {povLink ? (
                   <div className="flex flex-col gap-3">
-                    <Chip
-                      className="justify-center"
-                      color="default"
-                      size="sm"
-                      variant="flat"
-                    >
-                      {povLink}
-                    </Chip>
+                    <Chip variant="flat" color="default" className="justify-center" size="sm">{povLink}</Chip>
                     <Button
                       color="primary"
                       size="sm"
                       variant="flat"
                       onPress={async () => {
                         try {
-                          await navigator.clipboard.writeText(
-                            window.location.origin + povLink,
-                          );
+                          await navigator.clipboard.writeText(window.location.origin + povLink);
                         } catch {}
                       }}
                     >
@@ -724,15 +704,11 @@ export default function UpcomingsPage() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="text-default-500 text-sm">
-                    لینک در دسترس نیست
-                  </div>
+                  <div className="text-default-500 text-sm">لینک در دسترس نیست</div>
                 )}
               </ModalBody>
               <ModalFooter>
-                <Button color="default" variant="light" onPress={onClose}>
-                  بستن
-                </Button>
+                <Button color="default" variant="light" onPress={onClose}>بستن</Button>
               </ModalFooter>
             </>
           )}

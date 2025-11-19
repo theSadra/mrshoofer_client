@@ -1,9 +1,8 @@
 "use client";
 import React from "react";
+import Layout from "../../manage/components/App";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
-import Layout from "../../manage/components/App";
 
 function SuperAdminGuard({ children }) {
   const { status } = useSession();
