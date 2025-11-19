@@ -1,8 +1,11 @@
-// Use Vazir font instead of Vazirmatn
+// Use IRAN Sans X variable font
 export const fontSans = {
   variable: "--font-sans",
   style: {
-    fontFamily: "'Vazir', sans-serif",
+    fontFamily: "'IRAN Sans X', sans-serif",
+    fontFeatureSettings: "'locl' 1, 'ss02' 1",
+    fontVariantNumeric: "proportional-nums",
+    fontLanguageOverride: "FAR",
   },
 };
 
@@ -11,5 +14,6 @@ export const fontMono = {
   variable: "--font-mono",
   style: {
     fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+    fontFeatureSettings: "'locl' 1",
   },
 };

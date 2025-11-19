@@ -103,7 +103,9 @@ export default function DriverTable({
       )}
       <Table aria-label="جدول رانندگان" className="mb-4 relative">
         <TableHeader>
-          <TableColumn className="w-2/5 min-w-[200px]">نام و نام خانوادگی</TableColumn>
+          <TableColumn className="w-2/5 min-w-[200px]">
+            نام و نام خانوادگی
+          </TableColumn>
           <TableColumn className="w-1/4 min-w-[120px]">شماره تماس</TableColumn>
           <TableColumn className="w-1/5 min-w-[100px]">خودرو</TableColumn>
           <TableColumn className="w-1/6 min-w-[100px]">عملیات</TableColumn>

@@ -15,6 +15,8 @@ type TripData = Prisma.TripGetPayload<{
     Location: true;
     Passenger: true;
     Driver: true;
+    OriginLocation: true;
+    DestinationLocation: true;
   };
 }>;
 

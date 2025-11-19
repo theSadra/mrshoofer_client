@@ -10,7 +10,7 @@ import { Button } from "@heroui/button";
 import { Input} from "@heroui/react";
 import { Textarea } from "@heroui/react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from "@heroui/react";
-import { useTripContext } from "../../../contexts/TripContext";
+import { useTripContext } from "@/contexts/TripContext";
 
 // Custom CSS classes for enhanced animations
 const customStyles = `
@@ -181,9 +181,24 @@ const API_KEY =
   process.env.NEXT_PUBLIC_NESHAN_API_KEY ||
   "service.6f5734c50a9c43cba6f43a6254c1b668";
 
-function LocationSelectorPage({ tripId, tripData }) {
+const getLocationForSelection = (tripRecord, selectionType) => {
+  if (!tripRecord) return null;
+  return selectionType === "destination"
+    ? tripRecord.DestinationLocation
+    : tripRecord.OriginLocation;
+};
+
+function LocationSelectorPage({
+  tripId,
+  tripData,
+  selectionType = "origin",
+  returnTo,
+}) {
   const router = useRouter();
   const { tripData: contextTripData, setTripData, clearTripData } = useTripContext();
+  const activeSelection = selectionType === "destination" ? "destination" : "origin";
+  const initialTripRecord = tripData || contextTripData || null;
+  const initialLocation = getLocationForSelection(initialTripRecord, activeSelection);
   const [mounted, setMounted] = useState(false);
   const [trip, setTrip] = useState(tripData || contextTripData || null);
   const [loading, setLoading] = useState(true);
@@ -196,9 +211,11 @@ function LocationSelectorPage({ tripId, tripData }) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [showPicker, setShowPicker] = useState(true);
-  const [selectedAddress, setSelectedAddress] = useState("در حال بارگذاری آدرس...");
+  const [selectedAddress, setSelectedAddress] = useState(
+    initialLocation?.TextAddress || "در حال بارگذاری آدرس...",
+  );
   const [numberPhone, setNumberPhone] = useState(tripData?.Passenger?.NumberPhone || contextTripData?.Passenger?.NumberPhone || "");
-  const [description, setDescription] = useState(tripData?.Location?.Description || contextTripData?.Location?.Description || "");
+  const [description, setDescription] = useState(initialLocation?.Description || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -1247,13 +1264,21 @@ function LocationSelectorPage({ tripId, tripData }) {
           // Use data passed from parent (highest priority)
           setTrip(tripData);
           setNumberPhone(tripData.Passenger?.NumberPhone || "");
-          setDescription(tripData.Location?.Description || "");
+          const selectedLocation = getLocationForSelection(tripData, activeSelection);
+          setDescription(selectedLocation?.Description || "");
+          if (selectedLocation?.TextAddress) {
+            setSelectedAddress(selectedLocation.TextAddress);
+          }
           console.log('Using trip data from parent:', tripData);
         } else if (contextTripData) {
           // Use data from context (second priority)
           setTrip(contextTripData);
           setNumberPhone(contextTripData.Passenger?.NumberPhone || "");
-          setDescription(contextTripData.Location?.Description || "");
+          const selectedLocation = getLocationForSelection(contextTripData, activeSelection);
+          setDescription(selectedLocation?.Description || "");
+          if (selectedLocation?.TextAddress) {
+            setSelectedAddress(selectedLocation.TextAddress);
+          }
           console.log('Using trip data from context:', contextTripData);
         } else if (tripId) {
           // Fallback: fetch data if not passed from parent or context
@@ -1265,7 +1290,11 @@ function LocationSelectorPage({ tripId, tripData }) {
           const fetchedTripData = await response.json();
           setTrip(fetchedTripData);
           setNumberPhone(fetchedTripData.Passenger?.NumberPhone || "");
-          setDescription(fetchedTripData.Location?.Description || "");
+          const selectedLocation = getLocationForSelection(fetchedTripData, activeSelection);
+          setDescription(selectedLocation?.Description || "");
+          if (selectedLocation?.TextAddress) {
+            setSelectedAddress(selectedLocation.TextAddress);
+          }
           
           console.log('Fetched trip data:', fetchedTripData);
         }
@@ -1280,7 +1309,8 @@ function LocationSelectorPage({ tripId, tripData }) {
             NumberPhone: "09123456789"  // Default fallback number
           },
           OriginCity: "Tehran",
-          Location: null
+          OriginLocation: null,
+          DestinationLocation: null
         };
         setTrip(mockTrip);
         setNumberPhone(mockTrip.Passenger?.NumberPhone || "");
@@ -1372,7 +1402,8 @@ function LocationSelectorPage({ tripId, tripData }) {
         
         // Initialize map coordinates AFTER the map is loaded
         if (trip?.OriginCity) {
-          if (trip?.Location == null) {
+          const currentTripLocation = getLocationForSelection(trip, activeSelection);
+          if (!currentTripLocation || currentTripLocation == null) {
             // Center map on origin city
             console.log('Centering map on origin city:', trip.OriginCity);
             getCoordinatesFromCityName(trip.OriginCity).then((coords) => {
@@ -1394,7 +1425,7 @@ function LocationSelectorPage({ tripId, tripData }) {
             });
           } else {
             // Use saved location if available
-            const { Latitude, Longitude } = trip.Location;
+            const { Latitude, Longitude } = currentTripLocation;
             console.log('Setting map center to saved location:', { Latitude, Longitude });
             if (window.neshanMapInstance && Latitude && Longitude) {
               window.neshanMapInstance.setCenter([Longitude, Latitude]);
@@ -1705,7 +1736,7 @@ function LocationSelectorPage({ tripId, tripData }) {
         const labelDiv = document.createElement("div");
         labelDiv.innerText = "مبدا";
         labelDiv.style.background = "white";
-        labelDiv.style.fontFamily = "Vazir, sans-serif";
+        labelDiv.style.fontFamily = "IRAN Sans X, sans-serif";
         labelDiv.style.padding = "1px 8px";
         labelDiv.style.borderRadius = "9px";
         labelDiv.style.marginBottom = "8px";
@@ -1831,7 +1862,8 @@ function LocationSelectorPage({ tripId, tripData }) {
       longitude: selectedCordinates.current.lng,
       textAddress: selectedAddress,
       phoneNumber: numberPhone,
-      description: description
+      description: description,
+      type: activeSelection,
     };
 
     console.log('Full location data being sent:', locationData);
@@ -1845,7 +1877,7 @@ function LocationSelectorPage({ tripId, tripData }) {
         body: JSON.stringify(locationData)
       });
 
-      const result = await response.json();
+  const result = await response.json();
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to update location');
@@ -1860,11 +1892,17 @@ function LocationSelectorPage({ tripId, tripData }) {
       
       // Determine if this was a first-time add or an update
       const currentTripData = tripData || contextTripData;
-      const hadExistingLocation = currentTripData?.Location?.Latitude && currentTripData?.Location?.Longitude;
+      const existingLocation = getLocationForSelection(currentTripData, activeSelection);
+      const hadExistingLocation = existingLocation?.Latitude && existingLocation?.Longitude;
       const successType = hadExistingLocation ? 'location_updated' : 'location_added';
       
-      // Navigate back to trip info page with success parameter
-      router.push(`/trip/info/${tripId}?success=${successType}&refresh=${Date.now()}`);
+      if (returnTo) {
+        const decoded = decodeURIComponent(returnTo);
+        const separator = decoded.includes('?') ? '&' : '?';
+        router.push(`${decoded}${separator}refreshTrip=${Date.now()}`);
+      } else {
+        router.push(`/trip/info/${tripId}?success=${successType}&refresh=${Date.now()}`);
+      }
     } catch (error) {
       console.error('Error updating location:', error);
       setErrorMessage("خطا در اتصال به سرور، لطفاً دوباره امتحان کنید");
@@ -1879,7 +1917,11 @@ function LocationSelectorPage({ tripId, tripData }) {
       handleCloseDrawer();
     } else {
       // If on map selection, go back to trip info
-      router.push(`/trip/info/${tripId}`);
+      if (returnTo) {
+        router.push(decodeURIComponent(returnTo));
+      } else {
+        router.push(`/trip/info/${tripId}`);
+      }
     }
   };
 
@@ -1910,7 +1952,8 @@ function LocationSelectorPage({ tripId, tripData }) {
     });
     
     // Step 5: Reset description to original trip value
-    setDescription(trip?.Location?.Description || "");
+  const existingLocation = getLocationForSelection(trip, activeSelection);
+  setDescription(existingLocation?.Description || "");
     
     // Step 6: Clear any error messages
     setErrorMessage("");
@@ -1976,21 +2019,25 @@ function LocationSelectorPage({ tripId, tripData }) {
         <h1 className="text-base font-semibold text-gray-800 flex items-center gap-2 transition-all duration-300">
           {showForm ? (
             <>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-sm">
+              <div className={`w-6 h-6 rounded-full ${activeSelection === "origin" ? "bg-gradient-to-br from-green-400 to-green-600" : "bg-gradient-to-br from-amber-400 to-amber-600"} flex items-center justify-center shadow-sm`}>
                 <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-sm">تایید مبدأ</span>
+              <span className="text-sm">
+                {activeSelection === "origin" ? "تایید مبدأ" : "تایید مقصد"}
+              </span>
             </>
           ) : (
             <>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-sm">
+              <div className={`w-6 h-6 rounded-full ${activeSelection === "origin" ? "bg-gradient-to-br from-blue-500 to-purple-600" : "bg-gradient-to-br from-orange-500 to-pink-500"} flex items-center justify-center shadow-sm`}>
                 <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-sm">انتخاب مبدا</span>
+              <span className="text-sm">
+                {activeSelection === "origin" ? "انتخاب مبدا" : "انتخاب مقصد"}
+              </span>
             </>
           )}
         </h1>
@@ -2033,12 +2080,14 @@ function LocationSelectorPage({ tripId, tripData }) {
           <DrawerHeader className="flex flex-col gap-1 px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg">
+                <div className={`w-8 h-8 rounded-full ${activeSelection === "origin" ? "bg-gradient-to-br from-blue-400 to-blue-600" : "bg-gradient-to-br from-green-400 to-green-600"} flex items-center justify-center shadow-lg`}>
                   <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <h2 className="text-lg font-bold text-gray-800">تایید مبدأ</h2>
+                <h2 className="text-lg font-bold text-gray-800">
+                  {activeSelection === "origin" ? "تایید مبدا" : "تایید مقصد"}
+                </h2>
               </div>
             </div>
             <p className="text-xs text-gray-600 text-right leading-relaxed">

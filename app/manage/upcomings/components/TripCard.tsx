@@ -34,7 +34,11 @@ export type Trip = {
 export type TripCardProps = {
   trip: Trip;
   onOpenAssignAction: () => void;
-  onOpenLocationAction?: (lat?: number, lng?: number, addressText?: string) => void;
+  onOpenLocationAction?: (
+    lat?: number,
+    lng?: number,
+    addressText?: string,
+  ) => void;
   onOpenCallAction?: (driverName?: string, driverPhone?: string) => void;
   onOpenLocationDescAction?: (description?: string) => void;
   onOpenPovLinkAction?: (token?: string) => void;
@@ -205,7 +209,8 @@ export default function TripCard({
               title="نمایش توضیح مبدا"
               type="button"
               onClick={() =>
-                onOpenLocationDescAction && onOpenLocationDescAction(trip.originDescription)
+                onOpenLocationDescAction &&
+                onOpenLocationDescAction(trip.originDescription)
               }
             >
               <Chip
@@ -219,16 +224,23 @@ export default function TripCard({
               </Chip>
             </button>
           ) : null}
-          { (trip as any).secureToken ? (
+          {(trip as any).secureToken ? (
             <button
               className="inline-flex items-center justify-center rounded-full p-1 hover:bg-default-200 transition"
               title="لینک مسافر"
               type="button"
-              onClick={() => onOpenPovLinkAction && onOpenPovLinkAction((trip as any).secureToken)}
+              onClick={() =>
+                onOpenPovLinkAction &&
+                onOpenPovLinkAction((trip as any).secureToken)
+              }
             >
-              <Icon className="text-default-500" icon="solar:link-circle-linear" width={18} />
+              <Icon
+                className="text-default-500"
+                icon="solar:link-circle-linear"
+                width={18}
+              />
             </button>
-          ) : null }
+          ) : null}
         </div>
         {assignChip(assigned)}
       </CardHeader>

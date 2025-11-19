@@ -67,8 +67,10 @@ export default function App({ children }) {
   // 2. Then fallback to longest prefix match
   // 3. Finally fallback to segment key or "home"
   let currentKey = "home";
+
   if (pathname && items.length) {
     const exact = items.find((i) => i.href === pathname);
+
     if (exact) {
       currentKey = exact.key;
     } else {
@@ -76,12 +78,14 @@ export default function App({ children }) {
       const prefix = [...items]
         .sort((a, b) => b.href.length - a.href.length)
         .find((i) => pathname.startsWith(i.href));
+
       if (prefix) currentKey = prefix.key;
     }
   }
   // If still home and we have a segment that maps directly to an item key, use it
   if (currentKey === "home" && segment) {
     const bySegment = items.find((i) => i.key === segment);
+
     if (bySegment) currentKey = bySegment.key;
   }
 

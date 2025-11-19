@@ -1,10 +1,9 @@
 "use client";
 import React from "react";
+
 import TripsPageHeader from "../../../manage/components/trips-page-header";
 import TripsFilterBar from "../../../manage/components/trips-filter-bar";
 import TripsTable from "../../../manage/components/trips-table";
-
-
 
 /** @typedef {Object} TripRow
  * @property {number} id
@@ -56,14 +55,17 @@ export default function SuperadminTripsPage() {
         sortBy,
         sortOrder,
       });
+
       if (dateFrom) {
         // Convert Persian DateObject to Gregorian for API
         const gregorianDate = dateFrom.toDate();
+
         params.set("dateFrom", gregorianDate.toISOString());
       }
       if (dateTo) {
         // Convert Persian DateObject to Gregorian for API
         const gregorianDate = dateTo.toDate();
+
         params.set("dateTo", gregorianDate.toISOString());
       }
       try {
@@ -71,30 +73,46 @@ export default function SuperadminTripsPage() {
           signal: controller.signal,
           cache: "no-store",
         });
+
         if (!res.ok) {
           // Attempt to parse error json
-            let msg = `Request failed (${res.status})`;
-            try {
-              const j = await res.json();
-              if (j?.error) msg = j.error;
-            } catch {}
-            throw new Error(msg);
+          let msg = `Request failed (${res.status})`;
+
+          try {
+            const j = await res.json();
+
+            if (j?.error) msg = j.error;
+          } catch {}
+          throw new Error(msg);
         }
         const json = await res.json();
+
         if (json.error) throw new Error(json.error);
         setRows(json.data || []);
         setTotalPages(json.totalPages || 1);
       } catch (e) {
-        if (e.name === 'AbortError') return;
-        setError(e.message || 'خطا در دریافت داده');
+        if (e.name === "AbortError") return;
+        setError(e.message || "خطا در دریافت داده");
         setRows([]);
       } finally {
         setLoading(false);
       }
     };
+
     run();
+
     return () => controller.abort();
-  }, [page, search, driverFilter, locationFilter, statusFilter, sortBy, sortOrder, dateFrom, dateTo]);
+  }, [
+    page,
+    search,
+    driverFilter,
+    locationFilter,
+    statusFilter,
+    sortBy,
+    sortOrder,
+    dateFrom,
+    dateTo,
+  ]);
 
   const toggleSort = (field) => {
     if (sortBy === field) {
@@ -119,12 +137,14 @@ export default function SuperadminTripsPage() {
   // Count active filters
   const getActiveFiltersCount = () => {
     let count = 0;
+
     if (search) count++;
     if (driverFilter !== "all") count++;
     if (locationFilter !== "all") count++;
     if (statusFilter !== "all") count++;
     if (dateFrom) count++;
     if (dateTo) count++;
+
     return count;
   };
 
@@ -133,45 +153,45 @@ export default function SuperadminTripsPage() {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <TripsPageHeader 
+      <TripsPageHeader
+        error={error}
         loading={loading}
         rowsCount={rows.length}
-        error={error}
       />
 
       {/* Filter Navigation Bar */}
       <TripsFilterBar
-        search={search}
-        onSearchChange={setSearch}
-        driverFilter={driverFilter}
-        onDriverFilterChange={setDriverFilter}
-        locationFilter={locationFilter}
-        onLocationFilterChange={setLocationFilter}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
         dateFrom={dateFrom}
-        onDateFromChange={setDateFrom}
         dateTo={dateTo}
-        onDateToChange={setDateTo}
+        driverFilter={driverFilter}
+        locationFilter={locationFilter}
+        search={search}
         sortBy={sortBy}
-        onSortByChange={setSortBy}
         sortOrder={sortOrder}
-        onSortOrderChange={setSortOrder}
+        statusFilter={statusFilter}
+        onDateFromChange={setDateFrom}
+        onDateToChange={setDateTo}
+        onDriverFilterChange={setDriverFilter}
+        onLocationFilterChange={setLocationFilter}
         onPageChange={setPage}
+        onSearchChange={setSearch}
+        onSortByChange={setSortBy}
+        onSortOrderChange={setSortOrder}
+        onStatusFilterChange={setStatusFilter}
       />
 
       {/* Trips Table */}
       <TripsTable
-        rows={rows}
+        activeFiltersCount={activeFiltersCount}
         loading={loading}
         page={page}
-        totalPages={totalPages}
+        rows={rows}
         sortBy={sortBy}
         sortOrder={sortOrder}
-        activeFiltersCount={activeFiltersCount}
+        totalPages={totalPages}
+        onClearFilters={clearAllFilters}
         onPageChange={setPage}
         onSortChange={toggleSort}
-        onClearFilters={clearAllFilters}
       />
     </div>
   );

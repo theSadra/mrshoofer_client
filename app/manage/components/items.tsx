@@ -2,6 +2,7 @@
 import { Chip } from "@heroui/react";
 import React from "react";
 import { useSession } from "next-auth/react";
+
 import { type SidebarItem } from "./sidebar";
 
 /**
@@ -67,8 +68,10 @@ export const baseItems: SidebarItem[] = [
 export function useManageSidebarItems(): SidebarItem[] {
   const { data: session } = useSession();
   const isSuper = Boolean((session?.user as any)?.isSuperAdmin);
+
   return React.useMemo(() => {
     if (!isSuper) return baseItems;
+
     return [
       ...baseItems,
       {

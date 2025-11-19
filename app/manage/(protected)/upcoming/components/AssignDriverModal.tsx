@@ -6,7 +6,7 @@ import {
   Modal,
   ModalContent,
   ModalHeader,
-  ModalBody,  
+  ModalBody,
   ModalFooter,
 } from "@heroui/modal";
 import { Driver } from "@prisma/client";
@@ -134,18 +134,25 @@ export default function AssignDriverModal({
   useEffect(() => {
     if (open) {
       // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
       // Fix mobile viewport height
-      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-      
+      document.documentElement.style.setProperty(
+        "--vh",
+        `${window.innerHeight * 0.01}px`,
+      );
+
       const handleResize = () => {
-        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+        document.documentElement.style.setProperty(
+          "--vh",
+          `${window.innerHeight * 0.01}px`,
+        );
       };
-      
-      window.addEventListener('resize', handleResize);
+
+      window.addEventListener("resize", handleResize);
+
       return () => {
-        document.body.style.overflow = 'unset';
-        window.removeEventListener('resize', handleResize);
+        document.body.style.overflow = "unset";
+        window.removeEventListener("resize", handleResize);
       };
     }
   }, [open]);
@@ -153,18 +160,20 @@ export default function AssignDriverModal({
   return (
     <Modal
       className="z-[9999]"
-      isOpen={open}
-      scrollBehavior="inside"
-      onClose={onClose}
-      size="full"
       classNames={{
         base: "m-0 sm:m-6",
         wrapper: "w-full h-[100dvh] sm:w-auto sm:h-auto",
-        body: "overflow-y-auto max-h-none sm:max-h-[60vh]"
+        body: "overflow-y-auto max-h-none sm:max-h-[60vh]",
       }}
-      style={{
-        '--modal-height': 'calc(var(--vh, 1vh) * 100)'
-      } as React.CSSProperties}
+      isOpen={open}
+      scrollBehavior="inside"
+      size="full"
+      style={
+        {
+          "--modal-height": "calc(var(--vh, 1vh) * 100)",
+        } as React.CSSProperties
+      }
+      onClose={onClose}
     >
       <ModalContent className="overflow-visible z-[9999] h-full sm:h-auto modal-content-full">
         <ModalHeader className="flex flex-col gap-2 items-start min-h-20 flex-shrink-0">
@@ -213,19 +222,13 @@ export default function AssignDriverModal({
           ) : drivers.length === 0 ? (
             <div className="flex flex-col items-center justify-start h-full min-h-[250px]">
               {!showAddCard ? (
-                
                 <Button
                   className="mt-4"
                   color="primary"
                   variant="flat"
                   onClick={() => setShowAddCard(true)}
                 >
-
-                  <Icon
-                  icon="basil:add-outline"
-                  width={24}
-                  height={24}
-                />
+                  <Icon height={24} icon="basil:add-outline" width={24} />
                   افزودن راننده جدید
                 </Button>
               ) : (
@@ -285,31 +288,31 @@ export default function AssignDriverModal({
                         required
                         className="w-full"
                         labelPlacement="outside"
-                        placeholder="نام"
                         name="Firstname"
+                        placeholder="نام"
                       />
                       <Input
                         required
                         className="w-full"
                         labelPlacement="outside"
-                        placeholder="نام خانوادگی"
                         name="Lastname"
+                        placeholder="نام خانوادگی"
                       />
-                        <Input
-                          required
-                          className="w-full text-right"
-                          labelPlacement="outside"
-                          placeholder="شماره تماس"  
-                          name="PhoneNumber"
-                          pattern="[0-9]+"
-                          type="tel"
-                        />
-                                            <Input
+                      <Input
+                        required
+                        className="w-full text-right"
+                        labelPlacement="outside"
+                        name="PhoneNumber"
+                        pattern="[0-9]+"
+                        placeholder="شماره تماس"
+                        type="tel"
+                      />
+                      <Input
                         required
                         className="w-full"
                         labelPlacement="outside"
-                        placeholder="نام خودرو"
                         name="CarName"
+                        placeholder="نام خودرو"
                       />
                       <div className="flex gap-2 mt-2">
                         <Button

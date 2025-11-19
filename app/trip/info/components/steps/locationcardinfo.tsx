@@ -31,7 +31,7 @@ export default function StepItem({
 
   const handleLocationSelection = () => {
     setIsLoading(true);
-    router.push(`/trip/location/${trip.SecureToken}`);
+    router.push(`/location/${trip.SecureToken}`);
   };
 
   const content = {

@@ -1,11 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 
-import { useTripContext } from "../../../contexts/TripContext";
+import { useTripContext } from "@/contexts/TripContext";
 
 const LocationSelectorPage = dynamic(
   () => import("../components/LocationSelectorPage"),
@@ -24,15 +23,19 @@ const LocationSelectorPage = dynamic(
 
 export default function LocationSelectionPage() {
   const params = useParams();
-  const { tripData, loading, error, fetchTripData } = useTripContext();
+  const searchParams = useSearchParams();
+  const selectionParam =
+    searchParams.get("selection") === "destination" ? "destination" : "origin";
+  const returnTo = searchParams.get("returnTo") || null;
+  const { tripData, isLoading, error, setTripToken } = useTripContext();
 
   useEffect(() => {
     if (params.tripId) {
-      fetchTripData(params.tripId as string);
+      setTripToken(params.tripId as string);
     }
-  }, [params.tripId, fetchTripData]);
+  }, [params.tripId, setTripToken]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center">
@@ -53,6 +56,8 @@ export default function LocationSelectionPage() {
 
   return (
     <LocationSelectorPage
+      returnTo={returnTo}
+      selectionType={selectionParam}
       tripData={tripData}
       tripId={params.tripId as string}
     />

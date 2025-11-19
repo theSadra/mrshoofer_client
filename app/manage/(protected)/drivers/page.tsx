@@ -11,7 +11,7 @@ import EditDriverModal from "./EditDriverModal";
 
 const AddDriverModal = dynamic(
   () => import("../upcoming/components/AddDriverModal"),
-  { ssr: false }
+  { ssr: false },
 );
 
 export default function DriversPage() {

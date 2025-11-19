@@ -1,0 +1,546 @@
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@heroui/react";
+import { Icon } from "@iconify/react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import OnboardingStep1 from "@/components/onboarding/OnboardingStep1";
+import OnboardingStep2 from "@/components/onboarding/OnboardingStep2";
+import OnboardingStep3 from "@/components/onboarding/OnboardingStep3";
+import OnboardingStep4 from "@/components/onboarding/OnboardingStep4";
+import ProgressDots from "@/components/onboarding/ProgressDots";
+import TripNotFound from "@/components/onboarding/TripNotFound";
+import TripLoading from "@/components/onboarding/TripLoading";
+import { useTripContext } from "@/contexts/TripContext";
+
+const TOTAL_STEPS = 4;
+
+const pageVariants = {
+  initial: {
+    opacity: 0,
+    x: -50,
+    scale: 0.96,
+  },
+  in: {
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+  out: {
+    opacity: 0,
+    x: 50,
+    scale: 1.04,
+    transition: {
+      duration: 0.3,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
+
+const stepDetails = [
+  {
+    title: "شروع سریع سفر",
+    description:
+      "لطفاً اطلاعات پایه سفر را بررسی کنید تا روند هماهنگی بدون توقف ادامه پیدا کند.",
+    highlights: [
+      {
+        label: "پیشرفت فرم",
+        value: "۷۰٪",
+        icon: "solar:chart-square-bold-duotone",
+        accent: "text-primary-500",
+      },
+      {
+        label: "زمان تخمینی",
+        value: "کمتر از ۲ دقیقه",
+        icon: "solar:timer-2-bold-duotone",
+        accent: "text-secondary-500",
+      },
+      {
+        label: "وضعیت امنیت",
+        value: "فعال",
+        icon: "solar:shield-broken",
+        accent: "text-success-500",
+      },
+    ],
+    tipLabel: "راهنمای سریع",
+    tip: "جزئیات سفر را دقیق بنویسید تا پشتیبانی سریع‌تر هماهنگ شود.",
+  },
+  {
+    title: "تعیین مبدا و مقصد",
+    description:
+      "نقطه شروع و پایان سفر را انتخاب کنید تا مسیر روی نقشه نهایی شود.",
+    highlights: [
+      {
+        label: "مختصات ذخیره‌شده",
+        value: "۲",
+        icon: "solar:map-point-bold-duotone",
+        accent: "text-success-500",
+      },
+      {
+        label: "دقت نقشه",
+        value: "۱ متر",
+        icon: "solar:target-line-duotone",
+        accent: "text-primary-500",
+      },
+      {
+        label: "زمان متوسط",
+        value: "۴۵ ثانیه",
+        icon: "solar:hourglass-bold-duotone",
+        accent: "text-warning-500",
+      },
+    ],
+    tipLabel: "نکته انتخاب",
+    tip: "پس از ثبت مبدا، مقصد را در همان نقشه تایید کنید تا خطاها کمتر شود.",
+  },
+  {
+    title: "پیگیری وضعیت سفر",
+    description:
+      "نمای زنده حرکت راننده و وضعیت مسیر در این مرحله نمایش داده می‌شود.",
+    highlights: [
+      {
+        label: "به‌روزرسانی",
+        value: "هر ۸ ثانیه",
+        icon: "solar:radar-2-bold",
+        accent: "text-primary-500",
+      },
+      {
+        label: "سفرهای ثبت‌شده",
+        value: "+۳۵۰۰",
+        icon: "solar:road-line-bold",
+        accent: "text-secondary-500",
+      },
+      {
+        label: "رضایت کاربران",
+        value: "۹۸٪",
+        icon: "solar:like-bold",
+        accent: "text-success-500",
+      },
+    ],
+    tipLabel: "نکته اعتماد",
+    tip: "پیوند ردیابی را با همراهان خود به اشتراک بگذارید.",
+  },
+  {
+    title: "حساب شما فعال شد",
+    description: "آخرین بررسی‌ها انجام شده و می‌توانید وارد داشبورد شوید.",
+    highlights: [
+      {
+        label: "پشتیبانی",
+        value: "۲۴/۷",
+        icon: "solar:lifebuoy-bold",
+        accent: "text-warning-500",
+      },
+      {
+        label: "مدارک تایید",
+        value: "کامل",
+        icon: "solar:check-read-line-duotone",
+        accent: "text-success-500",
+      },
+      {
+        label: "پاداش شروع",
+        value: "+۱۵٪",
+        icon: "solar:gift-bold",
+        accent: "text-primary-500",
+      },
+    ],
+    tipLabel: "گام بعدی",
+    tip: "با اولین سفر خود پاداش خوش‌آمدگویی دریافت کنید.",
+  },
+];
+
+export default function OnboardingPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [currentStep, setCurrentStep] = useState(() => {
+    const stepParam = Number(searchParams.get("step"));
+
+    if (
+      Number.isFinite(stepParam) &&
+      stepParam >= 1 &&
+      stepParam <= TOTAL_STEPS
+    ) {
+      return stepParam;
+    }
+
+    return 1;
+  });
+  const {
+    setTripToken,
+    tripData,
+    isLoading,
+    error,
+    tripToken,
+    refreshTripData,
+  } = useTripContext();
+  const [hasTripToken, setHasTripToken] = useState(false);
+  const refreshTrigger = searchParams.get("refreshTrip");
+
+  // Extract triptoken from URL and set it in context
+  useEffect(() => {
+    const token = searchParams.get("triptoken");
+
+    if (token) {
+      setHasTripToken(true);
+      // Only set token if it's different or if we don't have trip data yet
+      // This prevents re-fetching when coming back from location picker
+      if (tripToken !== token) {
+        setTripToken(token);
+        console.log("Trip token from URL:", token);
+      }
+    } else {
+      // No token provided
+      setHasTripToken(false);
+    }
+  }, [searchParams, setTripToken, tripToken]);
+
+  useEffect(() => {
+    const stepParam = Number(searchParams.get("step"));
+
+    if (
+      Number.isFinite(stepParam) &&
+      stepParam >= 1 &&
+      stepParam <= TOTAL_STEPS &&
+      stepParam !== currentStep
+    ) {
+      setCurrentStep(stepParam);
+    }
+  }, [searchParams, currentStep]);
+
+  useEffect(() => {
+    if (!refreshTrigger) return;
+
+    const runRefresh = async () => {
+      await refreshTripData();
+
+      // Clean up URL after refresh
+      const params = new URLSearchParams(window.location.search);
+
+      params.delete("refreshTrip");
+      const queryString = params.toString();
+
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+        scroll: false,
+      });
+    };
+
+    runRefresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger]); // Only depend on refreshTrigger to prevent infinite loop
+
+  // Retry fetching trip data
+  const handleRetry = () => {
+    const token = searchParams.get("triptoken");
+
+    if (token) {
+      setTripToken(token);
+    }
+  };
+
+  const syncStepToUrl = useCallback(
+    (stepValue: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      params.set("step", stepValue.toString());
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [router, pathname, searchParams],
+  );
+
+  const handleOpenLocationPicker = useCallback(
+    (type: "origin" | "destination") => {
+      const token =
+        tripToken || tripData?.SecureToken || searchParams.get("triptoken");
+
+      if (!token) {
+        return;
+      }
+      const returnParams = new URLSearchParams(searchParams.toString());
+
+      returnParams.set("step", currentStep.toString());
+      const encodedReturn = encodeURIComponent(
+        `${pathname}?${returnParams.toString()}`,
+      );
+      const pickerQuery = new URLSearchParams();
+
+      pickerQuery.set("selection", type);
+      pickerQuery.set("returnTo", encodedReturn);
+      router.push(`/location/${token}?${pickerQuery.toString()}`);
+    },
+    [tripData, tripToken, searchParams, currentStep, pathname, router],
+  );
+
+  // Debug logging
+  console.log("Onboarding Debug:", {
+    hasTripToken,
+    isLoading,
+    hasError: !!error,
+    error,
+    hasTripData: !!tripData,
+  });
+
+  // Show loading spinner while fetching trip data
+  if (hasTripToken && isLoading) {
+    return <TripLoading />;
+  }
+
+  // Show TripNotFound page if:
+  // 1. No trip token was provided in URL
+  // 2. There's an error from the API
+  // 3. OR trip token was provided but loading finished and no trip data
+  const shouldShowNotFound =
+    !hasTripToken ||
+    error !== null ||
+    (hasTripToken && !isLoading && !tripData);
+
+  if (shouldShowNotFound) {
+    console.log("Showing TripNotFound page");
+
+    return (
+      <TripNotFound
+        message={!hasTripToken ? "لینک سفر نامعتبر است" : "سفر یافت نشد"}
+        onRetry={handleRetry}
+      />
+    );
+  }
+
+  const nextStep = () => {
+    if (currentStep < TOTAL_STEPS) {
+      const next = currentStep + 1;
+
+      setCurrentStep(next);
+      syncStepToUrl(next);
+    } else {
+      // Navigate to trip info page with secure token
+      if (tripData?.SecureToken) {
+        router.push(`/trip/info/${tripData.SecureToken}`);
+      } else {
+        // Fallback to main app if no token
+        window.location.href = "/";
+      }
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      const prev = currentStep - 1;
+
+      setCurrentStep(prev);
+      syncStepToUrl(prev);
+    }
+  };
+
+  const skipOnboarding = () => {
+    window.location.href = "/";
+  };
+
+  const activeStepMeta = stepDetails[currentStep - 1] ?? stepDetails[0];
+  const isFinalStep = currentStep === TOTAL_STEPS;
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return <OnboardingStep1 key="step1" />;
+      case 2:
+        return (
+          <OnboardingStep4
+            key="step4"
+            onSelectLocation={handleOpenLocationPicker}
+          />
+        );
+      case 3:
+        return <OnboardingStep2 key="step2" />;
+      case 4:
+        return <OnboardingStep3 key="step3" />;
+      default:
+        return <OnboardingStep1 key="step1" />;
+    }
+  };
+
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.1),rgba(255,255,255,0))]" />
+
+      {/* Main Content */}
+      <div className="relative z-10 flex min-h-screen flex-col pb-32 sm:pb-36">
+        <header className="px-4 pt-4 pb-2 sm:px-5" dir="ltr">
+          <div className="flex items-center justify-between gap-3">
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: -12 }}
+              transition={{ delay: 0.35 }}
+            >
+              <Button
+                className="text-default-500 hover:text-default-700"
+                color="default"
+                variant="light"
+                onClick={skipOnboarding}
+              >
+                رد کردن
+              </Button>
+            </motion.div>
+
+            <motion.div
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center"
+              initial={{ opacity: 0, x: 24 }}
+              transition={{ delay: 0.3 }}
+            >
+              <img
+                alt="MrShoofer"
+                className="h-8 w-auto object-contain sm:h-9"
+                src="/mrshoofer_logo_full.png"
+              />
+            </motion.div>
+          </div>
+        </header>
+
+  {/* Step Content */}
+  <div className="flex-1 px-3 sm:px-5 lg:px-8 min-h-0 py-2 sm:py-4 pb-20 sm:pb-24">
+          <div className="grid h-full max-w-6xl mx-auto gap-3 lg:gap-5 lg:grid-cols-[300px,1fr]">
+            <motion.aside
+              animate={{ opacity: 1, y: 0 }}
+              className="hidden lg:flex flex-col justify-between rounded-[32px] border border-white/60 bg-white/80 p-6 shadow-2xl backdrop-blur-xl"
+              initial={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+            >
+              <div className="space-y-2 text-right">
+                <p className="text-xs font-semibold text-primary-500">
+                  مسیر سفر شما
+                </p>
+                <h2 className="text-2xl font-black text-slate-900">
+                  {activeStepMeta.title}
+                </h2>
+                <p className="text-sm text-slate-600">
+                  {activeStepMeta.description}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {activeStepMeta.highlights?.map((highlight) => (
+                  <div
+                    key={highlight.label}
+                    className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white/70 px-4 py-3 shadow-sm"
+                  >
+                    <div className="text-right">
+                      <p className="text-xs text-slate-500">
+                        {highlight.label}
+                      </p>
+                      <p className="text-base font-semibold text-slate-900">
+                        {highlight.value}
+                      </p>
+                    </div>
+                    <Icon
+                      className={`text-2xl ${highlight.accent}`}
+                      icon={highlight.icon}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-gradient-to-br from-white/90 to-slate-50 p-5 text-right shadow-inner">
+                <p className="text-xs font-semibold text-slate-500">
+                  {activeStepMeta.tipLabel}
+                </p>
+                <p className="mt-1 text-sm text-slate-700">
+                  {activeStepMeta.tip}
+                </p>
+              </div>
+            </motion.aside>
+
+            <div className="relative flex items-stretch min-h-[60vh] sm:min-h-[68vh] lg:min-h-full">
+              <div className="w-full h-full flex items-stretch">
+                <AnimatePresence initial={false} mode="wait">
+                  <motion.div
+                    key={currentStep}
+                    animate="in"
+                    className="w-full h-full flex-1"
+                    exit="out"
+                    initial="initial"
+                    variants={pageVariants}
+                  >
+                    {renderStep()}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation & Progress */}
+        <div
+          className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 sm:px-5"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)" }}
+        >
+          <div className="pointer-events-auto mx-auto w-full max-w-2xl rounded-2xl border border-slate-100/80 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm sm:px-4">
+            <div className="flex flex-col gap-1.5">
+              <ProgressDots currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+
+              <AnimatePresence initial={false} mode="wait">
+                {currentStep === 1 ? (
+                  <motion.div
+                    key="single-next"
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    initial={{ opacity: 0, y: 12 }}
+                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <Button
+                      className="h-11 w-full justify-center gap-2 rounded-2xl text-sm font-semibold sm:h-12 sm:text-base"
+                      color="primary"
+                      size="lg"
+                      onClick={nextStep}
+                    >
+                      {isFinalStep ? "رفتن به صفحه سفر" : "ادامه"}
+                      <Icon
+                        icon={isFinalStep ? "solar:arrow-left-linear" : "solar:arrow-left-linear"}
+                        width={20}
+                      />
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="dual-nav"
+                    className="flex items-center gap-1.5"
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    initial={{ opacity: 0, y: 12 }}
+                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <Button
+                      className="h-10 w-[72px] shrink-0 px-2 text-[11px] font-medium sm:h-11 sm:w-[86px] sm:px-2.5 sm:text-xs"
+                      color="default"
+                      variant="flat"
+                      onClick={prevStep}
+                    >
+                      <Icon icon="solar:arrow-right-linear" width={18} />
+                    </Button>
+
+                    <Button
+                      className="h-11 flex-1 justify-center gap-2 rounded-2xl text-sm font-semibold sm:h-12 sm:text-base"
+                      color="primary"
+                      size="lg"
+                      onClick={nextStep}
+                    >
+                      {isFinalStep ? "رفتن به صفحه سفر" : "ادامه"}
+                      <Icon
+                        icon={isFinalStep ? "solar:arrow-left-linear" : "solar:arrow-left-linear"}
+                        width={20}
+                      />
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}

@@ -72,12 +72,14 @@ export default function TripsFilterBar({
   // Count active filters
   const getActiveFiltersCount = () => {
     let count = 0;
+
     if (search) count++;
     if (driverFilter !== "all") count++;
     if (locationFilter !== "all") count++;
     if (statusFilter !== "all") count++;
     if (dateFrom) count++;
     if (dateTo) count++;
+
     return count;
   };
 
@@ -88,10 +90,12 @@ export default function TripsFilterBar({
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full rtl">
           <div className="flex items-center gap-3 justify-end">
-            <h3 className="text-lg font-semibold text-foreground text-right">فیلترها و جستجو</h3>
+            <h3 className="text-lg font-semibold text-foreground text-right">
+              فیلترها و جستجو
+            </h3>
             {activeFiltersCount > 0 && (
               <Badge color="primary" content={activeFiltersCount} size="sm">
-                <Chip color="primary" variant="flat" size="sm">
+                <Chip color="primary" size="sm" variant="flat">
                   فیلتر فعال
                 </Chip>
               </Badge>
@@ -99,18 +103,18 @@ export default function TripsFilterBar({
           </div>
           <div className="flex items-center gap-2 justify-start">
             <Button
-              variant="ghost"
-              size="sm"
-              onPress={() => setShowFilters(!showFilters)}
               className="text-default-600"
+              size="sm"
+              variant="ghost"
+              onPress={() => setShowFilters(!showFilters)}
             >
               {showFilters ? "مخفی کردن فیلترها" : "نمایش فیلترها"}
             </Button>
             {activeFiltersCount > 0 && (
               <Button
-                variant="flat"
-                size="sm"
                 color="warning"
+                size="sm"
+                variant="flat"
                 onPress={clearAllFilters}
               >
                 پاک کردن همه
@@ -119,23 +123,26 @@ export default function TripsFilterBar({
           </div>
         </div>
       </CardHeader>
-      <CardBody className={`transition-all duration-300 ${showFilters ? 'pt-0' : 'hidden'}`}>
+      <CardBody
+        className={`transition-all duration-300 ${showFilters ? "pt-0" : "hidden"}`}
+      >
         {/* Primary Search Bar */}
         <div className="mb-6">
           <Input
+            isClearable
+            className="max-w-xl"
+            classNames={{
+              input: "text-base",
+              inputWrapper:
+                "bg-default-100 border-2 border-transparent hover:border-primary-200 focus-within:border-primary data-[hover=true]:bg-default-200/50",
+            }}
             placeholder="جستجو در کد بلیط، نام مسافر، راننده یا شهر..."
+            size="md"
+            startContent={<SearchIcon className="text-default-400" />}
             value={search}
             onValueChange={(v) => {
               onPageChange(1);
               onSearchChange(v);
-            }}
-            startContent={<SearchIcon className="text-default-400" />}
-            isClearable
-            size="md"
-            className="max-w-xl"
-            classNames={{
-              input: "text-base",
-              inputWrapper: "bg-default-100 border-2 border-transparent hover:border-primary-200 focus-within:border-primary data-[hover=true]:bg-default-200/50"
             }}
           />
         </div>
@@ -146,17 +153,20 @@ export default function TripsFilterBar({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 rtl">
           {/* Driver Filter */}
           <div className="space-y-2 text-right">
-            <label className="block text-sm font-medium text-default-700 text-right">وضعیت راننده</label>
+            <label className="block text-sm font-medium text-default-700 text-right">
+              وضعیت راننده
+            </label>
             <Select
+              classNames={{
+                trigger:
+                  "bg-default-100 border-1 border-default-300 hover:border-primary-300",
+              }}
               placeholder="انتخاب راننده"
               selectedKeys={[driverFilter]}
+              size="sm"
               onChange={(e) => {
                 onPageChange(1);
                 onDriverFilterChange(e.target.value);
-              }}
-              size="sm"
-              classNames={{
-                trigger: "bg-default-100 border-1 border-default-300 hover:border-primary-300"
               }}
             >
               <SelectItem key="all">همه رانندگان</SelectItem>
@@ -167,17 +177,20 @@ export default function TripsFilterBar({
 
           {/* Location Filter */}
           <div className="space-y-2 text-right">
-            <label className="block text-sm font-medium text-default-700 text-right">وضعیت آدرس</label>
+            <label className="block text-sm font-medium text-default-700 text-right">
+              وضعیت آدرس
+            </label>
             <Select
+              classNames={{
+                trigger:
+                  "bg-default-100 border-1 border-default-300 hover:border-primary-300",
+              }}
               placeholder="انتخاب آدرس"
               selectedKeys={[locationFilter]}
+              size="sm"
               onChange={(e) => {
                 onPageChange(1);
                 onLocationFilterChange(e.target.value);
-              }}
-              size="sm"
-              classNames={{
-                trigger: "bg-default-100 border-1 border-default-300 hover:border-primary-300"
               }}
             >
               <SelectItem key="all">همه آدرس‌ها</SelectItem>
@@ -188,17 +201,20 @@ export default function TripsFilterBar({
 
           {/* Status Filter */}
           <div className="space-y-2 text-right">
-            <label className="block text-sm font-medium text-default-700 text-right">وضعیت سفر</label>
+            <label className="block text-sm font-medium text-default-700 text-right">
+              وضعیت سفر
+            </label>
             <Select
+              classNames={{
+                trigger:
+                  "bg-default-100 border-1 border-default-300 hover:border-primary-300",
+              }}
               placeholder="انتخاب وضعیت"
               selectedKeys={[statusFilter]}
+              size="sm"
               onChange={(e) => {
                 onPageChange(1);
                 onStatusFilterChange(e.target.value);
-              }}
-              size="sm"
-              classNames={{
-                trigger: "bg-default-100 border-1 border-default-300 hover:border-primary-300"
               }}
             >
               <SelectItem key="all">همه وضعیت‌ها</SelectItem>
@@ -212,18 +228,22 @@ export default function TripsFilterBar({
 
           {/* Sort Options */}
           <div className="space-y-2 text-right">
-            <label className="block text-sm font-medium text-default-700 text-right">مرتب‌سازی</label>
+            <label className="block text-sm font-medium text-default-700 text-right">
+              مرتب‌سازی
+            </label>
             <Select
+              classNames={{
+                trigger:
+                  "bg-default-100 border-1 border-default-300 hover:border-primary-300",
+              }}
               placeholder="انتخاب مرتب‌سازی"
               selectedKeys={[`${sortBy}-${sortOrder}`]}
+              size="sm"
               onChange={(e) => {
-                const [field, order] = e.target.value.split('-');
+                const [field, order] = e.target.value.split("-");
+
                 onSortByChange(field);
                 onSortOrderChange(order);
-              }}
-              size="sm"
-              classNames={{
-                trigger: "bg-default-100 border-1 border-default-300 hover:border-primary-300"
               }}
             >
               <SelectItem key="StartsAt-desc">جدیدترین سفر</SelectItem>
@@ -235,40 +255,44 @@ export default function TripsFilterBar({
 
           {/* Date From */}
           <div className="space-y-2 text-right">
-            <label className="block text-sm font-medium text-default-700 text-right">از تاریخ</label>
+            <label className="block text-sm font-medium text-default-700 text-right">
+              از تاریخ
+            </label>
             <div className="relative">
               <DatePicker
+                calendar={persian}
+                calendarPosition="bottom-right"
+                className="rmdp-input px-3 py-2 rounded-lg border border-default-300 text-sm w-full focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 bg-default-100"
+                containerClassName="w-full"
+                locale={persian_fa}
+                placeholder="انتخاب تاریخ شروع"
                 value={dateFrom}
                 onChange={(date) => {
                   onPageChange(1);
                   onDateFromChange(date);
                 }}
-                calendar={persian}
-                locale={persian_fa}
-                placeholder="انتخاب تاریخ شروع"
-                className="rmdp-input px-3 py-2 rounded-lg border border-default-300 text-sm w-full focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 bg-default-100"
-                containerClassName="w-full"
-                calendarPosition="bottom-right"
               />
             </div>
           </div>
 
           {/* Date To */}
           <div className="space-y-2 text-right">
-            <label className="block text-sm font-medium text-default-700 text-right">تا تاریخ</label>
+            <label className="block text-sm font-medium text-default-700 text-right">
+              تا تاریخ
+            </label>
             <div className="relative">
               <DatePicker
+                calendar={persian}
+                calendarPosition="bottom-right"
+                className="rmdp-input px-3 py-2 rounded-lg border border-default-300 text-sm w-full focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 bg-default-100"
+                containerClassName="w-full"
+                locale={persian_fa}
+                placeholder="انتخاب تاریخ پایان"
                 value={dateTo}
                 onChange={(date) => {
                   onPageChange(1);
                   onDateToChange(date);
                 }}
-                calendar={persian}
-                locale={persian_fa}
-                placeholder="انتخاب تاریخ پایان"
-                className="rmdp-input px-3 py-2 rounded-lg border border-default-300 text-sm w-full focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 bg-default-100"
-                containerClassName="w-full"
-                calendarPosition="bottom-right"
               />
             </div>
           </div>
@@ -278,34 +302,66 @@ export default function TripsFilterBar({
         {activeFiltersCount > 0 && (
           <div className="mt-4 pt-4 border-t border-default-200 rtl">
             <div className="flex flex-wrap gap-2 justify-start items-center">
-              <span className="text-sm font-medium text-default-600 ml-2">فیلترهای فعال:</span>
+              <span className="text-sm font-medium text-default-600 ml-2">
+                فیلترهای فعال:
+              </span>
               {search && (
-                <Chip size="sm" color="primary" variant="flat" onClose={() => onSearchChange("")}>
+                <Chip
+                  color="primary"
+                  size="sm"
+                  variant="flat"
+                  onClose={() => onSearchChange("")}
+                >
                   جستجو: {search}
                 </Chip>
               )}
               {driverFilter !== "all" && (
-                <Chip size="sm" color="secondary" variant="flat" onClose={() => onDriverFilterChange("all")}>
+                <Chip
+                  color="secondary"
+                  size="sm"
+                  variant="flat"
+                  onClose={() => onDriverFilterChange("all")}
+                >
                   راننده: {driverFilter === "assigned" ? "دارد" : "ندارد"}
                 </Chip>
               )}
               {locationFilter !== "all" && (
-                <Chip size="sm" color="success" variant="flat" onClose={() => onLocationFilterChange("all")}>
+                <Chip
+                  color="success"
+                  size="sm"
+                  variant="flat"
+                  onClose={() => onLocationFilterChange("all")}
+                >
                   آدرس: {locationFilter === "assigned" ? "دارد" : "ندارد"}
                 </Chip>
               )}
               {statusFilter !== "all" && (
-                <Chip size="sm" color="warning" variant="flat" onClose={() => onStatusFilterChange("all")}>
+                <Chip
+                  color="warning"
+                  size="sm"
+                  variant="flat"
+                  onClose={() => onStatusFilterChange("all")}
+                >
                   وضعیت: {statusFilter}
                 </Chip>
               )}
               {dateFrom && (
-                <Chip size="sm" color="danger" variant="flat" onClose={() => onDateFromChange(null)}>
+                <Chip
+                  color="danger"
+                  size="sm"
+                  variant="flat"
+                  onClose={() => onDateFromChange(null)}
+                >
                   از: {dateFrom.format("YYYY/MM/DD")}
                 </Chip>
               )}
               {dateTo && (
-                <Chip size="sm" color="danger" variant="flat" onClose={() => onDateToChange(null)}>
+                <Chip
+                  color="danger"
+                  size="sm"
+                  variant="flat"
+                  onClose={() => onDateToChange(null)}
+                >
                   تا: {dateTo.format("YYYY/MM/DD")}
                 </Chip>
               )}

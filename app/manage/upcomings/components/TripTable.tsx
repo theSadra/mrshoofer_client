@@ -10,7 +10,11 @@ export type TripTableProps = {
   trips: Trip[];
   groupBreakIndex?: number; // optional index to insert a separator row (e.g., between unassigned and assigned)
   onOpenAssignAction: (tripId: string) => void;
-  onOpenLocationAction?: (lat?: number, lng?: number, addressText?: string) => void;
+  onOpenLocationAction?: (
+    lat?: number,
+    lng?: number,
+    addressText?: string,
+  ) => void;
   onOpenCallAction?: (driverName?: string, driverPhone?: string) => void;
   onOpenLocationDescAction?: (description?: string) => void;
   onOpenPovLinkAction?: (token?: string) => void;
@@ -178,7 +182,9 @@ export default function TripTable({
                             type="button"
                             onClick={() =>
                               onOpenLocationDescAction &&
-                              onOpenLocationDescAction((t as any).originDescription)
+                              onOpenLocationDescAction(
+                                (t as any).originDescription,
+                              )
                             }
                           >
                             <Chip
@@ -201,7 +207,10 @@ export default function TripTable({
                             className="inline-flex items-center justify-center rounded-full p-1 hover:bg-default-200 transition"
                             title="لینک مسافر"
                             type="button"
-                            onClick={() => onOpenPovLinkAction && onOpenPovLinkAction((t as any).secureToken)}
+                            onClick={() =>
+                              onOpenPovLinkAction &&
+                              onOpenPovLinkAction((t as any).secureToken)
+                            }
                           >
                             <Icon
                               className="text-default-500"

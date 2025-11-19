@@ -9,7 +9,6 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ToastProvider } from "@heroui/toast";
 
 import { SessionProvider } from "./session-provider";
-import { TripProvider } from "./contexts/TripContext";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -29,14 +28,10 @@ export function Providers({ children, themeProps }: ProvidersProps) {
 
   return (
     <SessionProvider>
-      <TripProvider>
-        <HeroUIProvider navigate={router.push}>
-          <ToastProvider 
-            placement="top-center"
-          />
-          <NextThemesProvider {...themeProps}>{children}</NextThemesProvider>
-        </HeroUIProvider>
-      </TripProvider>
+      <HeroUIProvider navigate={router.push}>
+        <ToastProvider placement="top-center" />
+        <NextThemesProvider {...themeProps}>{children}</NextThemesProvider>
+      </HeroUIProvider>
     </SessionProvider>
   );
 }

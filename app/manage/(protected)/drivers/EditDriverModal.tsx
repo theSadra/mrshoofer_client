@@ -109,18 +109,20 @@ export default function EditDriverModal({
   return (
     <Modal
       className="z-[9999]"
-            isOpen={open}
-            scrollBehavior="inside"
-            onClose={onClose}
-            size="full"
-            classNames={{
-              base: "m-0 sm:m-6",
-              wrapper: "w-full h-[100dvh] sm:w-auto sm:h-auto",
-              body: "overflow-y-auto max-h-none sm:max-h-[60vh]"
-            }}
-            style={{
-              '--modal-height': 'calc(var(--vh, 1vh) * 100)'
-            } as React.CSSProperties}
+      classNames={{
+        base: "m-0 sm:m-6",
+        wrapper: "w-full h-[100dvh] sm:w-auto sm:h-auto",
+        body: "overflow-y-auto max-h-none sm:max-h-[60vh]",
+      }}
+      isOpen={open}
+      scrollBehavior="inside"
+      size="full"
+      style={
+        {
+          "--modal-height": "calc(var(--vh, 1vh) * 100)",
+        } as React.CSSProperties
+      }
+      onClose={onClose}
     >
       <ModalContent className="max-w-md w-full">
         <ModalHeader className="flex flex-col gap-2 items-start">

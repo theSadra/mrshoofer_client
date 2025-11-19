@@ -1,10 +1,10 @@
 // removed 'use client' - root layout should be Server Component
 import React, { ReactNode } from "react";
 import "@/styles/globals.css";
-import { Link } from "@heroui/link";
 import clsx from "clsx";
 
 import { Providers } from "./providers";
+import AppFooter from "@/components/layout/AppFooter";
 
 import { fontSans, fontMono } from "@/config/fonts";
 
@@ -29,27 +29,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           <div className="relative flex flex-col h-screen">
             {/* <ClientNavbarWrapper /> */}
-            <main className="container p-1 mx-auto pt-4  xl:px-1 flex-grow">
+            <main className="container p-1 mx-auto pt-0 sm:px-0 xl:px-1 flex-grow">
               {children}
             </main>
-            <footer
-              className="w-full flex items-center justify-center py-5 mt-5"
-              style={{ zIndex: 1 }}
-            >
-              <img
-                alt="mrshoofer"
-                className="h-5 w-auto object-contain mx-1"
-                src="/mrshoofer_logo_full.png"
-              />
-              <Link
-                isExternal
-                className="flex items-center gap-1 text-current"
-                href="https://heroui.com?utm_source=next-app-template"
-                title="heroui.com homepage"
-              >
-                <p className="text-primary text-xs font-light">همیشه با شما</p>
-              </Link>
-            </footer>
+            <AppFooter />
           </div>
         </Providers>
       </body>

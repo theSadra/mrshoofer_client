@@ -6,16 +6,17 @@ const prisma = new PrismaClient();
 // GET /api/trip/[tripId] - Get trip information by SecureToken
 export async function GET(
   req: NextRequest,
-  { params }: { params: { tripId: string } },
+  { params }: { params: Promise<{ tripId: string }> },
 ) {
   try {
-    const tripId = params.tripId;
+    const { tripId } = await params;
 
     const trip = await prisma.trip.findUnique({
       where: { SecureToken: tripId },
       include: {
         Passenger: true,
-        Location: true,
+        OriginLocation: true,
+        DestinationLocation: true,
         Driver: true,
       },
     });
@@ -24,7 +25,12 @@ export async function GET(
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    return NextResponse.json(trip);
+    const normalizedTrip = {
+      ...trip,
+      Location: trip.OriginLocation ?? trip.DestinationLocation ?? null,
+    };
+
+    return NextResponse.json(normalizedTrip);
   } catch (error) {
     console.error("Error fetching trip:", error);
 

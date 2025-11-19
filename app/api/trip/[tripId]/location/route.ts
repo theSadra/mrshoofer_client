@@ -15,6 +15,8 @@ export async function GET(
     const trip = await prisma.trip.findUnique({
       where: { SecureToken: tripId },
       include: {
+        OriginLocation: true,
+        DestinationLocation: true,
         Location: true,
         Passenger: true,
       },
@@ -26,7 +28,10 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      location: trip.Location,
+      originLocation: trip.OriginLocation,
+      destinationLocation: trip.DestinationLocation,
+      location:
+        trip.Location ?? trip.OriginLocation ?? trip.DestinationLocation,
       trip: {
         id: trip.id,
         SecureToken: trip.SecureToken,
@@ -58,7 +63,15 @@ export async function PUT(
     const body = await req.json();
 
     // Validate required fields
-    const { latitude, longitude, textAddress, description, phoneNumber } = body;
+    const { latitude, longitude, textAddress, description, phoneNumber, type } =
+      body;
+
+    if (!type || !["origin", "destination"].includes(type)) {
+      return NextResponse.json(
+        { error: "type must be either 'origin' or 'destination'" },
+        { status: 400 },
+      );
+    }
 
     console.log("Received coordinates from frontend:");
     console.log("Raw latitude:", latitude, "Type:", typeof latitude);
@@ -77,6 +90,8 @@ export async function PUT(
     const trip = await prisma.trip.findUnique({
       where: { SecureToken: tripId },
       include: {
+        OriginLocation: true,
+        DestinationLocation: true,
         Location: true,
         Driver: true,
         Passenger: true,
@@ -87,12 +102,17 @@ export async function PUT(
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    const isOrigin = type === "origin";
+    const existingLocation = isOrigin
+      ? trip.OriginLocation
+      : trip.DestinationLocation;
+
     let location;
 
-    if (trip.Location) {
+    if (existingLocation) {
       // Update existing location
       location = await prisma.location.update({
-        where: { id: trip.Location.id },
+        where: { id: existingLocation.id },
         data: {
           Latitude: parseFloat(latitude),
           Longitude: parseFloat(longitude),
@@ -101,7 +121,7 @@ export async function PUT(
           PhoneNumber: phoneNumber || null,
         },
       });
-      console.log("Updated existing location in database:", {
+      console.log(`${type} location updated`, {
         id: location.id,
         Latitude: location.Latitude,
         Longitude: location.Longitude,
@@ -118,7 +138,7 @@ export async function PUT(
           passengerId: trip.passengerId,
         },
       });
-      console.log("Created new location in database:", {
+      console.log(`${type} location created`, {
         id: location.id,
         Latitude: location.Latitude,
         Longitude: location.Longitude,
@@ -127,10 +147,43 @@ export async function PUT(
       // Link the new location to the trip
       await prisma.trip.update({
         where: { id: trip.id },
-        data: {
-          locationId: location.id,
-          status: TripStatus.wating_start, // Update status when location is set
-        },
+        data: isOrigin
+          ? {
+              originLocationId: location.id,
+              locationId: location.id,
+            }
+          : {
+              destinationLocationId: location.id,
+              locationId: trip.OriginLocation?.id ?? location.id,
+            },
+      });
+    }
+
+    const originLocationId = isOrigin ? location.id : trip.OriginLocation?.id;
+    const destinationLocationId = !isOrigin
+      ? location.id
+      : trip.DestinationLocation?.id;
+    const legacyLocationId = originLocationId ?? destinationLocationId ?? null;
+
+    if (existingLocation) {
+      await prisma.trip.update({
+        where: { id: trip.id },
+        data: { locationId: legacyLocationId },
+      });
+    }
+
+    const hasOrigin = isOrigin ? true : Boolean(trip.OriginLocation);
+    const hasDestination = !isOrigin ? true : Boolean(trip.DestinationLocation);
+
+    if (hasOrigin && hasDestination) {
+      await prisma.trip.update({
+        where: { id: trip.id },
+        data: { status: TripStatus.wating_start },
+      });
+    } else if (trip.status === TripStatus.wating_info) {
+      await prisma.trip.update({
+        where: { id: trip.id },
+        data: { status: TripStatus.wating_location },
       });
     }
 
@@ -152,6 +205,8 @@ export async function PUT(
     const updatedTrip = await prisma.trip.findUnique({
       where: { SecureToken: tripId },
       include: {
+        OriginLocation: true,
+        DestinationLocation: true,
         Location: true,
         Driver: true,
         Passenger: true,
@@ -162,7 +217,8 @@ export async function PUT(
       success: true,
       message: "Location updated successfully",
       trip: updatedTrip,
-      location: location,
+      location,
+      type,
     });
   } catch (error) {
     console.error("Error updating trip location:", error);

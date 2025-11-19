@@ -56,7 +56,7 @@
     "bcryptjs": "^3.0.2",
     "clsx": "2.1.1",
     "date-fns": "^4.1.0",
-    "framer-motion": "11.13.1",
+    "framer-motion": "^11.13.1",
     "intl-messageformat": "^10.5.0",
     "jalali-react-datepicker": "^1.2.3",
     "jsonwebtoken": "^9.0.2",

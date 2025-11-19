@@ -3,10 +3,10 @@
 import React, { useEffect, use, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import TripInfo from "../components/tripinfo";
+import TripInfo from "../components/tripinfo-new";
 import LocationAddedModal from "../components/LocationAddedModal";
 import LocationUpdatedModal from "../components/LocationUpdatedModal";
-import { useTripContext } from "../../../contexts/TripContext";
+import { useTripContext } from "@/app/contexts/TripContext";
 import WelcomePassengerModal from "../components/WelcomePassengerModal";
 
 export default function Upcoming({
@@ -50,7 +50,7 @@ export default function Upcoming({
 
       hasInitialized.current = true;
     }
-  }, [resolvedParams.ticketid, searchParams.get("refresh"), fetchTripData]); // Only depend on the actual refresh param value
+  }, [resolvedParams.ticketid, searchParams.get("refresh"), fetchTripData]);
 
   // Success modal detection
   useEffect(() => {
@@ -97,10 +97,13 @@ export default function Upcoming({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
-          <span className="mt-2">در حال بارگذاری اطلاعات سفر...</span>
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200" />
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent absolute top-0 left-0" />
+          </div>
+          <span className="text-slate-600 font-medium animate-pulse">در حال بارگذاری اطلاعات سفر...</span>
         </div>
       </div>
     );
@@ -108,29 +111,43 @@ export default function Upcoming({
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-red-500">خطا در بارگذاری: {error}</div>
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <div className="text-red-500 font-semibold text-lg">خطا در بارگذاری</div>
+          <div className="text-slate-600 mt-2">{error}</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <TripInfo trip={tripData} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 transition-colors duration-500 scroll-smooth">
+      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8 relative">
+        {/* Subtle background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 right-10 w-72 h-72 bg-blue-100/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-purple-100/20 rounded-full blur-3xl" />
+        </div>
+        
+        <div className="relative z-10">
+          <TripInfo trip={tripData} />
 
-      <LocationAddedModal
-        isOpen={showAddedModal}
-        onOpenChange={setShowAddedModal}
-      />
-      <LocationUpdatedModal
-        isOpen={showUpdatedModal}
-        onOpenChange={setShowUpdatedModal}
-      />
+          <LocationAddedModal
+            isOpen={showAddedModal}
+            onOpenChange={setShowAddedModal}
+          />
+          <LocationUpdatedModal
+            isOpen={showUpdatedModal}
+            onOpenChange={setShowUpdatedModal}
+          />
 
-      <WelcomePassengerModal
-        showOneTime={true}
-        tripId={resolvedParams.ticketid}
-      />
+          <WelcomePassengerModal
+            showOneTime={true}
+            tripId={resolvedParams.ticketid}
+          />
+        </div>
+      </div>
     </div>
   );
 }

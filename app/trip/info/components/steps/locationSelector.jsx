@@ -416,7 +416,7 @@ function LocationSelector({ isOpen, trip, setIsOpen }) {
       const labelDiv = document.createElement("div");
       labelDiv.innerText = "مبدا";
       labelDiv.style.background = "white";
-      labelDiv.style.fontFamily = "Vazir, sans-serif";
+      labelDiv.style.fontFamily = "IRAN Sans X, sans-serif";
       labelDiv.style.padding = "1px 8px";
       labelDiv.style.borderRadius = "9px";
       labelDiv.style.marginBottom = "8px";
