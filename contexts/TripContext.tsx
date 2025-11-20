@@ -177,8 +177,20 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
 export function useTripContext() {
   const context = useContext(TripContext);
 
+  // Don't throw in production - return safe defaults instead
+  // This prevents "f is not a function" errors when context is undefined
   if (context === undefined) {
-    throw new Error("useTripContext must be used within a TripProvider");
+    console.warn("useTripContext called outside TripProvider - returning defaults");
+    return {
+      tripData: null,
+      tripToken: null,
+      isLoading: false,
+      error: "Context not available",
+      setTripToken: () => {},
+      setTripData: () => {},
+      refreshTripData: async () => {},
+      clearTrip: () => {},
+    };
   }
 
   return context;
