@@ -13,9 +13,14 @@ import {
   Divider,
 } from "@heroui/react";
 import { SearchIcon } from "@heroui/shared-icons";
-import DatePicker from "react-multi-date-picker";
+import dynamic from "next/dynamic";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
+
+// DatePicker relies on window/document so load it only on the client side
+const DatePicker = dynamic(() => import("react-multi-date-picker"), {
+  ssr: false,
+});
 
 /** @typedef {Object} FilterBarProps
  * @property {string} search
