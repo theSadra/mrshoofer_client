@@ -23,8 +23,8 @@ const nextConfig = {
       config.externals.push('@prisma/client')
     }
     
-    // Disable source maps entirely
-    config.devtool = false
+    // Keep source maps for debugging production issues
+    // devtool false can break minified function references
     
     return config
   },
@@ -37,8 +37,8 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // Disable everything unnecessary
-  productionBrowserSourceMaps: false,
+  // Enable source maps to debug production errors
+  productionBrowserSourceMaps: true,
   poweredByHeader: false,
   generateEtags: false,
   
