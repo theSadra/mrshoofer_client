@@ -48,8 +48,12 @@ model Trip {
   StartsAt         DateTime
   Passenger        Passenger  @relation(fields: [passengerId], references: [id])
   passengerId      Int
-  Location         Location?  @relation(fields: [locationId], references: [id])
+  Location         Location?  @relation("TripLocation", fields: [locationId], references: [id])
   locationId       Int?
+  OriginLocation      Location? @relation("TripOrigin", fields: [originLocationId], references: [id])
+  originLocationId    Int?
+  DestinationLocation Location? @relation("TripDestination", fields: [destinationLocationId], references: [id])
+  destinationLocationId Int?
   PassengerSmsSent Boolean
   AdminApproved    Boolean
   status           TripStatus @default(wating_info)
@@ -77,7 +81,9 @@ model Location {
   PhoneNumber String?
   Passenger   Passenger @relation(fields: [passengerId], references: [id])
   passengerId Int
-  Trips       Trip[]
+  Trips       Trip[]    @relation("TripLocation")
+  OriginTrips Trip[]    @relation("TripOrigin")
+  DestinationTrips Trip[] @relation("TripDestination")
 }
 
 model User {

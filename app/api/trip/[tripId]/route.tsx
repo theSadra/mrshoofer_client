@@ -25,12 +25,7 @@ export async function GET(
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    const normalizedTrip = {
-      ...trip,
-      Location: trip.OriginLocation ?? trip.DestinationLocation ?? null,
-    };
-
-    return NextResponse.json(normalizedTrip);
+    return NextResponse.json(trip);
   } catch (error) {
     console.error("Error fetching trip:", error);
 
