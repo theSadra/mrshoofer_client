@@ -1,8 +1,13 @@
 "use client";
 
-import React, { ReactNode, createContext, useContext, useState, useEffect } from "react";
-
-// Inline the entire TripProvider here to avoid any import/bundling issues
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  ReactNode,
+} from "react";
 
 interface TripLocation {
   id: number;
@@ -70,13 +75,13 @@ interface TripContextType {
 
 const TripContext = createContext<TripContextType | undefined>(undefined);
 
-function InlineTripProvider({ children }: { children: React.ReactNode }) {
-  console.log("InlineTripProvider: Initializing in onboarding layout");
+export function TripProvider({ children }: { children: ReactNode }) {
+  console.log("InlineTripProvider: Initializing in onboarding route");
   const [tripData, setTripData] = useState<TripData | null>(null);
   const [tripToken, setTripToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const isFetchingRef = React.useRef(false);
+  const isFetchingRef = useRef(false);
 
   const fetchTripData = async (token: string) => {
     if (!token) return;
@@ -160,7 +165,7 @@ function InlineTripProvider({ children }: { children: React.ReactNode }) {
 export function useTripContext() {
   const context = useContext(TripContext);
   if (context === undefined) {
-    console.error("useTripContext must be used within InlineTripProvider");
+    console.error("useTripContext must be used within TripProvider");
     return {
       tripData: null,
       tripToken: null,
@@ -173,10 +178,4 @@ export function useTripContext() {
     };
   }
   return context;
-}
-
-export default function OnboardingLayout({ children }: { children: ReactNode }) {
-  console.log("OnboardingLayout: Rendering with InlineTripProvider");
-   const TripProvider = require('../path/to/trip-context').TripProvider; // Adjust the path as necessary
-   return <TripProvider>{children}</TripProvider>;
 }

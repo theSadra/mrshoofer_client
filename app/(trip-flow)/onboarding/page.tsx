@@ -13,7 +13,7 @@ import OnboardingStep4 from "@/components/onboarding/OnboardingStep4";
 import ProgressDots from "@/components/onboarding/ProgressDots";
 import TripNotFound from "@/components/onboarding/TripNotFound";
 import TripLoading from "@/components/onboarding/TripLoading";
-import { useTripContext } from "@/contexts/TripContext";
+import { useTripContext } from "../layout"; // Use the inline provider from layout
 
 const TOTAL_STEPS = 4;
 
