@@ -51,9 +51,15 @@ const iconVariants = {
 };
 
 export default function OnboardingStep1() {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <motion.div
-      animate="visible"
+      animate={mounted ? "visible" : "hidden"}
       className="text-center flex flex-col justify-between h-full min-h-[55vh] px-3 sm:px-6 py-6 sm:py-8 gap-6"
       initial="hidden"
       variants={contentVariants}
@@ -78,44 +84,50 @@ export default function OnboardingStep1() {
             </motion.div>
 
             {/* Floating elements */}
-            <motion.div
-              animate={{
-                y: [0, -10, 0],
-                rotate: [0, 10, -10, 0],
-              }}
-              className="absolute -top-3 -right-3 w-6 h-6 sm:w-8 sm:h-8 bg-warning-400 rounded-full flex items-center justify-center"
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            >
-              <Icon
-                className="sm:w-4 sm:h-4 text-white"
-                icon="solar:star-bold"
-                width={12}
-              />
-            </motion.div>
+            {mounted && (
+              <>
+                <motion.div
+                  animate={{
+                    y: [0, -10, 0],
+                    rotate: [0, 10, -10, 0],
+                  }}
+                  className="absolute -top-3 -right-3 w-6 h-6 sm:w-8 sm:h-8 bg-warning-400 rounded-full flex items-center justify-center"
+                  initial={{ y: 0, rotate: 0 }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Icon
+                    className="sm:w-4 sm:h-4 text-white"
+                    icon="solar:star-bold"
+                    width={12}
+                  />
+                </motion.div>
 
-            <motion.div
-              animate={{
-                y: [0, 10, 0],
-                rotate: [0, -10, 10, 0],
-              }}
-              className="absolute -bottom-3 -left-3 w-5 h-5 sm:w-6 sm:h-6 bg-success-400 rounded-full flex items-center justify-center"
-              transition={{
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 0.5,
-              }}
-            >
-              <Icon
-                className="sm:w-3 sm:h-3 text-white"
-                icon="solar:check-circle-bold"
-                width={10}
-              />
-            </motion.div>
+                <motion.div
+                  animate={{
+                    y: [0, 10, 0],
+                    rotate: [0, -10, 10, 0],
+                  }}
+                  className="absolute -bottom-3 -left-3 w-5 h-5 sm:w-6 sm:h-6 bg-success-400 rounded-full flex items-center justify-center"
+                  initial={{ y: 0, rotate: 0 }}
+                  transition={{
+                    duration: 2.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 0.5,
+                  }}
+                >
+                  <Icon
+                    className="sm:w-3 sm:h-3 text-white"
+                    icon="solar:check-circle-bold"
+                    width={10}
+                  />
+                </motion.div>
+              </>
+            )}
           </div>
         </motion.div>
 

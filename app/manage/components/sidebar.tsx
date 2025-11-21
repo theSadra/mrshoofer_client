@@ -291,13 +291,11 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
             const href = keyHrefMap.get(key);
 
             if (!href || key === selected) return;
-            // 1) immediately update URL
-            router.replace(href);
-            // 2) update highlight
+            // Navigate using client-side routing for SPA feel
+            router.push(href);
+            // Update highlight
             setSelected(key);
             onSelect?.(key);
-            // 3) background fetch
-            startTransition(() => router.refresh());
           }}
           {...props}
         >
