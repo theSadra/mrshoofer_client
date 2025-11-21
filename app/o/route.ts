@@ -4,7 +4,8 @@ import { APP_BASE_URL } from "@/lib/env-constants";
 const TARGET_PATH = "/onboarding";
 
 function buildRedirectUrl(tripToken: string | null) {
-  const baseUrl = APP_BASE_URL || "https://webapp.mrshoofer.ir";
+  // Strip quotes from APP_BASE_URL in case they exist in env var
+  const baseUrl = (APP_BASE_URL || "https://webapp.mrshoofer.ir").replace(/^["']|["']$/g, '');
   const targetUrl = new URL(TARGET_PATH, baseUrl);
 
   if (tripToken) {

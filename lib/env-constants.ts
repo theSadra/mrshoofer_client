@@ -15,8 +15,9 @@ export const ORS_API_SECRET =
 export const SMSIR_API_KEY =
   process.env.SMSIR_API_KEY ||
   "YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6";
-export const APP_BASE_URL =
-  process.env.APP_BASE_URL || "https://webapp.mrshoofer.ir";
+export const APP_BASE_URL = (
+  process.env.APP_BASE_URL || "https://webapp.mrshoofer.ir"
+).replace(/^["']|["']$/g, "");
 
 // Database
 export const DATABASE_URL =
