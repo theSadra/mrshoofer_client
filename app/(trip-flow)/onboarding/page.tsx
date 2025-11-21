@@ -190,8 +190,12 @@ export default function OnboardingPage() {
       // Only set token if it's different or if we don't have trip data yet
       // This prevents re-fetching when coming back from location picker
       if (tripToken !== token) {
-        setTripToken(token);
-        console.log("Trip token from URL:", token);
+        if (typeof setTripToken !== "function") {
+          console.error("TripContext setTripToken is not a function", setTripToken);
+        } else {
+          setTripToken(token);
+          console.log("Trip token from URL:", token);
+        }
       }
     } else {
       // No token provided
@@ -238,7 +242,11 @@ export default function OnboardingPage() {
     const token = searchParams.get("triptoken");
 
     if (token) {
-      setTripToken(token);
+      if (typeof setTripToken !== "function") {
+        console.error("TripContext setTripToken is not a function on retry", setTripToken);
+      } else {
+        setTripToken(token);
+      }
     }
   };
 
