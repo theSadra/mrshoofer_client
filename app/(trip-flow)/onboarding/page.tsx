@@ -11,7 +11,6 @@ import OnboardingStep2 from "@/components/onboarding/OnboardingStep2";
 import OnboardingStep3 from "@/components/onboarding/OnboardingStep3";
 import OnboardingStep4 from "@/components/onboarding/OnboardingStep4";
 import ProgressDots from "@/components/onboarding/ProgressDots";
-import TripNotFound from "@/components/onboarding/TripNotFound";
 import TripLoading from "@/components/onboarding/TripLoading";
 import { useTripContext } from "@/contexts/TripContext";
 
@@ -307,13 +306,44 @@ export default function OnboardingPage() {
     (hasTripToken && !isLoading && !tripData);
 
   if (shouldShowNotFound) {
-    console.log("Showing TripNotFound page");
+    const notFoundMessage = !hasTripToken
+      ? "لینک سفر نامعتبر است"
+      : "سفر یافت نشد";
+
+    console.log("Showing TripNotFound page (inline fallback)");
 
     return (
-      <TripNotFound
-        message={!hasTripToken ? "لینک سفر نامعتبر است" : "سفر یافت نشد"}
-        onRetry={handleRetry}
-      />
+      <main className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-blue-50 via-white to-purple-50 px-6 py-12 text-center">
+        <img
+          alt="MrShoofer"
+          className="h-10 w-auto"
+          src="/mrshoofer_logo_full.png"
+        />
+        <div className="space-y-3">
+          <p className="text-3xl font-extrabold text-gray-900">{notFoundMessage}</p>
+          <p className="text-sm text-default-500 max-w-md">
+            لینک را بررسی کنید یا با پشتیبانی تماس بگیرید. برای امتحان دوباره روی دکمه
+            زیر بزنید.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button color="primary" onClick={handleRetry}>
+            تلاش دوباره
+          </Button>
+          <Button
+            color="default"
+            variant="bordered"
+            onClick={() => (window.location.href = "/")}
+          >
+            بازگشت به خانه
+          </Button>
+        </div>
+
+        <div className="text-xs text-default-400">
+          نیاز به کمک فوری دارید؟ با ۰۲۱-۲۸۴۲۲۲۴۳ تماس بگیرید.
+        </div>
+      </main>
     );
   }
 
