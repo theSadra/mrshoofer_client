@@ -75,11 +75,14 @@ const TripContext = createContext<TripContextType | undefined>(undefined);
 
 // Provider component
 export function TripProvider({ children }: { children: React.ReactNode }) {
+  console.log("TripProvider: Initializing");
   const [tripData, setTripData] = useState<TripData | null>(null);
   const [tripToken, setTripToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isFetchingRef = React.useRef(false);
+  
+  console.log("TripProvider: State initialized", { isLoading, hasSetTripToken: typeof setTripToken === 'function' });
 
   // Fetch trip data when token changes
   const fetchTripData = async (token: string) => {

@@ -8,5 +8,6 @@ import { TripProvider } from "@/contexts/TripContext";
  * This is a fallback to ensure the provider works even if the parent layout has issues
  */
 export default function OnboardingLayout({ children }: { children: ReactNode }) {
+  console.log("OnboardingLayout: Rendering with TripProvider");
   return <TripProvider>{children}</TripProvider>;
 }
