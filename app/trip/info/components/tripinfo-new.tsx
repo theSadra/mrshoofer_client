@@ -102,7 +102,7 @@ function TripInfo({ trip }) {
       return;
     }
     // Navigate to location selector
-    window.location.href = `/trip-flow/location?type=origin&tripId=${trip?.SecureToken}`;
+    window.location.href = `/location/${trip?.SecureToken}?selection=origin`;
   };
 
   const handleDestinationClick = () => {
@@ -113,15 +113,15 @@ function TripInfo({ trip }) {
       return;
     }
     // Navigate to location selector
-    window.location.href = `/trip-flow/location?type=destination&tripId=${trip?.SecureToken}`;
+    window.location.href = `/location/${trip?.SecureToken}?selection=destination`;
   };
 
   const handleConfirmOriginEdit = () => {
-    window.location.href = `/trip-flow/location?type=origin&tripId=${trip?.SecureToken}`;
+    window.location.href = `/location/${trip?.SecureToken}?selection=origin`;
   };
 
   const handleConfirmDestinationEdit = () => {
-    window.location.href = `/trip-flow/location?type=destination&tripId=${trip?.SecureToken}`;
+    window.location.href = `/location/${trip?.SecureToken}?selection=destination`;
   };
 
   const driver = trip?.Driver ?? null;

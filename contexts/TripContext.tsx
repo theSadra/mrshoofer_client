@@ -98,9 +98,14 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      const response = await fetch(`/api/trip/${token}`);
+      const apiUrl = `/api/trip/${token}`;
+      console.log("TripContext: Fetching from URL:", apiUrl);
+      console.log("TripContext: Current window.location:", typeof window !== 'undefined' ? window.location.href : 'SSR');
+      
+      const response = await fetch(apiUrl);
 
       console.log("TripContext: Response status:", response.status);
+      console.log("TripContext: Response URL:", response.url);
 
       if (!response.ok) {
         if (response.status === 404) {
