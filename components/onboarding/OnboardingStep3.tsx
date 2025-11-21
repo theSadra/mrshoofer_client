@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 
-import { useTripContext } from "@/app/(trip-flow)/onboarding/trip-context";
+import { useTripContext } from "@/app/(trip-flow)/trip-context";
 
 const contentVariants = {
   hidden: {

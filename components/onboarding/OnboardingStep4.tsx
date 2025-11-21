@@ -8,7 +8,7 @@ import { Image } from "@heroui/image";
 
 import LocationEditModal from "./LocationEditModal";
 
-import { useTripContext } from "@/app/(trip-flow)/onboarding/trip-context";
+import { useTripContext } from "@/app/(trip-flow)/trip-context";
 const contentVariants = {
   hidden: {
     opacity: 0,

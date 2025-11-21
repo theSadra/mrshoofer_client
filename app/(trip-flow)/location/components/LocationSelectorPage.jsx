@@ -10,7 +10,7 @@ import { Button } from "@heroui/button";
 import { Input} from "@heroui/react";
 import { Textarea } from "@heroui/react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from "@heroui/react";
-import { useTripContext } from "@/contexts/TripContext";
+import { useTripContext } from "@/app/(trip-flow)/trip-context";
 
 // Custom CSS classes for enhanced animations
 const customStyles = `

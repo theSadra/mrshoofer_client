@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useSearchParams } from "next/navigation";
 
-import { useTripContext } from "@/contexts/TripContext";
+import { useTripContext } from "@/app/(trip-flow)/trip-context";
 
 const LocationSelectorPage = dynamic(
   () => import("../components/LocationSelectorPage"),

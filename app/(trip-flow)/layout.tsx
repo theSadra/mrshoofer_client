@@ -2,7 +2,7 @@
 
 import React, { ReactNode } from "react";
 
-import { TripProvider } from "@/contexts/TripContext";
+import { TripProvider } from "./trip-context";
 
 /**
  * Shared layout for trip-related flows (onboarding + location picker)
