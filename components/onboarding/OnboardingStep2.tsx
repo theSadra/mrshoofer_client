@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 
-import { useTripContext } from "@/contexts/TripContext";
+import { useTripContext } from "@/app/(trip-flow)/onboarding/trip-context";
 import { formatTehranDateTime } from "@/lib/format-date";
 
 const contentVariants = {
