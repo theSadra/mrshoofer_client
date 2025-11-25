@@ -77,13 +77,13 @@ export default function OnboardingStep3() {
   return (
     <motion.div
       animate="visible"
-      className="relative flex h-full min-h-[60vh] flex-col gap-4 rounded-3xl px-3 py-2 text-right sm:gap-6 sm:px-6 sm:py-6"
+      className="relative flex h-full min-h-[60vh] flex-col gap-3 rounded-3xl px-2 sm:px-4 py-0 text-right"
       initial="hidden"
       variants={contentVariants}
     >
-      <div className="mx-auto flex h-full w-full max-w-3xl justify-around gap-7 flex-1 flex-col px-1.5 py-2 sm:px-4 sm:py-3">
+      <div className="mx-auto flex h-full w-full justify-around gap-4 flex-1 flex-col px-1 py-1 sm:px-2.5">
         {/* Header Card */}
-        <div className="my-3" />
+        <div className="my-2" />
         {/* Success Icon and Message */}
         <motion.div
           className="flex flex-col items-center justify-center flex-1 gap-4"
@@ -101,7 +101,7 @@ export default function OnboardingStep3() {
           </motion.div>
 
           <motion.div className="text-center space-y-2" variants={itemVariants}>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+            <h2 className="text-[26px] sm:text-[32px] font-bold text-slate-900">
               اطلاعات با موفقیت ثبت شد
             </h2>
             <p className="text-sm sm:text-base text-slate-600 max-w-md">

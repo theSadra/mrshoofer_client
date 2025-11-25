@@ -12,7 +12,9 @@ function toDate(value: string | number | Date | null | undefined): Date | null {
   if (!value) return null;
   try {
     const d = new Date(value);
+
     if (isNaN(d.getTime())) return null;
+
     return d;
   } catch {
     return null;
@@ -23,9 +25,13 @@ function toDate(value: string | number | Date | null | undefined): Date | null {
  * Format only time (HH:MM) in Persian locale locked to Tehran timezone.
  * @param {string|number|Date|null|undefined} value
  */
-export function formatTehranTime(value: string | number | Date | null | undefined): string {
+export function formatTehranTime(
+  value: string | number | Date | null | undefined,
+): string {
   const d = toDate(value);
+
   if (!d) return "—";
+
   return new Intl.DateTimeFormat("fa-IR", {
     timeZone: TEHRAN_TZ,
     hour: "2-digit",
@@ -37,9 +43,13 @@ export function formatTehranTime(value: string | number | Date | null | undefine
  * Format date (YYYY/MM/DD) Persian locale locked to Tehran timezone.
  * @param {string|number|Date|null|undefined} value
  */
-export function formatTehranDate(value: string | number | Date | null | undefined): string {
+export function formatTehranDate(
+  value: string | number | Date | null | undefined,
+): string {
   const d = toDate(value);
+
   if (!d) return "—";
+
   return new Intl.DateTimeFormat("fa-IR", {
     timeZone: TEHRAN_TZ,
     year: "numeric",
@@ -49,13 +59,37 @@ export function formatTehranDate(value: string | number | Date | null | undefine
 }
 
 /**
- * Convenience combined format returning {time, date}
+ * Format weekday name in Persian locale locked to Tehran timezone.
  * @param {string|number|Date|null|undefined} value
  */
-export function formatTehranDateTime(value: string | number | Date | null | undefined): { time: string; date: string } {
+export function formatTehranWeekday(
+  value: string | number | Date | null | undefined,
+): string {
+  const d = toDate(value);
+
+  if (!d) return "—";
+
+  return new Intl.DateTimeFormat("fa-IR", {
+    timeZone: TEHRAN_TZ,
+    weekday: "long",
+  }).format(d);
+}
+
+/**
+ * Convenience combined format returning {time, date, weekday}
+ * @param {string|number|Date|null|undefined} value
+ */
+export function formatTehranDateTime(
+  value: string | number | Date | null | undefined,
+): {
+  time: string;
+  date: string;
+  weekday: string;
+} {
   return {
     time: formatTehranTime(value),
     date: formatTehranDate(value),
+    weekday: formatTehranWeekday(value),
   };
 }
 
@@ -63,4 +97,5 @@ export default {
   formatTehranTime,
   formatTehranDate,
   formatTehranDateTime,
+  formatTehranWeekday,
 };

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export default function ProgressDots({ currentStep, totalSteps }) {
   return (
-    <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse py-4">
+    <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse py-1.5">
       {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
         <motion.div
           key={step}

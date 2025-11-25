@@ -140,10 +140,10 @@ export default function OnboardingStep4({ onSelectLocation }) {
       initial="hidden"
       variants={contentVariants}
     >
-      <div className="mx-auto flex h-full w-full max-w-3xl justify-around gap-7 flex-1 flex-col px-1.5 py-2  sm:px-4 sm:py-3">
+      <div className="mx-auto flex h-full w-full max-w-3xl justify-around gap-7 flex-1 flex-col px-1 py-2 sm:px-3.5 sm:py-3">
         {/* Header / status */}
         <motion.div
-          className="w-full max-w-full self-center rounded-[26px] border border-white/60 bg-white/80 px-3.5 py-3.5 sm:px-5 sm:py-4 shadow-[0_12px_28px_rgba(15,23,42,0.08)] backdrop-blur text-right"
+          className="w-full max-w-full self-center rounded-[26px] border border-white/60 bg-white/80 px-2.5 py-3.5 sm:px-4 sm:py-4 shadow-[0_12px_28px_rgba(15,23,42,0.08)] backdrop-blur text-right"
           variants={titleVariants}
         >
           <div className="flex flex-col gap-3">
@@ -160,10 +160,10 @@ export default function OnboardingStep4({ onSelectLocation }) {
                     : "مبدا را تعیین کنید"}
               </span>
             </div>
-            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-              🧭 مبدا و مقصد را دقیق مشخص کنید
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              🧭 مبدا و مقصد دقیق را مشخص کنید
             </h1>
-            <p className="text-[12px] sm:text-sm leading-5 px-2 text-slate-600">
+            <p className="text-[12px] sm:text-sm leading-5 px-1 text-slate-600">
               به منظور تکمیل اطلاعات سفر شما، نیاز داریم که مکان دقیق مبدا و
               مقصد خود را به منظور حضور یافتن تاکسی در آن مکان، مشخص نمایید
             </p>
@@ -339,11 +339,12 @@ export default function OnboardingStep4({ onSelectLocation }) {
                 icon="solar:hand-heart-line-duotone"
                 width={16}
               />
-              نکته سریع
+           راهنمای انتخاب مسیر
             </div>
             <p className="leading-relaxed">
-              اگر در طول تماس با پشتیبانی هستید، آدرس دقیق‌تر باعث می‌شود اولین
-              راننده سریع‌تر به شما برسد.
+             در صورتی که مایل به ثبت مبدا یا مقصد اضافی هستید، می‌توانید با پشتیبانی مسترشوفر در تماس باشید.
+
+             <a href="tel:+9828422243" className=" ms-1 text-primary-600">تماس با پشتیبانی</a>
             </p>
           </div>
         </motion.div>

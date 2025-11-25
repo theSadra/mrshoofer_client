@@ -139,9 +139,9 @@ export default function OnboardingStep2() {
       initial="hidden"
       variants={contentVariants}
     >
-      <div className="mx-auto flex h-full w-full max-w-3xl justify-around gap-7 flex-1 flex-col px-1.5 py-2 sm:px-4 sm:py-3">
+      <div className="mx-auto flex h-full w-full max-w-3xl justify-around gap-7 flex-1 flex-col px-1 py-2 sm:px-3 sm:py-3">
         <motion.div
-          className="w-full max-w-full self-center rounded-[26px] border border-white/60 bg-white/80 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_12px_28px_rgba(15,23,42,0.08)] backdrop-blur text-right"
+          className="w-full max-w-full self-center rounded-[26px] border border-white/60 bg-white/80 px-2.5 py-4 sm:px-4 sm:py-5 shadow-[0_12px_28px_rgba(15,23,42,0.08)] backdrop-blur text-right"
           variants={itemVariants}
         >
           <div className="flex flex-col gap-2">
@@ -154,7 +154,7 @@ export default function OnboardingStep2() {
                 {tripData ? "اطلاعات کامل ✅" : "در حال بارگذاری..."}
               </span>
             </div>
-            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               🚕 اطلاعات سفر شما
             </h1>
             <p className="text-[12px] sm:text-sm leading-5 text-slate-600">

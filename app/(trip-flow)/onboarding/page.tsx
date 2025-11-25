@@ -4,7 +4,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@heroui/react";
 import { Icon } from "@iconify/react";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { useTripContext } from "../trip-context";
 
 import OnboardingStep1 from "@/components/onboarding/OnboardingStep1";
 import OnboardingStep2 from "@/components/onboarding/OnboardingStep2";
@@ -13,7 +16,6 @@ import OnboardingStep4 from "@/components/onboarding/OnboardingStep4";
 import ProgressDots from "@/components/onboarding/ProgressDots";
 import TripNotFound from "@/components/onboarding/TripNotFound";
 import TripLoading from "@/components/onboarding/TripLoading";
-import { useTripContext } from "../trip-context";
 
 const TOTAL_STEPS = 4;
 
@@ -237,6 +239,26 @@ export default function OnboardingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger]); // Only depend on refreshTrigger to prevent infinite loop
 
+  // Ensure the fixed bottom navigation is relative to the real viewport.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const htmlElement = document.documentElement;
+    const htmlStyle = htmlElement.style as CSSStyleDeclaration & {
+      webkitTransform?: string;
+    };
+    const previousTransform = htmlStyle.transform;
+    const previousWebkitTransform = htmlStyle.webkitTransform;
+
+    htmlStyle.transform = "none";
+    htmlStyle.webkitTransform = "none";
+
+    return () => {
+      htmlStyle.transform = previousTransform;
+      htmlStyle.webkitTransform = previousWebkitTransform ?? "";
+    };
+  }, []);
+
   // Retry fetching trip data
   const handleRetry = () => {
     const token = searchParams.get("triptoken");
@@ -349,6 +371,11 @@ export default function OnboardingPage() {
 
   const activeStepMeta = stepDetails[currentStep - 1] ?? stepDetails[0];
   const isFinalStep = currentStep === TOTAL_STEPS;
+  const nextButtonLabel = isFinalStep
+    ? "رفتن به صفحه سفر"
+    : currentStep === 3
+      ? "تایید و ادامه"
+      : "ادامه";
 
   const renderStep = () => {
     switch (currentStep) {
@@ -377,7 +404,7 @@ export default function OnboardingPage() {
 
       {/* Main Content */}
       <div className="relative z-10 flex min-h-screen flex-col pb-32 sm:pb-36">
-        <header className="px-4 pt-4 pb-2 sm:px-5" dir="ltr">
+        <header className="px-3 pt-4 pb-2 sm:px-6" dir="ltr">
           <div className="flex items-center justify-between gap-3">
             <motion.div
               animate={{ opacity: 1, y: 0 }}
@@ -400,10 +427,13 @@ export default function OnboardingPage() {
               initial={{ opacity: 0, x: 24 }}
               transition={{ delay: 0.3 }}
             >
-              <img
+              <Image
+                priority
                 alt="MrShoofer"
                 className="h-8 w-auto object-contain sm:h-9"
+                height={36}
                 src="/mrshoofer_logo_full.png"
+                width={160}
               />
             </motion.div>
           </div>
@@ -483,9 +513,9 @@ export default function OnboardingPage() {
 
         {/* Navigation & Progress */}
         <div
-          className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 sm:px-5"
+          className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 px-3 pb-3"
           style={{
-            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)",
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)",
           }}
         >
           <div className="pointer-events-auto mx-auto w-full max-w-2xl rounded-2xl border border-slate-100/80 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm sm:px-4">
@@ -510,7 +540,7 @@ export default function OnboardingPage() {
                       size="lg"
                       onClick={nextStep}
                     >
-                      {isFinalStep ? "رفتن به صفحه سفر" : "ادامه"}
+                      {nextButtonLabel}
                       <Icon
                         icon={
                           isFinalStep
@@ -545,7 +575,7 @@ export default function OnboardingPage() {
                       size="lg"
                       onClick={nextStep}
                     >
-                      {isFinalStep ? "رفتن به صفحه سفر" : "ادامه"}
+                      {nextButtonLabel}
                       <Icon
                         icon={
                           isFinalStep

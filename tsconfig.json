@@ -23,6 +23,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/trip/info/components/steps/locationSelector.jsx", "app/trip/info/components/confirmaddress.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/trip/info/components/steps/locationSelector.jsx", "app/trip/info/components/confirmaddress.jsx", "components/onboarding/ProgressDots.jsx"],
   "exclude": ["node_modules"]
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Prisma } from "@prisma/client";
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { Card, CardBody } from "@heroui/card";
@@ -9,6 +10,16 @@ import { Chip } from "@heroui/chip";
 
 import LocationEditModal from "@/components/onboarding/LocationEditModal";
 import { formatTehranDateTime } from "@/lib/format-date";
+
+type TripWithRelations = Prisma.TripGetPayload<{
+  include: {
+    Location: true;
+    Passenger: true;
+    Driver: true;
+    OriginLocation: true;
+    DestinationLocation: true;
+  };
+}>;
 
 const contentVariants = {
   hidden: {
@@ -67,10 +78,11 @@ const cardHoverVariants = {
   },
 };
 
-function TripInfo({ trip }) {
+function TripInfo({ trip }: { trip: TripWithRelations | null }) {
   const [showOriginEditModal, setShowOriginEditModal] = useState(false);
   const [showDestinationEditModal, setShowDestinationEditModal] =
     useState(false);
+  const [displayDriver, setDisplayDriver] = useState(trip?.Driver ?? null);
 
   const schedule = formatTehranDateTime(trip?.StartsAt ?? null);
   const scheduleTime = schedule?.time || "زمان نامشخص";
@@ -102,7 +114,7 @@ function TripInfo({ trip }) {
       return;
     }
     // Navigate to location selector
-    window.location.href = `/location/${trip?.SecureToken}?selection=origin`;
+    window.location.href = `/trip-flow/location?type=origin&tripId=${trip?.SecureToken}`;
   };
 
   const handleDestinationClick = () => {
@@ -113,22 +125,42 @@ function TripInfo({ trip }) {
       return;
     }
     // Navigate to location selector
-    window.location.href = `/location/${trip?.SecureToken}?selection=destination`;
+    window.location.href = `/trip-flow/location?type=destination&tripId=${trip?.SecureToken}`;
   };
 
   const handleConfirmOriginEdit = () => {
-    window.location.href = `/location/${trip?.SecureToken}?selection=origin`;
+    window.location.href = `/trip-flow/location?type=origin&tripId=${trip?.SecureToken}`;
   };
 
   const handleConfirmDestinationEdit = () => {
-    window.location.href = `/location/${trip?.SecureToken}?selection=destination`;
+    window.location.href = `/trip-flow/location?type=destination&tripId=${trip?.SecureToken}`;
   };
 
-  const driver = trip?.Driver ?? null;
-  const driverFullName = driver
-    ? [driver.Firstname, driver.Lastname].filter(Boolean).join(" ")
+  const hasDriverAssigned = Boolean(trip?.driverId);
+  const driverFullName = displayDriver
+    ? [displayDriver.Firstname, displayDriver.Lastname]
+        .filter(Boolean)
+        .join(" ")
     : "";
-  const driverCarName = driver?.CarName || trip?.CarName || "نامشخص";
+  const driverCarName = displayDriver?.CarName || trip?.CarName || "نامشخص";
+
+  useEffect(() => {
+    if (!trip) {
+      setDisplayDriver(null);
+
+      return;
+    }
+
+    if (trip.Driver) {
+      setDisplayDriver(trip.Driver);
+
+      return;
+    }
+
+    if (!trip.driverId) {
+      setDisplayDriver(null);
+    }
+  }, [trip?.Driver, trip?.driverId, trip?.SecureToken, trip?.id]);
 
   return (
     <motion.div
@@ -497,11 +529,11 @@ function TripInfo({ trip }) {
         className="relative z-10"
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
         variants={itemVariants}
-        whileHover={driver ? { y: -2 } : {}}
+        whileHover={displayDriver ? { y: -2 } : {}}
       >
         <Card className="shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl border border-slate-200 overflow-hidden">
           <CardBody className="p-4">
-            {driver ? (
+            {displayDriver ? (
               // Driver Selected
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
@@ -551,10 +583,10 @@ function TripInfo({ trip }) {
                     </p>
                   </div>
 
-                  {driver.PhoneNumber && (
+                  {displayDriver.PhoneNumber && (
                     <motion.a
                       className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 shadow-sm"
-                      href={`tel:${driver.PhoneNumber}`}
+                      href={`tel:${displayDriver.PhoneNumber}`}
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -569,10 +601,31 @@ function TripInfo({ trip }) {
                         className="text-sm font-semibold text-gray-900"
                         dir="ltr"
                       >
-                        {driver.PhoneNumber}
+                        {displayDriver.PhoneNumber}
                       </p>
                     </motion.a>
                   )}
+                </div>
+              </div>
+            ) : hasDriverAssigned ? (
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center shadow-sm">
+                    <Icon
+                      className="text-blue-500"
+                      icon="solar:user-circle-line-duotone"
+                      width={28}
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 text-right space-y-1">
+                  <p className="font-bold text-sm text-gray-800">
+                    اطلاعات راننده در حال به‌روزرسانی است
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-gray-600">
+                    راننده شما انتخاب شده است و به محض دریافت جزئیات کامل، نام و
+                    اطلاعات تماس او در این بخش نمایش داده می‌شود.
+                  </p>
                 </div>
               </div>
             ) : (
