@@ -517,7 +517,7 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
                       width={28}
                     />
                   </motion.div>
-                </div>+
+                </div>
               </div>
             </CardBody>
           </Card>

@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import TripInfo from "../components/tripinfo-new";
 import LocationAddedModal from "../components/LocationAddedModal";
 import LocationUpdatedModal from "../components/LocationUpdatedModal";
-import WelcomePassengerModal from "../components/WelcomePassengerModal";
 
 import { useTripContext } from "@/app/contexts/TripContext";
 
@@ -147,10 +146,13 @@ export default function Upcoming({
             onOpenChange={setShowUpdatedModal}
           />
 
+          {/* Below modal welcomes the user and is configured to just be openned once */ }
+          {/*
           <WelcomePassengerModal
             showOneTime={true}
             tripId={resolvedParams.ticketid}
           />
+          */}
         </div>
       </div>
     </div>
