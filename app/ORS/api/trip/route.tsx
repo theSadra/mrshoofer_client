@@ -118,28 +118,49 @@ export async function POST(req: NextRequest) {
     const uniqueTicketCode = await generateUniqueTicketCode(prisma);
 
     // Case-insensitive trip properties
+    const TEHRAN_OFFSET_MINUTES = 210; // UTC+3:30 without DST
+
     function parseLocalNaive(isoOrDate: any): Date | undefined {
       if (!isoOrDate) return undefined;
       if (isoOrDate instanceof Date) return isoOrDate;
-      const s = String(isoOrDate);
+
+      const s = String(isoOrDate).trim();
+      if (!s) return undefined;
+
+      // If the incoming string already has an explicit timezone (e.g. Z or +0330)
+      // defer to native parsing to preserve the exact instant.
+      const hasExplicitTz = /[zZ]|[+-]\d{2}:?\d{2}$/.test(s);
+      if (hasExplicitTz) {
+        const parsed = new Date(s);
+
+        return isNaN(parsed.getTime()) ? undefined : parsed;
+      }
+
       const m = s.match(
-        /^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2})(?::(\d{2}))?/,
+        /^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2})(?::(\d{2}))?/
       );
 
       if (m) {
         const [, Y, Mo, D, H, Mi, S] = m;
+        const utcMs =
+          Date.UTC(
+            Number(Y),
+            Number(Mo) - 1,
+            Number(D),
+            Number(H),
+            Number(Mi),
+            S ? Number(S) : 0,
+          ) -
+          TEHRAN_OFFSET_MINUTES * 60 * 1000;
 
-        return new Date(
-          Number(Y),
-          Number(Mo) - 1,
-          Number(D),
-          Number(H),
-          Number(Mi),
-          S ? Number(S) : 0,
-        );
+        const result = new Date(utcMs);
+
+        return isNaN(result.getTime()) ? undefined : result;
       }
 
-      return new Date(s);
+      const fallback = new Date(s);
+
+      return isNaN(fallback.getTime()) ? undefined : fallback;
     }
 
     const tripData = {
