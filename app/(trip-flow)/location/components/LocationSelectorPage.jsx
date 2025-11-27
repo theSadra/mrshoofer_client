@@ -1321,12 +1321,39 @@ function LocationSelectorPage({
     initializeTripData();
   }, [tripId, tripData, contextTripData]);
 
-  // Initialize map when component mounts - coordinates will be set in mapSetter after map loads
+  // Update map center when trip data becomes available or changes
   useEffect(() => {
-    // This useEffect now just ensures trip data is available
-    // The actual coordinate setting happens in mapSetter's "load" event
     console.log('Trip data updated:', trip);
-  }, [trip]);
+    
+    if (trip && typeof window !== 'undefined' && window.neshanMapInstance) {
+      const targetCity = activeSelection === "destination" ? trip?.DestinationCity : trip?.OriginCity;
+      const currentTripLocation = getLocationForSelection(trip, activeSelection);
+      
+      if (targetCity) {
+        if (!currentTripLocation || currentTripLocation == null) {
+          // Center map on target city
+          console.log(`Centering map on ${activeSelection} city (useEffect):`, targetCity);
+          getCoordinatesFromCityName(targetCity).then((coords) => {
+            if (coords && window.neshanMapInstance) {
+              console.log('Setting map center to city coordinates (useEffect):', coords);
+              window.neshanMapInstance.setCenter([coords.lng, coords.lat]);
+              window.neshanMapInstance.setZoom(11); // Less zoom for city view
+            }
+          }).catch((error) => {
+            console.error('Error getting city coordinates (useEffect):', error);
+          });
+        } else {
+          // Use saved location if available
+          const { Latitude, Longitude } = currentTripLocation;
+          if (Latitude && Longitude) {
+            console.log('Setting map center to saved location (useEffect):', { Latitude, Longitude });
+            window.neshanMapInstance.setCenter([Longitude, Latitude]);
+            window.neshanMapInstance.setZoom(15);
+          }
+        }
+      }
+    }
+  }, [trip, activeSelection, loading]); // Add loading to dependencies to run after map load
 
   // Add user location marker when both map is loaded and user location is available
   useEffect(() => {
@@ -1401,18 +1428,21 @@ function LocationSelectorPage({
         setLoading(false);
         
         // Initialize map coordinates AFTER the map is loaded
-        if (trip?.OriginCity) {
-          const currentTripLocation = getLocationForSelection(trip, activeSelection);
+        const targetCity = activeSelection === "destination" ? trip?.DestinationCity : trip?.OriginCity;
+        const currentTripLocation = getLocationForSelection(trip, activeSelection);
+
+        
+        if (targetCity) {
           if (!currentTripLocation || currentTripLocation == null) {
-            // Center map on origin city
-            console.log('Centering map on origin city:', trip.OriginCity);
-            getCoordinatesFromCityName(trip.OriginCity).then((coords) => {
+            // Center map on target city
+            console.log(`Centering map on ${activeSelection} city:`, targetCity);
+            getCoordinatesFromCityName(targetCity).then((coords) => {
               if (coords && window.neshanMapInstance) {
                 console.log('Setting map center to city coordinates:', coords);
                 window.neshanMapInstance.setCenter([coords.lng, coords.lat]);
-                window.neshanMapInstance.setZoom(13);
+                window.neshanMapInstance.setZoom(11); // Less zoom for city view
               } else {
-                console.warn('Could not get coordinates for city:', trip.OriginCity);
+                console.warn('Could not get coordinates for city:', targetCity);
                 // Fallback to Tehran if city lookup fails
                 window.neshanMapInstance.setCenter([51.389, 35.6892]);
                 window.neshanMapInstance.setZoom(11);
@@ -1429,12 +1459,12 @@ function LocationSelectorPage({
             console.log('Setting map center to saved location:', { Latitude, Longitude });
             if (window.neshanMapInstance && Latitude && Longitude) {
               window.neshanMapInstance.setCenter([Longitude, Latitude]);
-              window.neshanMapInstance.setZoom(14.5);
+              window.neshanMapInstance.setZoom(15);
             }
           }
         } else {
           // No trip city info, default to Tehran
-          console.log('No origin city found, defaulting to Tehran');
+          console.log('No city info found, defaulting to Tehran');
           window.neshanMapInstance.setCenter([51.389, 35.6892]);
           window.neshanMapInstance.setZoom(11);
         }
@@ -1512,17 +1542,15 @@ function LocationSelectorPage({
   }
 
   async function getCoordinatesFromCityName(cityName) {
-    const url = `https://api.neshan.org/v1/search?term=${encodeURIComponent(
-      cityName
-    )}&lat=35.6892&lng=51.389`;
+    const url = `https://api.neshan.org/v6/geocoding?address=${encodeURIComponent(cityName)}`;
     const response = await fetch(url, {
       headers: {
         "Api-Key": API_KEY,
       },
     });
     const data = await response.json();
-    if (data.items && data.items.length > 0) {
-      const { x: lng, y: lat } = data.items[0].location;
+    if (data.location) {
+      const { x: lng, y: lat } = data.location;
       return { lat, lng };
     }
     return null;
@@ -1734,7 +1762,7 @@ function LocationSelectorPage({
 
         // Add label
         const labelDiv = document.createElement("div");
-        labelDiv.innerText = "مبدا";
+        labelDiv.innerText = activeSelection === "destination" ? "مقصد" : "مبدا";
         labelDiv.style.background = "white";
         labelDiv.style.fontFamily = "IRAN Sans X, sans-serif";
         labelDiv.style.padding = "1px 8px";
@@ -2346,10 +2374,10 @@ function LocationSelectorPage({
             <div
               className="text-gray-800 transition-all duration-300"
               style={{
-                background: "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%)",
+                background: "linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 60%)",
                 backdropFilter: "blur(20px)",
                 padding: "4px 6px",
-                borderRadius: "20px",
+                borderRadius: "17px",
                 marginBottom: "11px",
                 fontWeight: "600",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.8), inset 0 1px 0 rgba(255,255,255,0.9)",
@@ -2361,12 +2389,12 @@ function LocationSelectorPage({
               }}
             >
               <span className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-blue-300 flex items-center justify-center shadow-sm">
+                {/* <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-blue-300 flex items-center justify-center shadow-sm">
                   <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                   </svg>
-                </div>
-                مبدا را انتخاب کنید
+                </div> */}
+                {activeSelection === "origin" ? "مبدا" : "مقصد سفر" }
               </span>
             </div>
             <div

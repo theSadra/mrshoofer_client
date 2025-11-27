@@ -13,7 +13,12 @@ export default async function DriverTripPage({
 }) {
   const trip = await prisma.trip.findUnique({
     where: { SecureToken: params.id },
-    include: { Driver: true, Passenger: true, Location: true },
+    include: {
+      Driver: true,
+      Passenger: true,
+      Location: true,
+      DestinationLocation: true,
+    },
   });
 
   if (!trip) {

@@ -38,6 +38,13 @@ interface TripPageProps {
       Latitude: number | null;
       Longitude: number | null;
       TextAddress?: string | null;
+      Description?: string | null;
+    } | null;
+    DestinationLocation?: {
+      Latitude: number | null;
+      Longitude: number | null;
+      TextAddress?: string | null;
+      Description?: string | null;
     } | null;
   };
 }
@@ -85,19 +92,18 @@ function TripPage({ trip }: TripPageProps) {
     },
   ];
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const {
+    isOpen: isDestOpen,
+    onOpen: onDestOpen,
+    onOpenChange: onDestOpenChange,
+  } = useDisclosure();
 
   // Helper to open navigation app with correct URL and close popover
   const handleDirection = (
     platform: "neshan" | "google" | "waze" | "balad",
+    lat: number,
+    lng: number,
   ) => {
-    if (
-      !trip.Location ||
-      typeof trip.Location.Latitude !== "number" ||
-      typeof trip.Location.Longitude !== "number"
-    )
-      return;
-    const lat = trip.Location.Latitude;
-    const lng = trip.Location.Longitude;
     let url = "";
 
     switch (platform) {
@@ -376,7 +382,7 @@ function TripPage({ trip }: TripPageProps) {
                           isIconOnly={true}
                           size="md"
                           variant="bordered"
-                          onPress={() => handleDirection("neshan")}
+                          onPress={() => handleDirection("neshan", trip.Location!.Latitude!, trip.Location!.Longitude!)}
                         >
                           <Image
                             alt="Neshan Logo"
@@ -394,7 +400,7 @@ function TripPage({ trip }: TripPageProps) {
                           isIconOnly={true}
                           size="md"
                           variant="bordered"
-                          onPress={() => handleDirection("waze")}
+                          onPress={() => handleDirection("waze", trip.Location!.Latitude!, trip.Location!.Longitude!)}
                         >
                           <Image
                             alt="Waze Logo"
@@ -412,7 +418,7 @@ function TripPage({ trip }: TripPageProps) {
                           isIconOnly={true}
                           size="md"
                           variant="bordered"
-                          onPress={() => handleDirection("google")}
+                          onPress={() => handleDirection("google", trip.Location!.Latitude!, trip.Location!.Longitude!)}
                         >
                           <GoogleMapsLogo
                             className="object-contain"
@@ -431,6 +437,153 @@ function TripPage({ trip }: TripPageProps) {
             <span className="text-danger-400 me-1">*</span>
             برای مشاهده مقصد دقیق مسافر و مسیریابی، از گزینه بالا استفاده کنید.
           </div>
+        </CardBody>
+      </Card>
+
+      {/* Destination Card */}
+      <Card className="mx-2 mt-4 p-1.5" dir="rtl">
+        <CardHeader>
+          <span className="font-md text-default-900">
+            <Icon icon="solar:map-point-bold-duotone" className="inline me-1 text-danger-500" width={20} />
+            موقعیت مقصد
+          </span>
+        </CardHeader>
+        <CardBody className="gap-1">
+          <div className="flex flex-col gap-3" dir="rtl">
+            {trip.DestinationLocation &&
+            typeof trip.DestinationLocation.Latitude === "number" &&
+            typeof trip.DestinationLocation.Longitude === "number" ? (
+              <PassengerMap
+                latitude={trip.DestinationLocation.Latitude}
+                longitude={trip.DestinationLocation.Longitude}
+              />
+            ) : (
+              <span className="text-default-500 mb-3 text-center">
+                موقعیت مقصد هنوز ثبت نشده است.
+              </span>
+            )}
+          </div>
+          <div>
+            <div className="mt-2" dir="rtl">
+              <p className="font-light text-xs text-right pb-2">آدرس مقصد</p>
+              <textarea
+                disabled
+                readOnly
+                className="w-full mx-1 text-sm text-default-900 bg-default-100 rounded-lg border border-default-200 p-2 resize-none"
+                rows={2}
+                style={{ direction: "rtl" }}
+                value={
+                  typeof trip.DestinationLocation?.TextAddress === "string"
+                    ? trip.DestinationLocation.TextAddress
+                    : "آدرس مقصد ثبت نشده است."
+                }
+              />
+            </div>
+
+            {trip.DestinationLocation?.Description && (
+              <>
+                <p className="font-light text-xs text-right pb-2">
+                  توضیحات مقصد
+                </p>
+                <textarea
+                  disabled
+                  readOnly
+                  className="w-full mx-1 text-sm text-default-900 bg-default-100 rounded-lg border border-default-200 p-2 resize-none"
+                  rows={2}
+                  style={{ direction: "rtl" }}
+                  value={trip.DestinationLocation.Description}
+                />
+              </>
+            )}
+          </div>
+          {/* Direction Button for Destination */}
+          {trip.DestinationLocation &&
+            typeof trip.DestinationLocation.Latitude === "number" &&
+            typeof trip.DestinationLocation.Longitude === "number" && (
+              <Popover
+                isOpen={isDestOpen}
+                placement="top"
+                onOpenChange={onDestOpenChange}
+              >
+                <PopoverTrigger>
+                  <Button
+                    className="w-full mt-3 px-3 font-md"
+                    color="danger"
+                    endContent={
+                      <Icon
+                        className=""
+                        icon="solar:route-outline"
+                        width={24}
+                      />
+                    }
+                    size="lg"
+                    variant="solid"
+                  >
+                    مسیریابی به مقصد
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-4" dir="rtl">
+                  <div className="flex flex-col gap-3">
+                    <h4 className="text-sm font-semibold mb-2">
+                      انتخاب برنامه مسیریابی
+                    </h4>
+                    <div className="flex justify-around gap-4">
+                      <div className="flex flex-col items-center">
+                        <Button
+                          className="w-12 h-12"
+                          isIconOnly={true}
+                          size="md"
+                          variant="bordered"
+                          onPress={() => handleDirection("neshan", trip.DestinationLocation!.Latitude!, trip.DestinationLocation!.Longitude!)}
+                        >
+                          <Image
+                            alt="Neshan Logo"
+                            className="object-contain"
+                            height={39}
+                            src="/neshanlogo.png"
+                            width={39}
+                          />
+                        </Button>
+                        <p className="text-center mt-1 text-xs">نشان</p>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <Button
+                          className="w-12 h-12"
+                          isIconOnly={true}
+                          size="md"
+                          variant="bordered"
+                          onPress={() => handleDirection("waze", trip.DestinationLocation!.Latitude!, trip.DestinationLocation!.Longitude!)}
+                        >
+                          <Image
+                            alt="Waze Logo"
+                            className="object-contain rounded-lg"
+                            height={34}
+                            src="/wazelogo.webp"
+                            width={34}
+                          />
+                        </Button>
+                        <p className="text-center mt-1 text-xs">waze</p>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <Button
+                          className="w-12 h-12"
+                          isIconOnly={true}
+                          size="md"
+                          variant="bordered"
+                          onPress={() => handleDirection("google", trip.DestinationLocation!.Latitude!, trip.DestinationLocation!.Longitude!)}
+                        >
+                          <GoogleMapsLogo
+                            className="object-contain"
+                            size={34}
+                          />
+                        </Button>
+                        <p className="text-center mt-1 text-xs">گوگل‌مپس</p>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
         </CardBody>
       </Card>
 

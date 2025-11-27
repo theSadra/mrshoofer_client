@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
+import Image from "next/image";
 
 const contentVariants = {
   hidden: {
@@ -71,15 +72,16 @@ export default function OnboardingStep1() {
         <motion.div className="mb-6" variants={iconVariants}>
           <div className="relative">
             <motion.div
-              className="w-36 h-36 sm:w-40 sm:h-40 bg-gradient-to-br from-primary-200 to-primary-400 rounded-full flex items-center justify-center shadow-xl"
+              className="w-36 h-36 sm:w-40 sm:h-40 bg-gradient-to-br from-primary-200 to-primary-400 rounded-full flex items-center justify-center shadow-xl overflow-hidden"
               transition={{ type: "spring", stiffness: 300 }}
               whileHover={{ scale: 1.05 }}
             >
-              <Icon
-                className="w-14 h-14 sm:w-16 sm:h-16 text-white"
-                height={56}
-                icon="solar:taxi-bold-duotone"
-                width={64}
+              <Image
+                alt="Taxi Check"
+                className="w-24 h-24 sm:w-28 sm:h-28 object-contain"
+                height={160}
+                src="/taxicheck.png"
+                width={160}
               />
             </motion.div>
 
@@ -203,46 +205,6 @@ export default function OnboardingStep1() {
           </div>
           <p className="typography-feature-text text-default-700 text-xs sm:text-sm ">
            تاکسی رسمی
-          </p>
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="w-full max-w-md mx-auto rounded-2xl border border-slate-100 bg-white/85 px-4 py-4 shadow-sm text-right"
-        variants={itemVariants}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-primary-500">
-            راهنمای تکمیل سریع
-          </p>
-          <Icon
-            className="text-primary-600"
-            icon="solar:info-circle-bold-duotone"
-            width={20}
-          />
-        </div>
-        <div className="flex items-start gap-2 text-default-200">
-          <Icon
-            className="mt-0.5 text-primary-500"
-            icon="solar:document-text-bold-duotone"
-            width={18}
-          />
-          <p className="text-xs sm:text-sm leading-relaxed text-default-700">
-            <span>
-              برای تکمیل اطلاعات، کافیست{" "}
-              <span className="font-semibold">مبدا</span>
-              {" و "}
-              <span className="font-semibold">مقصد</span>
-              {" خود را وارد کنید"}
-            </span>
-            <span className="block mt-1">
-              تا <span className="font-semibold">قبل</span> از حرکت راننده به{" "}
-              سمت شما، می‌توانید مبدا یا مقصد را ویرایش کنید
-            </span>
-            <span className="block mt-1">
-              اطلاعات به صورت <span className="font-semibold">خودکار</span>{" "}
-              ذخیره می‌شوند
-            </span>
           </p>
         </div>
       </motion.div>

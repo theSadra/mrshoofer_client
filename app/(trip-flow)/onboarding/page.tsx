@@ -2,7 +2,15 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@heroui/react";
+import {
+  Button,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from "@heroui/react";
 import { Icon } from "@iconify/react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -182,6 +190,7 @@ export default function OnboardingPage() {
   } = useTripContext();
   const [hasTripToken, setHasTripToken] = useState(false);
   const refreshTrigger = searchParams.get("refreshTrip");
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   // Extract triptoken from URL and set it in context
   useEffect(() => {
@@ -340,6 +349,14 @@ export default function OnboardingPage() {
   }
 
   const nextStep = () => {
+    if (currentStep === 2) {
+      if (!tripData?.OriginLocation || !tripData?.DestinationLocation) {
+        onOpen();
+
+        return;
+      }
+    }
+
     if (currentStep < TOTAL_STEPS) {
       const next = currentStep + 1;
 
@@ -376,6 +393,10 @@ export default function OnboardingPage() {
     : currentStep === 3
       ? "تایید و ادامه"
       : "ادامه";
+
+  const isNextDisabled =
+    currentStep === 2 &&
+    (!tripData?.OriginLocation || !tripData?.DestinationLocation);
 
   const renderStep = () => {
     switch (currentStep) {
@@ -570,7 +591,9 @@ export default function OnboardingPage() {
                     </Button>
 
                     <Button
-                      className="h-11 flex-1 justify-center gap-2 rounded-2xl text-sm font-semibold sm:h-12 sm:text-base"
+                      className={`h-11 flex-1 justify-center gap-2 rounded-2xl text-sm font-semibold sm:h-12 sm:text-base ${
+                        isNextDisabled ? "opacity-50" : ""
+                      }`}
                       color="primary"
                       size="lg"
                       onClick={nextStep}
@@ -592,6 +615,44 @@ export default function OnboardingPage() {
           </div>
         </div>
       </div>
+
+      <Modal
+        backdrop="blur"
+        isOpen={isOpen}
+        placement="center"
+        size="xs"
+        onOpenChange={onOpenChange}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col items-center gap-1">
+                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-warning-100">
+                  <Icon
+                    className="text-2xl text-warning-600"
+                    icon="solar:map-point-bold-duotone"
+                  />
+                </div>
+                <span className="text-lg font-bold text-default-900">توجه</span>
+              </ModalHeader>
+              <ModalBody>
+                <p className="text-center font-medium text-default-600">
+                  لطفا برای ادامه، ابتدا موقعیت دقیق مبدا و مقصد را مشخص کنید
+                </p>
+              </ModalBody>
+              <ModalFooter className="justify-center pb-6">
+                <Button
+                  className="w-full max-w-[200px] font-semibold"
+                  color="primary"
+                  onPress={onClose}
+                >
+                  متوجه شدم
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </main>
   );
 }

@@ -517,7 +517,7 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
                       width={28}
                     />
                   </motion.div>
-                </div>
+                </div>+
               </div>
             </CardBody>
           </Card>
@@ -531,132 +531,114 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
         variants={itemVariants}
         whileHover={displayDriver ? { y: -2 } : {}}
       >
-        <Card className="shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl border border-slate-200 overflow-hidden">
-          <CardBody className="p-4">
+        <Card className="shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl border border-slate-200 overflow-hidden bg-white">
+          <CardBody className="p-0">
             {displayDriver ? (
               // Driver Selected
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between gap-3">
-                  <motion.div
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex-1 text-right space-y-1"
-                    initial={{ opacity: 0, x: -20 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <p className="text-[11px] text-gray-500">راننده</p>
-                    <p className="font-bold text-lg text-gray-900">
-                      {driverFullName || "بدون نام"}
-                    </p>
-                  </motion.div>
-                  <motion.div
-                    animate={{ scale: 1 }}
-                    className="flex-shrink-0"
-                    initial={{ scale: 0 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 220,
-                      damping: 16,
-                      delay: 0.3,
-                    }}
-                  >
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-purple-600 flex items-center justify-center shadow-md ring-2 ring-blue-100">
-                      <Icon
-                        className="text-white"
-                        icon="solar:user-check-bold-duotone"
-                        width={24}
-                      />
-                    </div>
-                  </motion.div>
+              <div className="flex flex-col">
+                {/* Header / Status Bar */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-5 py-3 border-b border-blue-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-xs font-bold text-gray-800">
+                      سفیر مسترشوفر
+                      (راننده‌ی شما)
+                    </span>
+                  </div>
+                  <Icon
+                    className="text-blue-400 text-lg"
+                    icon="solar:shield-check-bold-duotone"
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2 shadow-sm">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Icon
-                        icon="solar:steering-wheel-bold-duotone"
-                        width={18}
-                      />
-                      <span className="text-[11px]">خودرو</span>
+                <div className="p-5 flex flex-col gap-5">
+                  {/* Driver Profile & Car */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <motion.div
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="relative"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shadow-inner border-2 border-white">
+                          <Icon
+                            className="text-slate-400 text-2xl"
+                            icon="solar:user-bold-duotone"
+                          />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-green-500 border-2 border-white flex items-center justify-center">
+                          <Icon
+                            className="text-white text-[10px]"
+                            icon="solar:check-read-bold"
+                          />
+                        </div>
+                      </motion.div>
+
+                      <div className="space-y-2 text-right">
+                        <h3 className="font-black text-base text-slate-800 leading-tight">
+                          {driverFullName || "بدون نام"}
+                        </h3>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-[11px] text-slate-400 font-semibold tracking-wide">
+                            مشخصات خودرو
+                          </span>
+                          <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-inner">
+                            <Icon
+                              className="text-xs text-slate-500"
+                              icon="solar:steering-wheel-bold-duotone"
+                            />
+                            <span className="text-[11px] font-bold text-slate-700 max-w-[140px] truncate">
+                              {driverCarName}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {driverCarName}
-                    </p>
                   </div>
 
+                  {/* Actions */}
                   {displayDriver.PhoneNumber && (
-                    <motion.a
-                      className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 shadow-sm"
-                      href={`tel:${displayDriver.PhoneNumber}`}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex items-center gap-2 text-blue-500">
-                        <Icon
-                          icon="solar:phone-calling-rounded-bold-duotone"
-                          width={18}
-                        />
-                        <span className="text-[11px]">تماس</span>
-                      </div>
-                      <p
-                        className="text-sm font-semibold text-gray-900"
-                        dir="ltr"
+                    <div className="grid grid-cols-1">
+                      <motion.a
+                        className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-xl shadow-md shadow-green-200 transition-colors"
+                        href={`tel:${displayDriver.PhoneNumber}`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        {displayDriver.PhoneNumber}
-                      </p>
-                    </motion.a>
+                        <Icon
+                          className="text-lg"
+                          icon="solar:phone-calling-bold"
+                        />
+                        <span className="font-bold text-sm">
+                          تماس با راننده
+                        </span>
+                      </motion.a>
+                    </div>
                   )}
                 </div>
               </div>
-            ) : hasDriverAssigned ? (
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center shadow-sm">
-                    <Icon
-                      className="text-blue-500"
-                      icon="solar:user-circle-line-duotone"
-                      width={28}
-                    />
-                  </div>
-                </div>
-                <div className="flex-1 text-right space-y-1">
-                  <p className="font-bold text-sm text-gray-800">
-                    اطلاعات راننده در حال به‌روزرسانی است
-                  </p>
-                  <p className="text-[11px] leading-relaxed text-gray-600">
-                    راننده شما انتخاب شده است و به محض دریافت جزئیات کامل، نام و
-                    اطلاعات تماس او در این بخش نمایش داده می‌شود.
-                  </p>
-                </div>
-              </div>
             ) : (
-              // No Driver Selected - Loading State
-              <div className="flex items-center gap-3">
-                <motion.div
-                  animate={{
-                    rotate: [0, 360],
-                  }}
-                  className="flex-shrink-0"
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center shadow-sm">
+              // Searching for Driver
+              <div className="p-6 flex flex-col items-center text-center gap-4 bg-gradient-to-b from-amber-50/50 to-transparent">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-amber-200 rounded-full animate-ping opacity-20" />
+                  <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center relative z-10">
                     <Icon
-                      className="text-amber-600"
-                      icon="solar:refresh-circle-bold-duotone"
-                      width={28}
+                      className="text-amber-600 text-3xl animate-spin"
+                      icon="solar:radar-2-bold-duotone"
                     />
                   </div>
-                </motion.div>
-                <div className="flex-1 text-right space-y-1">
-                  <p className="font-bold text-sm text-gray-800">
-                    درحال انتخاب راننده هستیم
-                  </p>
-                  <p className="text-[11px] leading-relaxed text-gray-600">
-                    درحال انتخاب بهترین رانندگانمون برای شما هستیم و پس از
-                    انتخاب، اطلاعات راننده در این قسمت نمایش خواهد داده شد.
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-bold text-slate-800">
+                    در حال انتخاب سفیر
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">
+                    ما در حال تخصیص بهترین سفیر و خودرو از میان خودروهای فعال
+                    هستیم.
+                    <span className="block mt-1">
+                      سفیر مسترشوفر، پس از تخصیص سفر با شما تماس خواهد گرفت.
+                    </span>
                   </p>
                 </div>
               </div>

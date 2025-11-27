@@ -43,8 +43,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 // Metadata for the app
 export const metadata = {
   title: {
-    default: "MrShoofer",
-    template: "%s - MrShoofer",
+    default: "مسترشوفر - تاکسی رسمی بین شهری",
+    template: "%s - مسترشوفر",
   },
   description: "درخواست تاکسی آنلاین",
   keywords: ["MrShoofer", "تاکسی", "درخواست تاکسی"],
