@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 import Image from "next/image";
 
+import { useTripContext } from "@/app/(trip-flow)/trip-context";
+
 const contentVariants = {
   hidden: {
     opacity: 0,
@@ -53,6 +55,9 @@ const iconVariants = {
 
 export default function OnboardingStep1() {
   const [mounted, setMounted] = React.useState(false);
+  const { tripData } = useTripContext();
+  const originCity = tripData?.OriginCity?.trim() || "شهر مبدا";
+  const destinationCity = tripData?.DestinationCity?.trim() || "شهر مقصد";
 
   React.useEffect(() => {
     setMounted(true);
@@ -140,17 +145,29 @@ export default function OnboardingStep1() {
             className="font-extrabold text-[28px] sm:text-[34px] mt-4 pt-1 text-center"
             variants={itemVariants}
           >
-            به مسترشوفر خوش آمدیـد
+            به مِسترشوفر خوش آمدیـد
           </motion.h1>
 
           {/* Subtitle */}
 
           <motion.p
-            className="typography-subtitle text-center max-w-lg px-1 text-sm sm:text-base leading-relaxed"
+            className="typography-subtitle text-center max-w-lg px-1 text-sm sm:text-base leading-relaxed text-gray-600"
             variants={itemVariants}
           >
-            از خرید شما متشکریم! برای سفر تهران به اصفهان کافیست چند قدم ساده را
-            دنبال کنید
+            از خرید شما متشکریم! برای سفر
+            <span className="font-bold text-slate-900">
+            &nbsp;
+              {originCity}
+            &nbsp;
+            </span>
+            به
+            <span className="font-bold text-slate-900">
+            &nbsp;
+
+              {destinationCity}
+            &nbsp;
+            </span>
+            کافیست چند قدم ساده را دنبال کنید
           </motion.p>
         </div>
       </div>

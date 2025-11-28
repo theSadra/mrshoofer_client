@@ -137,7 +137,7 @@ export default function TripNotFound({
                 </div>
                 <div className="text-right flex-1">
                   <p className="text-xs text-gray-600 font-medium text-center">
-                    پشتیبانی تلفنی مسترشوفر
+                    پشتیبانی تلفنی مِسترشوفر
                   </p>
                   <p className="font-semibold text-sm text-center text-blue-600">
                     ۰۲۱-۲۸۴۲۲۲۴۳

@@ -342,7 +342,7 @@ export default function OnboardingStep4({ onSelectLocation }) {
            راهنمای انتخاب مسیر
             </div>
             <p className="leading-relaxed">
-             در صورتی که مایل به ثبت مبدا یا مقصد اضافی هستید، می‌توانید با پشتیبانی مسترشوفر در تماس باشید.
+             در صورتی که مایل به ثبت مبدا یا مقصد اضافی هستید، می‌توانید با پشتیبانی مِسترشوفر در تماس باشید.
 
              <a href="tel:+9828422243" className=" ms-1 text-primary-600">تماس با پشتیبانی</a>
             </p>

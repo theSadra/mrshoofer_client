@@ -106,7 +106,7 @@ export default function OnboardingStep3() {
             </h2>
             <p className="text-sm sm:text-base text-slate-600 max-w-md">
               راننده‌ی{" "}
-              <span className="font-bold text-slate-900">مسترشوفر</span> در مبدا
+              <span className="font-bold text-slate-900">مِسترشوفر</span> در مبدا
               مورد نظر شما، در زمان مقرر، حضور خواهد یافت.
             </p>
           </motion.div>
@@ -169,7 +169,7 @@ export default function OnboardingStep3() {
                 <span className="font-bold text-slate-800">اضافه مسیر</span>،
                 وجود مقصد یا مبدا در{" "}
                 <span className="font-bold text-slate-800">طرح ترافیک</span>، با
-                پشتیبانی مسترشوفر تماس حاصل فرمایید
+                پشتیبانی مِسترشوفر تماس حاصل فرمایید
               </p>
               <a
                 className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] sm:text-xs font-semibold text-white transition-all hover:bg-blue-700 hover:shadow-md"
