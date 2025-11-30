@@ -10,7 +10,7 @@ import { fontSans, fontMono } from "@/config/fonts";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html suppressHydrationWarning dir="rtl" lang="fa">
+    <html className="light" data-theme="light" dir="rtl" lang="fa">
       <body
         className={clsx(
           "min-h-screen bg-background font-sans antialiased",
@@ -25,6 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             forcedTheme: "light",
             enableSystem: false,
             enableColorScheme: false,
+            disableTransitionOnChange: true,
           }}
         >
           <div className="relative flex flex-col h-screen">
@@ -74,8 +75,5 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
+  themeColor: "white", // Always light mode
 };

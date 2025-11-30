@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force light mode - prevent dark mode from ever activating */
+html.dark,
+html[data-theme="dark"] {
+  color-scheme: light !important;
+}
+
+html {
+  color-scheme: light;
+}
+
 :root {
   --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
 }

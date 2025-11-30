@@ -19,6 +19,7 @@ export type LocationModalProps = {
   lat?: number;
   lng?: number;
   addressText?: string;
+  context?: "origin" | "destination";
 };
 
 export default function LocationModal({
@@ -27,12 +28,22 @@ export default function LocationModal({
   lat,
   lng,
   addressText,
+  context = "origin",
 }: LocationModalProps) {
   const valid =
     typeof lat === "number" &&
     typeof lng === "number" &&
     !isNaN(lat) &&
     !isNaN(lng);
+  const isDestination = context === "destination";
+  const modalTitle = isDestination ? "موقعیت مقصد" : "موقعیت مبدا";
+  const helperCopy = isDestination
+    ? "موقعیت و آدرسی که کاربر به عنوان مقصد انتخاب کرده است"
+    : "موقعیتی و آدرسی که کاربر به عنوان مبدا انتخاب کرده است";
+  const missingCopy = isDestination
+    ? "مختصات مقصد موجود نیست."
+    : "مختصات مبدا موجود نیست.";
+  const addressLabel = isDestination ? "آدرس مقصد" : "آدرس مبدا";
 
   return (
     <Modal
@@ -48,15 +59,13 @@ export default function LocationModal({
             width={18}
           />
 
-          <span className="font-medium ">موقعیت مبدا</span>
+          <span className="font-medium ">{modalTitle}</span>
         </ModalHeader>
 
         <ModalBody>
-          <div className="text-default-600 text-sm font-light">
-            موقعیتی و آدرسی که کاربر به عنوان مبدا انتخاب کرده است
-          </div>
+          <div className="text-default-600 text-sm font-light">{helperCopy}</div>
           {!valid ? (
-            <div className="text-danger text-sm">مختصات مبدا موجود نیست.</div>
+            <div className="text-danger text-sm">{missingCopy}</div>
           ) : (
             <div className="flex flex-col gap-3">
               {addressText ? (
@@ -67,7 +76,7 @@ export default function LocationModal({
                     width={18}
                   />
                   <span className="font-medium truncate" title={addressText}>
-                    {addressText}
+                    {addressLabel}: {addressText}
                   </span>
                 </div>
               ) : null}

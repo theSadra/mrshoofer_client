@@ -9,7 +9,11 @@ import persianDate from "persian-date";
 
 import AssignDriverModal from "../(protected)/upcoming/components/AssignDriverModal";
 
-import TripCard, { Trip, TripStatus } from "./components/TripCard";
+import TripCard, {
+  Trip,
+  TripStatus,
+  TripLocationOpenPayload,
+} from "./components/TripCard";
 import TripTable from "./components/TripTable";
 import LocationModal from "./components/LocationModal";
 import CallDriverModal from "./components/CallDriverModal";
@@ -91,104 +95,9 @@ function formatFaDate(dt: string | Date | undefined) {
   }
 }
 
-// Persian (Jalali) format but based on locally parsed Date to avoid UTC shifts
-function formatFaTimeLocal(dt: string | Date | undefined) {
-  if (!dt) return undefined;
-  const d = dt instanceof Date ? dt : parseLocalNaive(dt);
-
-  if (!d || isNaN(d.getTime())) return undefined;
-  try {
-    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(d);
-  } catch {
-    return undefined;
-  }
-}
-
-function formatFaDateLocal(dt: string | Date | undefined) {
-  if (!dt) return undefined;
-  const d = dt instanceof Date ? dt : parseLocalNaive(dt);
-
-  if (!d || isNaN(d.getTime())) return undefined;
-  try {
-    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-      dateStyle: "medium",
-    }).format(d);
-  } catch {
-    return undefined;
-  }
-}
-
-// Parse an ISO-like string as a local-naive Date (ignore Z/UTC when present)
-function parseLocalNaive(
-  isoOrDate: string | Date | undefined,
-): Date | undefined {
-  if (!isoOrDate) return undefined;
-  if (isoOrDate instanceof Date) return isoOrDate;
-  const s = isoOrDate;
-  // Extract components YYYY-MM-DDTHH:mm[:ss]
-  const m = s.match(
-    /^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2})(?::(\d{2}))?/,
-  );
-
-  if (m) {
-    const [, Y, Mo, D, H, Mi, S] = m;
-    const year = Number(Y);
-    const month = Number(Mo) - 1;
-    const day = Number(D);
-    const hour = Number(H);
-    const minute = Number(Mi);
-    const second = S ? Number(S) : 0;
-
-    return new Date(year, month, day, hour, minute, second);
-  }
-
-  // Fallback to native parsing (may treat as UTC if suffixed with Z)
-  return new Date(s);
-}
-
-// Format local numeric date YYYY/MM/DD regardless of locale ordering
-function formatLocalDateYMD(dt: Date | string | undefined): string | undefined {
-  if (!dt) return undefined;
-  const d = dt instanceof Date ? dt : parseLocalNaive(dt);
-
-  if (!d || isNaN(d.getTime())) return undefined;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-
-  return `${y}/${m}/${day}`;
-}
-
-// Format local 24h time HH:MM
-function formatLocalTimeHM(dt: Date | string | undefined): string | undefined {
-  if (!dt) return undefined;
-  const d = dt instanceof Date ? dt : parseLocalNaive(dt);
-
-  if (!d || isNaN(d.getTime())) return undefined;
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-
-  return `${hh}:${mm}`;
-}
 
 export default function UpcomingsPage() {
-  type ExtendedTrip = Trip & {
-    startsAtMs?: number;
-    driverName?: string;
-    driverCar?: string;
-    driverPhone?: string;
-    tripCarName?: string;
-    originLat?: number;
-    originLng?: number;
-    originAddress?: string;
-    originDescription?: string;
-    ticketCode?: string;
-    secureToken?: string;
-  };
+  type ExtendedTrip = Trip;
   const [trips, setTrips] = useState<ExtendedTrip[]>([]);
   const [assignFilter, setAssignFilter] = useState<
     "all" | "assigned" | "unassigned"
@@ -235,6 +144,7 @@ export default function UpcomingsPage() {
   const [locLat, setLocLat] = useState<number | undefined>(undefined);
   const [locLng, setLocLng] = useState<number | undefined>(undefined);
   const [locAddress, setLocAddress] = useState<string | undefined>(undefined);
+  const [locContext, setLocContext] = useState<TripLocationOpenPayload["context"]>("origin");
   const [callOpen, setCallOpen] = useState(false);
   const [callDriverName, setCallDriverName] = useState<string | undefined>(
     undefined,
@@ -260,7 +170,13 @@ export default function UpcomingsPage() {
     setAssignModalOpen(true);
   };
 
-  const openLocation = (lat?: number, lng?: number, addressText?: string) => {
+  const openLocation = ({
+    context,
+    lat,
+    lng,
+    addressText,
+  }: TripLocationOpenPayload) => {
+    setLocContext(context);
     setLocLat(lat);
     setLocLng(lng);
     setLocAddress(addressText);
@@ -279,6 +195,74 @@ export default function UpcomingsPage() {
     setDescOpen(true);
   };
 
+  const mapTripRecord = (t: any): ExtendedTrip => {
+    const startsAtRaw = t?.StartsAt ? new Date(t.StartsAt) : undefined;
+    const startsAt =
+      startsAtRaw && !isNaN(startsAtRaw.getTime()) ? startsAtRaw : undefined;
+    const pickup = t?.OriginCity || t?.Location?.TextAddress || "-";
+    const dropoff =
+      t?.DestinationCity ||
+      t?.DestinationLocation?.TextAddress ||
+      t?.Location?.TextAddress ||
+      "-";
+    const originLat =
+      typeof t?.Location?.Latitude === "number"
+        ? t.Location.Latitude
+        : undefined;
+    const originLng =
+      typeof t?.Location?.Longitude === "number"
+        ? t.Location.Longitude
+        : undefined;
+    const destinationLat =
+      typeof t?.DestinationLocation?.Latitude === "number"
+        ? t.DestinationLocation.Latitude
+        : undefined;
+    const destinationLng =
+      typeof t?.DestinationLocation?.Longitude === "number"
+        ? t.DestinationLocation.Longitude
+        : undefined;
+    const hasLocation =
+      typeof originLat === "number" && typeof originLng === "number";
+    const hasDestinationLocation =
+      typeof destinationLat === "number" && typeof destinationLng === "number";
+    const scheduledDate = formatFaDate(startsAt);
+    const scheduledTime = formatFaTime(startsAt);
+    const scheduledAt =
+      scheduledDate && scheduledTime
+        ? `${scheduledDate} ${scheduledTime}`
+        : scheduledDate || scheduledTime;
+
+    return {
+      id: String(t.id),
+      pickup,
+      dropoff,
+      scheduledAt,
+      scheduledTime,
+      scheduledDate,
+      status: mapPrismaStatusToUi(t.status),
+      assignedDriverId: t.driverId ? String(t.driverId) : null,
+      driverName: t.Driver
+        ? `${t.Driver.Firstname ?? ""} ${t.Driver.Lastname ?? ""}`.trim()
+        : undefined,
+      driverCar: t.Driver?.CarName ?? undefined,
+      driverPhone: t.Driver?.PhoneNumber ?? undefined,
+      tripCarName: t.CarName ?? undefined,
+      ticketCode: t.TicketCode ?? undefined,
+      secureToken: t.SecureToken ?? undefined,
+      hasLocation,
+      hasDestinationLocation,
+      originLat,
+      originLng,
+      destinationLat,
+      destinationLng,
+      originAddress: t.Location?.TextAddress ?? undefined,
+      destinationAddress: t.DestinationLocation?.TextAddress ?? undefined,
+      originDescription: t.Location?.Description ?? undefined,
+      destinationDescription: t.DestinationLocation?.Description ?? undefined,
+      startsAtMs: startsAt ? startsAt.getTime() : Number.POSITIVE_INFINITY,
+    };
+  };
+
   // Fetch trips when day changes
   useEffect(() => {
     let cancelled = false;
@@ -294,42 +278,7 @@ export default function UpcomingsPage() {
         const data: any[] = await res.json();
 
         if (cancelled) return;
-        const mapped: ExtendedTrip[] = data.map((t) => {
-          const local = parseLocalNaive(t.StartsAt);
-
-          return {
-            id: String(t.id),
-            pickup: t.OriginCity || t.Location?.TextAddress || "-",
-            dropoff: t.DestinationCity || t.Location?.TextAddress || "-",
-            scheduledAt: local
-              ? `${formatFaDateLocal(local)} ${formatFaTimeLocal(local)}`
-              : undefined,
-            scheduledTime: formatFaTimeLocal(local),
-            scheduledDate: formatFaDateLocal(local),
-            status: mapPrismaStatusToUi(t.status),
-            assignedDriverId: t.driverId ? String(t.driverId) : null,
-            driverName: t.Driver
-              ? `${t.Driver.Firstname ?? ""} ${t.Driver.Lastname ?? ""}`.trim()
-              : undefined,
-            driverCar: t.Driver?.CarName ?? undefined,
-            driverPhone: t.Driver?.PhoneNumber ?? undefined,
-            tripCarName: t.CarName ?? undefined,
-            ticketCode: t.TicketCode ?? undefined,
-            secureToken: t.SecureToken ?? undefined,
-            hasLocation: !!(t.Location?.Latitude && t.Location?.Longitude),
-            originLat:
-              typeof t.Location?.Latitude === "number"
-                ? t.Location.Latitude
-                : undefined,
-            originLng:
-              typeof t.Location?.Longitude === "number"
-                ? t.Location.Longitude
-                : undefined,
-            originAddress: t.Location?.TextAddress ?? undefined,
-            originDescription: t.Location?.Description ?? undefined,
-            startsAtMs: local ? local.getTime() : Number.POSITIVE_INFINITY,
-          };
-        });
+        const mapped: ExtendedTrip[] = data.map(mapTripRecord);
 
         setTrips(mapped);
       } catch (e: any) {
@@ -423,42 +372,7 @@ export default function UpcomingsPage() {
 
     if (tRes.ok) {
       const data: any[] = await tRes.json();
-      const mapped: ExtendedTrip[] = data.map((t) => {
-        const local = parseLocalNaive(t.StartsAt);
-
-        return {
-          id: String(t.id),
-          pickup: t.OriginCity || t.Location?.TextAddress || "-",
-          dropoff: t.DestinationCity || t.Location?.TextAddress || "-",
-          scheduledAt: local
-            ? `${formatFaDateLocal(local)} ${formatFaTimeLocal(local)}`
-            : undefined,
-          scheduledTime: formatFaTimeLocal(local),
-          scheduledDate: formatFaDateLocal(local),
-          status: mapPrismaStatusToUi(t.status),
-          assignedDriverId: t.driverId ? String(t.driverId) : null,
-          driverName: t.Driver
-            ? `${t.Driver.Firstname ?? ""} ${t.Driver.Lastname ?? ""}`.trim()
-            : undefined,
-          driverCar: t.Driver?.CarName ?? undefined,
-          driverPhone: t.Driver?.PhoneNumber ?? undefined,
-          tripCarName: t.CarName ?? undefined,
-          ticketCode: t.TicketCode ?? undefined,
-          secureToken: t.SecureToken ?? undefined,
-          hasLocation: !!(t.Location?.Latitude && t.Location?.Longitude),
-          originLat:
-            typeof t.Location?.Latitude === "number"
-              ? t.Location.Latitude
-              : undefined,
-          originLng:
-            typeof t.Location?.Longitude === "number"
-              ? t.Location.Longitude
-              : undefined,
-          originAddress: t.Location?.TextAddress ?? undefined,
-          originDescription: t.Location?.Description ?? undefined,
-          startsAtMs: local ? local.getTime() : Number.POSITIVE_INFINITY,
-        };
-      });
+      const mapped: ExtendedTrip[] = data.map(mapTripRecord);
 
       setTrips(mapped);
     }
@@ -655,6 +569,7 @@ export default function UpcomingsPage() {
       <Spacer y={8} />
       <LocationModal
         addressText={locAddress}
+        context={locContext}
         lat={locLat}
         lng={locLng}
         open={locOpen}

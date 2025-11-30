@@ -13,7 +13,7 @@ export default function ClientRootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html suppressHydrationWarning lang="en">
+    <html className="light" data-theme="light" lang="en">
       <head />
       <body
         className={clsx(
@@ -29,6 +29,7 @@ export default function ClientRootLayout({
             forcedTheme: "light",
             enableSystem: false,
             enableColorScheme: false,
+            disableTransitionOnChange: true,
           }}
         >
           <div className="relative flex flex-col h-screen">

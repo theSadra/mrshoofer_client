@@ -1,16 +1,18 @@
 "use client";
 
-import type { Trip } from "./TripCard";
+import type { Trip, TripLocationOpenPayload } from "./TripCard";
 
 import React from "react";
 import { Chip, Button } from "@heroui/react";
 import { Icon } from "@iconify/react";
 
+import { formatTehranDate, formatTehranTime } from "../utils/tehranDate";
+
 export type TripTableProps = {
   trips: Trip[];
   groupBreakIndex?: number; // optional index to insert a separator row (e.g., between unassigned and assigned)
   onOpenAssignAction: (tripId: string) => void;
-  onOpenLocationAction?: (lat?: number, lng?: number, addressText?: string) => void;
+  onOpenLocationAction?: (payload: TripLocationOpenPayload) => void;
   onOpenCallAction?: (driverName?: string, driverPhone?: string) => void;
   onOpenLocationDescAction?: (description?: string) => void;
   onOpenPovLinkAction?: (token?: string) => void;
@@ -32,31 +34,42 @@ const assignStatusChip = (assigned: boolean) => (
   </Chip>
 );
 
-const locationStatusChip = (
-  hasLocation: boolean | undefined,
-  onOpenLocation?: () => void,
-) => (
+const locationStatusChip = ({
+  hasLocation,
+  label,
+  title,
+  onOpenLocation,
+  readyIcon,
+  readyIconClass,
+}: {
+  hasLocation?: boolean;
+  label: string;
+  title: string;
+  onOpenLocation?: () => void;
+  readyIcon: string;
+  readyIconClass: string;
+}) => (
   <button
     className="inline-flex items-center"
     disabled={!onOpenLocation}
-    title={hasLocation ? "نمایش مبدا روی نقشه" : "لوکیشن تعیین نشده"}
+    title={title}
     type="button"
     onClick={onOpenLocation}
   >
     <Chip
-      className="bg-default-100 p-1"
+      className="bg-default-100 p-1 gap-1"
       color="default"
       size="sm"
       variant="flat"
     >
-      <span className="text-xs font-nano">لوکیشن</span>
+      <span className="text-xs font-medium">{label}</span>
       <Icon
         className={
-          hasLocation ? "text-success-700 inline" : "text-danger inline"
+          hasLocation ? `${readyIconClass} inline` : "text-danger inline"
         }
         icon={
           hasLocation
-            ? "qlementine-icons:location-16"
+            ? readyIcon
             : "material-symbols-light:location-off-outline-rounded"
         }
         width={16}
@@ -157,20 +170,50 @@ export default function TripTable({
                     <div className="flex flex-col items-center gap-1">
                       <div className="inline-flex items-center gap-2">
                         {assignStatusChip(!!t.assignedDriverId)}
-                        {locationStatusChip(
-                          (t as any).hasLocation,
-                          onOpenLocationAction &&
-                            typeof (t as any).originLat === "number" &&
-                            typeof (t as any).originLng === "number"
-                            ? () =>
-                                onOpenLocationAction(
-                                  (t as any).originLat,
-                                  (t as any).originLng,
-                                  (t as any).originAddress || t.pickup,
-                                )
-                            : undefined,
-                        )}
-                        {(t as any).originDescription ? (
+                        {locationStatusChip({
+                          hasLocation: t.hasLocation,
+                          label: "مبدا",
+                          title: t.hasLocation
+                            ? "نمایش مبدا روی نقشه"
+                            : "لوکیشن مبدا تعیین نشده",
+                          readyIcon: "qlementine-icons:location-16",
+                          readyIconClass: "text-success-700",
+                          onOpenLocation:
+                            onOpenLocationAction &&
+                            typeof t.originLat === "number" &&
+                            typeof t.originLng === "number"
+                              ? () =>
+                                  onOpenLocationAction({
+                                    context: "origin",
+                                    lat: t.originLat,
+                                    lng: t.originLng,
+                                    addressText: t.originAddress || t.pickup,
+                                  })
+                              : undefined,
+                        })}
+                        {locationStatusChip({
+                          hasLocation: t.hasDestinationLocation,
+                          label: "مقصد",
+                          title: t.hasDestinationLocation
+                            ? "نمایش مقصد روی نقشه"
+                            : "لوکیشن مقصد تعیین نشده",
+                          readyIcon: "solar:map-arrow-right-bold",
+                          readyIconClass: "text-yellow-600",
+                          onOpenLocation:
+                            onOpenLocationAction &&
+                            typeof t.destinationLat === "number" &&
+                            typeof t.destinationLng === "number"
+                              ? () =>
+                                  onOpenLocationAction({
+                                    context: "destination",
+                                    lat: t.destinationLat,
+                                    lng: t.destinationLng,
+                                    addressText:
+                                      t.destinationAddress || t.dropoff,
+                                  })
+                              : undefined,
+                        })}
+                        {t.originDescription ? (
                           <button
                             className="inline-flex items-center"
                             disabled={!onOpenLocationDescAction}
@@ -178,7 +221,7 @@ export default function TripTable({
                             type="button"
                             onClick={() =>
                               onOpenLocationDescAction &&
-                              onOpenLocationDescAction((t as any).originDescription)
+                              onOpenLocationDescAction(t.originDescription)
                             }
                           >
                             <Chip
@@ -196,12 +239,40 @@ export default function TripTable({
                             </Chip>
                           </button>
                         ) : null}
-                        {(t as any).secureToken ? (
+                          {t.destinationDescription ? (
+                            <button
+                              className="inline-flex items-center"
+                              disabled={!onOpenLocationDescAction}
+                              title="نمایش توضیح مقصد"
+                              type="button"
+                              onClick={() =>
+                                onOpenLocationDescAction &&
+                                onOpenLocationDescAction(t.destinationDescription)
+                              }
+                            >
+                              <Chip
+                                className="bg-default-100 p-1"
+                                color="default"
+                                size="sm"
+                                variant="flat"
+                              >
+                                <span className="text-xs">توضیح مقصد</span>
+                                <Icon
+                                  className="text-default-500"
+                                  icon="mdi:text"
+                                  width={16}
+                                />
+                              </Chip>
+                            </button>
+                          ) : null}
+                        {t.secureToken ? (
                           <button
                             className="inline-flex items-center justify-center rounded-full p-1 hover:bg-default-200 transition"
                             title="لینک مسافر"
                             type="button"
-                            onClick={() => onOpenPovLinkAction && onOpenPovLinkAction((t as any).secureToken)}
+                            onClick={() =>
+                              onOpenPovLinkAction && onOpenPovLinkAction(t.secureToken)
+                            }
                           >
                             <Icon
                               className="text-default-500"
@@ -214,7 +285,7 @@ export default function TripTable({
                       {!t.assignedDriverId ? (
                         <CountdownChip
                           assigned={!!t.assignedDriverId}
-                          startsAtMs={(t as any).startsAtMs}
+                          startsAtMs={t.startsAtMs}
                         />
                       ) : null}
                     </div>
@@ -258,7 +329,7 @@ export default function TripTable({
                           </span>
                         </div>
                       ) : null}
-                      {(t as any).ticketCode ? (
+                      {t.ticketCode ? (
                         <div className="mt-1 inline-flex items-center gap-1 text-xs text-default-500">
                           <Icon
                             className="text-default-400"
@@ -267,7 +338,7 @@ export default function TripTable({
                           />
                           <span className="whitespace-nowrap">شماره سفر:</span>
                           <span className="font-medium text-default-600">
-                            {toFaDigits((t as any).ticketCode)}
+                            {toFaDigits(t.ticketCode)}
                           </span>
                         </div>
                       ) : null}
@@ -276,10 +347,10 @@ export default function TripTable({
                   <td className="px-3 py-2 text-center align-middle">
                     <div className="flex flex-col items-center leading-tight">
                       <span className="font-bold text-default-900">
-                        {t.scheduledTime}
+                        {formatTehranTime(t.startsAtMs) ?? t.scheduledTime}
                       </span>
                       <span className="text-xs text-default-500 mt-0.5">
-                        {t.scheduledDate}
+                        {formatTehranDate(t.startsAtMs) ?? t.scheduledDate}
                       </span>
                     </div>
                   </td>
@@ -293,13 +364,13 @@ export default function TripTable({
                             width={22}
                           />
                           <span className="font-medium">
-                            {(t as any).driverName ?? "راننده"}
+                            {t.driverName ?? "راننده"}
                           </span>
-                          {(t as any).driverCar ? (
+                          {t.driverCar ? (
                             <span className="text-default-400">•</span>
                           ) : null}
                           <span className="text-default-600">
-                            {(t as any).driverCar ?? ""}
+                            {t.driverCar ?? ""}
                           </span>
                         </div>
                         <Button
@@ -312,8 +383,8 @@ export default function TripTable({
                           onPress={() =>
                             onOpenCallAction &&
                             onOpenCallAction(
-                              (t as any).driverName,
-                              (t as any).driverPhone,
+                              t.driverName,
+                              t.driverPhone,
                             )
                           }
                         >

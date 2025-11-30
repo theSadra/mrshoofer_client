@@ -15,7 +15,7 @@ const config = {
       },
     },
   },
-  darkMode: ["class", '[data-theme="dark"]'],
+  darkMode: 'class', // HeroUI requires this but we force light mode
   plugins: [heroui({
       addCommonColors: true,
     })],

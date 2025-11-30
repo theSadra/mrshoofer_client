@@ -7,6 +7,8 @@ import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
 import { Icon } from "@iconify/react";
 
+import { formatTehranDate, formatTehranTime } from "../utils/tehranDate";
+
 export type TripStatus = "pending" | "ongoing" | "completed";
 
 export type Trip = {
@@ -23,18 +25,33 @@ export type Trip = {
   driverPhone?: string;
   tripCarName?: string;
   ticketCode?: string;
+  secureToken?: string;
   hasLocation?: boolean;
+  hasDestinationLocation?: boolean;
   originLat?: number;
   originLng?: number;
   originAddress?: string;
   originDescription?: string;
+  destinationLat?: number;
+  destinationLng?: number;
+  destinationAddress?: string;
+  destinationDescription?: string;
   startsAtMs?: number;
+};
+
+export type TripLocationContext = "origin" | "destination";
+
+export type TripLocationOpenPayload = {
+  lat?: number;
+  lng?: number;
+  addressText?: string;
+  context: TripLocationContext;
 };
 
 export type TripCardProps = {
   trip: Trip;
   onOpenAssignAction: () => void;
-  onOpenLocationAction?: (lat?: number, lng?: number, addressText?: string) => void;
+  onOpenLocationAction?: (payload: TripLocationOpenPayload) => void;
   onOpenCallAction?: (driverName?: string, driverPhone?: string) => void;
   onOpenLocationDescAction?: (description?: string) => void;
   onOpenPovLinkAction?: (token?: string) => void;
@@ -73,6 +90,29 @@ export default function TripCard({
   const URGENT_MIN = 30;
   const toFaDigits = (s: string) =>
     s.replace(/[0-9]/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]);
+  const tehranTime = React.useMemo(
+    () => formatTehranTime(trip.startsAtMs),
+    [trip.startsAtMs],
+  );
+  const tehranDate = React.useMemo(
+    () => formatTehranDate(trip.startsAtMs),
+    [trip.startsAtMs],
+  );
+  const canOpenOrigin =
+    typeof trip.originLat === "number" && typeof trip.originLng === "number";
+  const canOpenDestination =
+    typeof trip.destinationLat === "number" &&
+    typeof trip.destinationLng === "number";
+
+  const handleOpenLocation = (
+    context: TripLocationContext,
+    lat?: number,
+    lng?: number,
+    addressText?: string,
+  ) => {
+    if (!onOpenLocationAction) return;
+    onOpenLocationAction({ context, lat, lng, addressText });
+  };
 
   const CountdownChip: React.FC = () => {
     const [now, setNow] = React.useState<number>(Date.now());
@@ -136,14 +176,14 @@ export default function TripCard({
       <CardHeader className="flex items-center justify-between gap-3 py-3 px-4">
         <div className="flex items-center gap-2 text-default-600 text-sm">
           <Icon icon="solar:clock-circle-linear" width={18} />
-          {trip.scheduledTime ? (
+          {tehranTime || trip.scheduledTime ? (
             <span className="inline-flex items-baseline gap-1">
               <span className="font-bold text-default-900">
-                {trip.scheduledTime}
+                {tehranTime ?? trip.scheduledTime}
               </span>
-              {trip.scheduledDate ? (
+              {tehranDate || trip.scheduledDate ? (
                 <span className="text-default-500 text-xs sm:text-sm">
-                  {trip.scheduledDate}
+                  {tehranDate ?? trip.scheduledDate}
                 </span>
               ) : null}
             </span>
@@ -153,28 +193,21 @@ export default function TripCard({
           {/* Location status + description chips */}
           <button
             className="inline-flex items-center"
-            disabled={
-              !onOpenLocationAction ||
-              typeof trip.originLat !== "number" ||
-              typeof trip.originLng !== "number"
-            }
+            disabled={!onOpenLocationAction || !canOpenOrigin}
             title={
-              trip.hasLocation ? "نمایش مبدا روی نقشه" : "لوکیشن تعیین نشده"
+              trip.hasLocation
+                ? "نمایش مبدا روی نقشه"
+                : "لوکیشن مبدا تعیین نشده"
             }
             type="button"
-            onClick={() => {
-              if (
-                onOpenLocationAction &&
-                typeof trip.originLat === "number" &&
-                typeof trip.originLng === "number"
-              ) {
-                onOpenLocationAction(
-                  trip.originLat,
-                  trip.originLng,
-                  trip.originAddress || trip.pickup,
-                );
-              }
-            }}
+            onClick={() =>
+              handleOpenLocation(
+                "origin",
+                trip.originLat,
+                trip.originLng,
+                trip.originAddress || trip.pickup,
+              )
+            }
           >
             <Chip
               className="bg-default-100 p-1 gap-1"
@@ -195,7 +228,47 @@ export default function TripCard({
                 }
                 width={16}
               />
-              {trip.hasLocation && "مبدا"}
+              <span className="text-xs">مبدا</span>
+            </Chip>
+          </button>
+          <button
+            className="inline-flex items-center"
+            disabled={!onOpenLocationAction || !canOpenDestination}
+            title={
+              trip.hasDestinationLocation
+                ? "نمایش مقصد روی نقشه"
+                : "لوکیشن مقصد تعیین نشده"
+            }
+            type="button"
+            onClick={() =>
+              handleOpenLocation(
+                "destination",
+                trip.destinationLat,
+                trip.destinationLng,
+                trip.destinationAddress || trip.dropoff,
+              )
+            }
+          >
+            <Chip
+              className="bg-default-100 p-1 gap-1"
+              color="default"
+              size="sm"
+              variant="flat"
+            >
+              <Icon
+                className={
+                  trip.hasDestinationLocation
+                    ? "text-yellow-600 inline"
+                    : "text-danger inline"
+                }
+                icon={
+                  trip.hasDestinationLocation
+                    ? "solar:map-arrow-right-bold"
+                    : "material-symbols-light:location-off-outline-rounded"
+                }
+                width={16}
+              />
+              <span className="text-xs">مقصد</span>
             </Chip>
           </button>
           {trip.originDescription ? (
@@ -219,12 +292,14 @@ export default function TripCard({
               </Chip>
             </button>
           ) : null}
-          { (trip as any).secureToken ? (
+          {trip.secureToken ? (
             <button
               className="inline-flex items-center justify-center rounded-full p-1 hover:bg-default-200 transition"
               title="لینک مسافر"
               type="button"
-              onClick={() => onOpenPovLinkAction && onOpenPovLinkAction((trip as any).secureToken)}
+              onClick={() =>
+                onOpenPovLinkAction && onOpenPovLinkAction(trip.secureToken)
+              }
             >
               <Icon className="text-default-500" icon="solar:link-circle-linear" width={18} />
             </button>

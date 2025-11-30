@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
           Driver: true,
           Passenger: true,
           Location: true,
+          DestinationLocation: true,
         },
       });
     }
