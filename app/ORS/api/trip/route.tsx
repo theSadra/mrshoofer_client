@@ -114,9 +114,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Generate unique TicketCode
-    const uniqueTicketCode = await generateUniqueTicketCode(prisma);
-
     // Case-insensitive trip properties
     const TEHRAN_OFFSET_MINUTES = 210; // UTC+3:30 without DST
 
@@ -163,8 +160,30 @@ export async function POST(req: NextRequest) {
       return isNaN(fallback.getTime()) ? undefined : fallback;
     }
 
+    const inputTicketCode = getProperty(trip, "TicketCode", "ticketCode", "ticketcode");
+    
+    // Use input TicketCode if provided, otherwise generate unique one
+    let finalTicketCode: string;
+    if (inputTicketCode && typeof inputTicketCode === 'string' && inputTicketCode.trim() !== '') {
+      // Validate that the provided TicketCode is not already in use
+      const existingTrip = await prisma.trip.findUnique({
+        where: { TicketCode: inputTicketCode.trim() },
+      });
+      
+      if (existingTrip) {
+        return NextResponse.json(
+          { error: `TicketCode "${inputTicketCode}" is already in use`, code: "DUPLICATE_TICKET_CODE" },
+          { status: 409 },
+        );
+      }
+      
+      finalTicketCode = inputTicketCode.trim();
+    } else {
+      // Generate unique TicketCode only if not provided
+      finalTicketCode = await generateUniqueTicketCode(prisma);
+    }
+
     const tripData = {
-      TicketCode: getProperty(trip, "TicketCode", "ticketCode", "ticketcode"),
       TripCode: getProperty(trip, "TripCode", "tripCode", "tripcode"),
       Origin_id: getProperty(trip, "Origin_id", "origin_id", "originId"),
       Destination_id: getProperty(
@@ -196,7 +215,7 @@ export async function POST(req: NextRequest) {
     const newTrip = await prisma.trip.create({
       data: {
         ...tripData,
-        TicketCode: uniqueTicketCode, // Override with unique generated code
+        TicketCode: finalTicketCode, // Use input TicketCode or generated one
         passengerId: upsertedPassenger.id,
         PassengerSmsSent: false,
         AdminApproved: false,
