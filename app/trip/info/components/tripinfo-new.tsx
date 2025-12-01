@@ -107,14 +107,24 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
     trip?.DestinationLocation?.Latitude && trip?.DestinationLocation?.Longitude,
   );
 
+  const navigateToLocationSelector = (selection: "origin" | "destination") => {
+    if (!trip?.SecureToken) {
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set("selection", selection);
+
+    window.location.href = `/location/${trip.SecureToken}?${params.toString()}`;
+  };
+
   const handleOriginClick = () => {
     if (originSelected) {
       setShowOriginEditModal(true);
 
       return;
     }
-    // Navigate to location selector
-    window.location.href = `/trip-flow/location?type=origin&tripId=${trip?.SecureToken}`;
+    navigateToLocationSelector("origin");
   };
 
   const handleDestinationClick = () => {
@@ -124,16 +134,15 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
 
       return;
     }
-    // Navigate to location selector
-    window.location.href = `/trip-flow/location?type=destination&tripId=${trip?.SecureToken}`;
+    navigateToLocationSelector("destination");
   };
 
   const handleConfirmOriginEdit = () => {
-    window.location.href = `/trip-flow/location?type=origin&tripId=${trip?.SecureToken}`;
+    navigateToLocationSelector("origin");
   };
 
   const handleConfirmDestinationEdit = () => {
-    window.location.href = `/trip-flow/location?type=destination&tripId=${trip?.SecureToken}`;
+    navigateToLocationSelector("destination");
   };
 
   const hasDriverAssigned = Boolean(trip?.driverId);
