@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Button,
@@ -188,6 +188,9 @@ export default function OnboardingPage() {
     tripToken,
     refreshTripData,
   } = useTripContext();
+  const swipeStartRef = useRef<
+    { x: number; y: number; time: number; pointerId?: number } | null
+  >(null);
   const [hasTripToken, setHasTripToken] = useState(false);
   const refreshTrigger = searchParams.get("refreshTrip");
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -398,6 +401,46 @@ export default function OnboardingPage() {
     currentStep === 2 &&
     (!tripData?.OriginLocation || !tripData?.DestinationLocation);
 
+  const SWIPE_MIN_DISTANCE = 60; // pixels
+  const SWIPE_MAX_DURATION = 700; // ms
+  const SWIPE_MAX_OFF_AXIS = 80; // pixels
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLElement>) => {
+    // Only react to primary mouse button or touch/pen interactions
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    swipeStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      time: Date.now(),
+      pointerId: event.pointerId,
+    };
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLElement>) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+
+    if (!start || start.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = Math.abs(event.clientY - start.y);
+    const duration = Date.now() - start.time;
+
+    const isHorizontalSwipe =
+      duration <= SWIPE_MAX_DURATION &&
+      deltaX >= SWIPE_MIN_DISTANCE &&
+      deltaY <= SWIPE_MAX_OFF_AXIS;
+
+    if (isHorizontalSwipe && !isNextDisabled) {
+      nextStep();
+    }
+  };
+
+  const handlePointerCancel = () => {
+    swipeStartRef.current = null;
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -522,6 +565,11 @@ export default function OnboardingPage() {
                     className="w-full h-full flex-1"
                     exit="out"
                     initial="initial"
+                    style={{ touchAction: "pan-y" }}
+                    onPointerDown={handlePointerDown}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerCancel}
+                    onPointerLeave={handlePointerCancel}
                     variants={pageVariants}
                   >
                     {renderStep()}
