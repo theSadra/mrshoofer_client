@@ -1,8 +1,14 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-
 import prisma from "@/lib/prisma";
+import { normalizeIranPhoneNumber } from "@/lib/phone-utils";
+import {
+  deleteAdminOtpRecord,
+  getAdminOtpRecord,
+  incrementAdminOtpAttempts,
+} from "@/lib/otp-store";
+const OTP_MAX_ATTEMPTS = 5;
 
 // DOCKER FIX: Ensure secret is always available
 const SECRET =
@@ -27,9 +33,67 @@ export const authOptions = {
           placeholder: "admin@example.com",
         },
         password: { label: "رمز عبور", type: "password" },
+        otpCode: { label: "کد پیامکی", type: "text" },
+        loginMethod: { label: "loginMethod", type: "text" },
       },
       async authorize(credentials: Record<string, string> | undefined) {
         try {
+          const loginMethod = credentials?.loginMethod ?? "password";
+
+          if (loginMethod === "otp") {
+            const normalizedPhone = normalizeIranPhoneNumber(
+              credentials?.username ?? "",
+            );
+            const codeInput = (credentials?.otpCode || credentials?.password || "").trim();
+
+            if (!normalizedPhone || codeInput.length < 4) {
+              return null;
+            }
+
+            const otpRecord = getAdminOtpRecord(normalizedPhone);
+
+            if (!otpRecord) {
+              return null;
+            }
+
+            if (otpRecord.expiresAt < Date.now()) {
+              deleteAdminOtpRecord(normalizedPhone);
+
+              return null;
+            }
+
+            if (otpRecord.code !== codeInput) {
+              const attempts = incrementAdminOtpAttempts(normalizedPhone);
+
+              if (attempts >= OTP_MAX_ATTEMPTS) {
+                deleteAdminOtpRecord(normalizedPhone);
+              }
+
+              return null;
+            }
+
+            deleteAdminOtpRecord(normalizedPhone);
+
+            const otpUser = await prisma.user.findFirst({
+              where: {
+                phoneNumber: normalizedPhone,
+                isAdmin: true,
+              } as any,
+            });
+
+            if (!otpUser) {
+              return null;
+            }
+
+            return {
+              id: otpUser.id,
+              name: otpUser.name,
+              email: otpUser.email,
+              isAdmin: otpUser.isAdmin,
+              isSuperAdmin: (otpUser as any).isSuperAdmin,
+            };
+          }
+
           // Validate that both username and password are provided
           if (!credentials?.username || !credentials?.password) {
             return null;
@@ -43,6 +107,8 @@ export const authOptions = {
             return null;
           }
 
+          const normalizedPhone = normalizeIranPhoneNumber(username);
+
           // Try to find user by email first
           let user = await prisma.user.findUnique({
             where: { email: username },
@@ -52,6 +118,12 @@ export const authOptions = {
           if (!user) {
             user = await prisma.user.findFirst({
               where: { name: username },
+            });
+          }
+
+          if (!user && normalizedPhone) {
+            user = await prisma.user.findFirst({
+              where: { phoneNumber: normalizedPhone } as any,
             });
           }
 

@@ -1,12 +1,20 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Prisma } from "@prisma/client";
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { Card, CardBody } from "@heroui/card";
 import { Image } from "@heroui/image";
 import { Chip } from "@heroui/chip";
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from "@heroui/react";
 
 import LocationEditModal from "@/components/onboarding/LocationEditModal";
 import { formatTehranDateTime } from "@/lib/format-date";
@@ -82,6 +90,9 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
   const [showOriginEditModal, setShowOriginEditModal] = useState(false);
   const [showDestinationEditModal, setShowDestinationEditModal] =
     useState(false);
+  const [lockedModalType, setLockedModalType] = useState<
+    "origin" | "destination" | null
+  >(null);
   const [displayDriver, setDisplayDriver] = useState(trip?.Driver ?? null);
 
   const schedule = formatTehranDateTime(trip?.StartsAt ?? null);
@@ -107,6 +118,24 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
     trip?.DestinationLocation?.Latitude && trip?.DestinationLocation?.Longitude,
   );
 
+  const isLocationEditingLocked = useMemo(() => {
+    if (!trip?.StartsAt) return false;
+
+    const startsAt = new Date(trip.StartsAt);
+
+    if (Number.isNaN(startsAt.getTime())) return false;
+
+    const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+
+    return startsAt.getTime() - Date.now() <= THIRTY_MINUTES_MS;
+  }, [trip?.StartsAt]);
+
+  const openLockedModal = (type: "origin" | "destination") => {
+    setLockedModalType(type);
+  };
+
+  const closeLockedModal = () => setLockedModalType(null);
+
   const navigateToLocationSelector = (selection: "origin" | "destination") => {
     if (!trip?.SecureToken) {
       return;
@@ -119,6 +148,12 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
   };
 
   const handleOriginClick = () => {
+    if (isLocationEditingLocked) {
+      openLockedModal("origin");
+
+      return;
+    }
+
     if (originSelected) {
       setShowOriginEditModal(true);
 
@@ -129,6 +164,13 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
 
   const handleDestinationClick = () => {
     if (!originSelected) return;
+
+    if (isLocationEditingLocked) {
+      openLockedModal("destination");
+
+      return;
+    }
+
     if (destinationSelected) {
       setShowDestinationEditModal(true);
 
@@ -138,10 +180,22 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
   };
 
   const handleConfirmOriginEdit = () => {
+    if (isLocationEditingLocked) {
+      openLockedModal("origin");
+
+      return;
+    }
+
     navigateToLocationSelector("origin");
   };
 
   const handleConfirmDestinationEdit = () => {
+    if (isLocationEditingLocked) {
+      openLockedModal("destination");
+
+      return;
+    }
+
     navigateToLocationSelector("destination");
   };
 
@@ -669,6 +723,72 @@ function TripInfo({ trip }: { trip: TripWithRelations | null }) {
         onClose={() => setShowDestinationEditModal(false)}
         onConfirm={handleConfirmDestinationEdit}
       />
+      <Modal
+        backdrop="blur"
+        classNames={{
+          base: "rounded-3xl shadow-2xl",
+          header: "border-b border-default-200",
+          footer: "border-t border-default-200",
+        }}
+        isOpen={lockedModalType !== null}
+        placement="center"
+        onClose={closeLockedModal}
+      >
+        <ModalContent>
+          <ModalHeader className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-warning-100 flex items-center justify-center">
+              <Icon
+                className="text-warning-600"
+                icon="solar:shield-warning-bold"
+                width={26}
+              />
+            </div>
+            <div className="text-right">
+              <p className="text-base font-bold text-gray-900">
+                امکان ویرایش محدود است
+              </p>
+              <p className="text-xs text-gray-500">
+                {lockedModalType === "origin" ? "مبدا" : "مقصد"} این سفر
+              </p>
+            </div>
+          </ModalHeader>
+          <ModalBody className="space-y-3 text-right">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              به دلیل نزدیک بودن شروع سفر، به منظور تغییر مبدا یا مقصد، با پشتیبانی تماس
+              حاصل فرمایید.
+            </p>
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-3 flex items-start gap-2">
+              <Icon
+                className="text-gray-400 mt-0.5"
+                icon="solar:clock-circle-bold"
+                width={20}
+              />
+              <p className="text-xs text-gray-500 leading-relaxed">
+                تغییر موقعیت‌ها تا ۳۰ دقیقه پیش از شروع سفر امکان‌پذیر است.
+              </p>
+            </div>
+          </ModalBody>
+          <ModalFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              className="w-full"
+              color="default"
+              variant="flat"
+              onPress={closeLockedModal}
+            >
+              متوجه شدم
+            </Button>
+            <Button
+              as="a"
+              className="w-full"
+              color="primary"
+              href="tel:+9828422243"
+              startContent={<Icon icon="solar:phone-calling-bold" width={18} />}
+            >
+              تماس با پشتیبانی
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </motion.div>
   );
 }

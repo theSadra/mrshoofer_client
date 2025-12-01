@@ -1,19 +1,13 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
+  previewFeatures = []
+  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+}
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = []
-  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
-  output          = "../node_modules/.prisma/client"
 }
 
 model Passenger {
@@ -22,49 +16,39 @@ model Passenger {
   Lastname    String
   NumberPhone String     @unique
   NaCode      String?
-  Trips       Trip[]
   Locations   Location[]
-}
-
-enum TripStatus {
-  wating_info
-  wating_location
-  wating_start
-  intrip
-  done
-  canceled
+  Trips       Trip[]
 }
 
 model Trip {
-  id               Int        @id @default(autoincrement())
-  TicketCode       String     @unique
-  TripCode         String?
-  Origin_id        Int
-  Destination_id   Int
-  OriginCity       String
-  DestinationCity  String
-  CarName          String
-  ServiceName      String
-  StartsAt         DateTime
-  Passenger        Passenger  @relation(fields: [passengerId], references: [id])
-  passengerId      Int
-  Location         Location?  @relation("TripLocation", fields: [locationId], references: [id])
-  locationId       Int?
-  OriginLocation      Location? @relation("TripOrigin", fields: [originLocationId], references: [id])
-  originLocationId    Int?
-  DestinationLocation Location? @relation("TripDestination", fields: [destinationLocationId], references: [id])
+  id                    Int        @id @default(autoincrement())
+  TicketCode            String     @unique
+  TripCode              String?
+  Origin_id             Int
+  Destination_id        Int
+  OriginCity            String
+  DestinationCity       String
+  CarName               String
+  ServiceName           String
+  StartsAt              DateTime
+  passengerId           Int
+  locationId            Int?
+  PassengerSmsSent      Boolean
+  AdminApproved         Boolean
+  status                TripStatus @default(wating_info)
+  SecureToken           String     @unique
+  driverId              Int?
+  originLocationId      Int?
   destinationLocationId Int?
-  PassengerSmsSent Boolean
-  AdminApproved    Boolean
-  status           TripStatus @default(wating_info)
-  SecureToken      String     @unique
-  driverId Int?
-  Driver   Driver? @relation(fields: [driverId], references: [id])
+  DestinationLocation   Location?  @relation("TripDestination", fields: [destinationLocationId], references: [id])
+  Driver                Driver?    @relation(fields: [driverId], references: [id])
+  Location              Location?  @relation("TripLocation", fields: [locationId], references: [id])
+  OriginLocation        Location?  @relation("TripOrigin", fields: [originLocationId], references: [id])
+  Passenger             Passenger  @relation(fields: [passengerId], references: [id])
 }
 
 model Driver {
-  id Int @id @default(autoincrement())
-
+  id          Int     @id @default(autoincrement())
   Firstname   String
   Lastname    String
   CarName     String?
@@ -73,17 +57,17 @@ model Driver {
 }
 
 model Location {
-  id          Int       @id @default(autoincrement())
-  Latitude    Float?
-  Longitude   Float?
-  Description String?
-  TextAddress String?
-  PhoneNumber String?
-  Passenger   Passenger @relation(fields: [passengerId], references: [id])
-  passengerId Int
-  Trips       Trip[]    @relation("TripLocation")
-  OriginTrips Trip[]    @relation("TripOrigin")
-  DestinationTrips Trip[] @relation("TripDestination")
+  id               Int       @id @default(autoincrement())
+  Latitude         Float?
+  Longitude        Float?
+  Description      String?
+  TextAddress      String?
+  PhoneNumber      String?
+  passengerId      Int
+  Passenger        Passenger @relation(fields: [passengerId], references: [id])
+  DestinationTrips Trip[]    @relation("TripDestination")
+  Trips            Trip[]    @relation("TripLocation")
+  OriginTrips      Trip[]    @relation("TripOrigin")
 }
 
 model User {
@@ -91,10 +75,11 @@ model User {
   name          String?
   email         String?   @unique
   emailVerified DateTime?
-  password      String? // hashed password
+  password      String?
   isAdmin       Boolean   @default(false)
-  isSuperAdmin  Boolean   @default(false)
   image         String?
+  isSuperAdmin  Boolean   @default(false)
+  phoneNumber   String?
   accounts      Account[]
   sessions      Session[]
 }
@@ -131,4 +116,25 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model AdminOtp {
+  phone      String   @id
+  code       String
+  expiresAt  DateTime
+  attempts   Int      @default(0)
+  lastSentAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([expiresAt])
+}
+
+enum TripStatus {
+  wating_info
+  wating_location
+  wating_start
+  intrip
+  done
+  canceled
 }

@@ -15,6 +15,9 @@ export const ORS_API_SECRET =
 export const SMSIR_API_KEY =
   process.env.SMSIR_API_KEY ||
   "YJure760oRHOgR01yMMB9R0my7cLtNOlscPgMLazgZCQhVy6";
+export const SMSIR_MANAGE_OTP_TEMPLATE_ID = Number(
+  process.env.SMSIR_MANAGE_OTP_TEMPLATE_ID || "473631",
+);
 export const APP_BASE_URL = (
   process.env.APP_BASE_URL || "https://webapp.mrshoofer.ir"
 ).replace(/^["']|["']$/g, "");

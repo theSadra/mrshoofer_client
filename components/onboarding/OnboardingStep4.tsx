@@ -1,10 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { Card, CardBody } from "@heroui/card";
 import { Image } from "@heroui/image";
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from "@heroui/react";
 
 import LocationEditModal from "./LocationEditModal";
 
@@ -76,6 +84,9 @@ export default function OnboardingStep4({ onSelectLocation }) {
   const [showOriginEditModal, setShowOriginEditModal] = useState(false);
   const [showDestinationEditModal, setShowDestinationEditModal] =
     useState(false);
+  const [lockedModalType, setLockedModalType] = useState<
+    "origin" | "destination" | null
+  >(null);
 
   const { tripData } = useTripContext();
   const selectLocation = onSelectLocation || (() => {});
@@ -95,7 +106,31 @@ export default function OnboardingStep4({ onSelectLocation }) {
     ? destinationInfo?.TextAddress || "موقعیت ثبت شد"
     : "انتخاب مقصد";
 
+  const isLocationEditingLocked = useMemo(() => {
+    if (!typedTripData?.StartsAt) return false;
+
+    const startsAt = new Date(typedTripData.StartsAt);
+
+    if (Number.isNaN(startsAt.getTime())) return false;
+
+    const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+
+    return startsAt.getTime() - Date.now() <= THIRTY_MINUTES_MS;
+  }, [typedTripData?.StartsAt]);
+
+  const openLockedModal = (type: "origin" | "destination") => {
+    setLockedModalType(type);
+  };
+
+  const closeLockedModal = () => setLockedModalType(null);
+
   const handleOriginClick = () => {
+    if (isLocationEditingLocked) {
+      openLockedModal("origin");
+
+      return;
+    }
+
     if (originSelected) {
       // Show confirmation modal for editing
       setShowOriginEditModal(true);
@@ -112,6 +147,13 @@ export default function OnboardingStep4({ onSelectLocation }) {
       // Cannot select destination without origin
       return;
     }
+
+    if (isLocationEditingLocked) {
+      openLockedModal("destination");
+
+      return;
+    }
+
     if (destinationSelected) {
       // Show confirmation modal for editing
       setShowDestinationEditModal(true);
@@ -124,11 +166,23 @@ export default function OnboardingStep4({ onSelectLocation }) {
   };
 
   const handleConfirmOriginEdit = () => {
+    if (isLocationEditingLocked) {
+      openLockedModal("origin");
+
+      return;
+    }
+
     setIsOpeningOriginMap(true);
     selectLocation("origin");
   };
 
   const handleConfirmDestinationEdit = () => {
+    if (isLocationEditingLocked) {
+      openLockedModal("destination");
+
+      return;
+    }
+
     setIsOpeningDestinationMap(true);
     selectLocation("destination");
   };
@@ -365,6 +419,72 @@ export default function OnboardingStep4({ onSelectLocation }) {
         onClose={() => setShowDestinationEditModal(false)}
         onConfirm={handleConfirmDestinationEdit}
       />
+      <Modal
+        backdrop="blur"
+        classNames={{
+          base: "rounded-3xl shadow-2xl",
+          header: "border-b border-default-200",
+          footer: "border-t border-default-200",
+        }}
+        isOpen={lockedModalType !== null}
+        placement="center"
+        onClose={closeLockedModal}
+      >
+        <ModalContent>
+          <ModalHeader className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-warning-100 flex items-center justify-center">
+              <Icon
+                className="text-warning-600"
+                icon="solar:shield-warning-bold"
+                width={26}
+              />
+            </div>
+            <div className="text-right">
+              <p className="text-base font-bold text-gray-900">
+                امکان ویرایش محدود است
+              </p>
+              <p className="text-xs text-gray-500">
+                {lockedModalType === "origin" ? "مبدا" : "مقصد"} این سفر
+              </p>
+            </div>
+          </ModalHeader>
+          <ModalBody className="space-y-3 text-right">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              به دلیل نزدیک بودن شروع سفر، به منظور تغییر مبدا یا مقصد، با پشتیبانی تماس
+              حاصل فرمایید.
+            </p>
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-3 flex items-start gap-2">
+              <Icon
+                className="text-gray-400 mt-0.5"
+                icon="solar:clock-circle-bold"
+                width={20}
+              />
+              <p className="text-xs text-gray-500 leading-relaxed">
+                تغییر موقعیت‌ها تا ۳۰ دقیقه پیش از شروع سفر امکان‌پذیر است.
+              </p>
+            </div>
+          </ModalBody>
+          <ModalFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              className="w-full"
+              color="default"
+              variant="flat"
+              onPress={closeLockedModal}
+            >
+              متوجه شدم
+            </Button>
+            <Button
+              as="a"
+              className="w-full"
+              color="primary"
+              href="tel:+9828422243"
+              startContent={<Icon icon="solar:phone-calling-bold" width={18} />}
+            >
+              تماس با پشتیبانی
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </motion.div>
   );
 }

@@ -20,6 +20,11 @@ export default withAuth(
     // Public manage login always allowed
     if (pathname === "/manage/login") return NextResponse.next();
 
+    // OTP request endpoint must stay public so admins can receive codes before logging in
+    if (pathname === "/manage/api/auth/request-otp") {
+      return NextResponse.next();
+    }
+
     // Superadmin section
     if (pathname.startsWith("/superadmin")) {
       if (!token) {
