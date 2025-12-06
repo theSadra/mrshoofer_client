@@ -16,12 +16,16 @@ function generateOtpCode(length = 5): string {
 }
 
 export async function POST(request: NextRequest) {
+  console.log("[OTP] Request received");
+  
   // 1. Parse request body
   let body: { phone?: string };
 
   try {
     body = await request.json();
-  } catch {
+    console.log("[OTP] Body parsed, phone:", body?.phone?.substring(0, 3) + "***");
+  } catch (parseError) {
+    console.error("[OTP] JSON parse error:", parseError);
     return NextResponse.json(
       { error: "درخواست نامعتبر است" },
       { status: 400 },
@@ -84,12 +88,23 @@ export async function POST(request: NextRequest) {
   let smsSent = false;
 
   try {
+    console.log("[OTP] Attempting to send SMS...");
     smsSent = await sendAdminOtpSMS(normalizedPhone, code);
+    console.log("[OTP] SMS send result:", smsSent);
   } catch (smsError) {
     console.error("[OTP] SMS send error:", smsError);
+    // Return more detailed error
+    return NextResponse.json(
+      { 
+        error: "ارسال پیامک با خطا مواجه شد", 
+        details: smsError instanceof Error ? smsError.message : "Unknown error"
+      },
+      { status: 500 },
+    );
   }
 
   if (!smsSent) {
+    console.error("[OTP] SMS not sent (returned false)");
     return NextResponse.json(
       { error: "ارسال پیامک با خطا مواجه شد" },
       { status: 500 },
