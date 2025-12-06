@@ -334,6 +334,7 @@ export default function AdminLoginPage() {
                   color="primary"
                   isDisabled={otpSending || resendTimer > 0 || !otpPhone.trim()}
                   isLoading={otpSending}
+                  type="button"
                   variant="bordered"
                   onPress={handleSendOtp}
                 >
