@@ -115,8 +115,9 @@ export default function AdminLoginPage() {
     setOtpSending(true);
 
     try {
-      console.log("[OTP Client] Sending request to /manage/api/auth/request-otp");
-      const res = await fetch("/manage/api/auth/request-otp", {
+      const apiUrl = "/manage/api/auth/request-otp";
+      console.log("[OTP Client] Sending request to", apiUrl);
+      const res = await fetch(new URL(apiUrl, window.location.origin).href, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: otpPhone }),
@@ -352,8 +353,21 @@ export default function AdminLoginPage() {
                   <div className="space-y-4">
                     <div className="space-y-3 text-center" dir="rtl">
                       <p className="text-sm text-gray-600 mb-2">
-                        کد تایید برای شماره {maskPhoneNumber(otpPhone)} ارسال شد
+                        کد تایید برای شماره {otpPhone} ارسال شد
                       </p>
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:underline"
+                        onClick={() => {
+                          setOtpSent(false);
+                          setOtpCode("");
+                          setOtpError("");
+                          setOtpSuccess("");
+                          setResendTimer(0);
+                        }}
+                      >
+                        تغییر شماره
+                      </button>
                       <div className="flex justify-center" dir="ltr">
                         <InputOtp
                           allowedKeys={REGEXP_ONLY_DIGITS}

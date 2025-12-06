@@ -5,6 +5,10 @@ import { sendAdminOtpSMS } from "@/lib/SmsService/AdminSMSSender";
 import { normalizeIranPhoneNumber } from "@/lib/phone-utils";
 import { getAdminOtpRecord, saveAdminOtpRecord } from "@/lib/otp-store";
 
+// Force this route to use Node.js runtime (not Edge)
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 const OTP_EXPIRATION_MINUTES = 5;
 const RESEND_WINDOW_SECONDS = 60;
 
