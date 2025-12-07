@@ -1,18 +1,19 @@
 import { Smsir } from "sms-typescript/lib";
 
-import {
-  SMSIR_API_KEY,
-  SMSIR_MANAGE_OTP_TEMPLATE_ID,
-} from "@/lib/env-constants";
+import { SMSIR_API_KEY } from "@/lib/env-constants";
 
+// Use centralized env constants - same pattern as PassengerSMSSender
 const smsirClient = new Smsir(SMSIR_API_KEY, 1);
+
+// Hardcode template ID like other SMS senders (env var was causing issues)
+const ADMIN_OTP_TEMPLATE_ID = 473631;
 
 export async function sendAdminOtpSMS(phone: string, code: string) {
   try {
-    console.log("[AdminOTP] Sending OTP to", phone, "with template", SMSIR_MANAGE_OTP_TEMPLATE_ID);
+    console.log("[AdminOTP] Sending OTP to", phone, "with template", ADMIN_OTP_TEMPLATE_ID);
     const result = await smsirClient.SendVerifyCode(
       phone,
-      SMSIR_MANAGE_OTP_TEMPLATE_ID,
+      ADMIN_OTP_TEMPLATE_ID,
       [{ name: "CODE", value: code }],
     );
 
