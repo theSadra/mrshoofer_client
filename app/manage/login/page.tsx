@@ -159,8 +159,7 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleOtpVerify = async () => {
     setOtpError("");
     setOtpSuccess("");
 
@@ -318,9 +317,8 @@ export default function AdminLoginPage() {
             </Tab>
 
             <Tab key="otp" title="ورود با پیامک">
-              <form className="space-y-4" onSubmit={handleOtpSubmit}>
+              <div className="space-y-4">
                 <Input
-                  isRequired
                   label="شماره موبایل مدیر"
                   placeholder="مثال: 09123456789"
                   startContent={
@@ -333,6 +331,14 @@ export default function AdminLoginPage() {
                   value={otpPhone}
                   variant="bordered"
                   onChange={(e) => setOtpPhone(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (!otpSent && otpPhone.trim() && !otpSending) {
+                        handleSendOtp();
+                      }
+                    }
+                  }}
                 />
 
                 <Button
@@ -397,13 +403,18 @@ export default function AdminLoginPage() {
                       isDisabled={otpCode.trim().length < 4}
                       isLoading={otpVerifying}
                       size="lg"
-                      type="submit"
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleOtpVerify();
+                      }}
                     >
                       {otpVerifying ? "در حال ورود..." : "ورود با کد پیامکی"}
                     </Button>
                   </div>
                 )}
-              </form>
+              </div>
             </Tab>
           </Tabs>
         </CardBody>
