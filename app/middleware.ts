@@ -8,8 +8,15 @@ const HARDCODED_SECRET =
   "vK8mN2pQ7rS9tU6wX3yZ5aB8cE1fH4iL7oP0qR3sT6uV9xA2bD5gJ8kM1nQ4rU7w";
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Allow OTP/auth endpoints to be publicly accessible for login
+  if (pathname.startsWith("/manage/api/auth")) {
+    return NextResponse.next();
+  }
+
   // Allow access to login page
-  if (request.nextUrl.pathname === "/manage/login") {
+  if (pathname === "/manage/login") {
     return NextResponse.next();
   }
 
@@ -33,7 +40,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/manage/((?!login).*)", // All /manage routes except /manage/login
+    "/manage/((?!login|api/auth).*)", // /manage routes except login & public auth endpoints
     "/api/admin/:path*", // All admin API routes
   ],
 };
