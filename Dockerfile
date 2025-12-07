@@ -1,47 +1,57 @@
-# Build stage
-FROM node:18-alpine AS builder
+# Next.js + Prisma Production Dockerfile
+FROM node:20-alpine AS base
 
+# Install dependencies only when needed
+FROM base AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+# Remove postinstall script to prevent early Prisma generation
+RUN sed -i '/postinstall/d' package.json
+RUN npm ci --legacy-peer-deps
 
-# Install dependencies
-RUN npm ci
-
-# Copy prisma schema and generate client
-COPY prisma ./prisma/
-RUN npx prisma generate
-
-# Copy source code
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the application
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV SKIP_ENV_VALIDATION=1
-RUN npm run build
+# Set placeholder DATABASE_URL for Prisma client generation (no actual DB connection)
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
-# Production stage
-FROM node:18-alpine AS runner
+# Generate Prisma client during build (no database access needed)
+RUN npx prisma generate
 
+# Build Next.js application
+RUN npx next build
+
+# Production image, copy all the files and run next
+FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+# Disable Next.js telemetry during runtime
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user
+# Create nextjs user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built application
+# Copy the public folder from builder stage
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Set correct permissions
-RUN chown -R nextjs:nodejs /app
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy Prisma schema and generated client for runtime migrations
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
 USER nextjs
 
@@ -50,4 +60,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Start with migrations and then the app
+CMD ["sh", "-c", "echo '🔄 Running database migrations...' && npx prisma migrate deploy || echo '⚠️ Migration failed or no migrations to run' && echo '🚀 Starting Next.js application...' && exec node server.js"]
