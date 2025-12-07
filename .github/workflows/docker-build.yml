@@ -42,6 +42,7 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
+        no-cache: true
         tags: |
           sadradorostkar/mrshoofer-client:latest
           sadradorostkar/mrshoofer-client:${{ steps.meta.outputs.commit_hash }}
