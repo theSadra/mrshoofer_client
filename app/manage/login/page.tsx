@@ -102,7 +102,13 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleSendOtp = async () => {
+  const handleSendOtp = async (e?: React.MouseEvent | React.FormEvent) => {
+    // Prevent any form submission
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     setOtpError("");
     setOtpSuccess("");
 
@@ -336,7 +342,11 @@ export default function AdminLoginPage() {
                   isLoading={otpSending}
                   type="button"
                   variant="bordered"
-                  onPress={handleSendOtp}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSendOtp(e);
+                  }}
                 >
                   {resendTimer > 0
                     ? `ارسال مجدد در ${resendTimer} ثانیه`
