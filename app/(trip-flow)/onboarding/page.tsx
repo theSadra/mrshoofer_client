@@ -17,6 +17,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useTripContext } from "../trip-context";
 
+import {
+  markOnboardingCompleted,
+  isOnboardingCompleted,
+} from "@/lib/onboarding-utils";
 import OnboardingStep1 from "@/components/onboarding/OnboardingStep1";
 import OnboardingStep2 from "@/components/onboarding/OnboardingStep2";
 import OnboardingStep3 from "@/components/onboarding/OnboardingStep3";
@@ -194,6 +198,25 @@ export default function OnboardingPage() {
   const [hasTripToken, setHasTripToken] = useState(false);
   const refreshTrigger = searchParams.get("refreshTrip");
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const hasCheckedCompletion = useRef(false);
+
+  // Check if onboarding was already completed and redirect to trip info
+  useEffect(() => {
+    if (hasCheckedCompletion.current) return;
+    hasCheckedCompletion.current = true;
+
+    const token = searchParams.get("triptoken");
+    
+    // Only auto-redirect if:
+    // 1. We have a trip token
+    // 2. Onboarding was previously completed
+    // 3. User is on step 1 (default landing)
+    if (token && isOnboardingCompleted() && currentStep === 1) {
+      console.log("Onboarding already completed - redirecting to trip info");
+      // Use replace to avoid adding to history stack
+      router.replace(`/trip/info/${token}`);
+    }
+  }, [searchParams, router, currentStep]);
 
   // Extract triptoken from URL and set it in context
   useEffect(() => {
@@ -366,6 +389,10 @@ export default function OnboardingPage() {
       setCurrentStep(next);
       syncStepToUrl(next);
     } else {
+      // User completed onboarding - mark it and navigate to trip info
+      markOnboardingCompleted();
+      console.log("Onboarding completed - marked in localStorage");
+      
       // Navigate to trip info page with secure token
       if (tripData?.SecureToken) {
         router.push(`/trip/info/${tripData.SecureToken}`);

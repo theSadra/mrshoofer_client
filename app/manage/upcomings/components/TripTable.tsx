@@ -156,6 +156,9 @@ export default function TripTable({
                 زمان
               </th>
               <th className="px-3 py-2 text-center font-semibold text-default-700 whitespace-nowrap">
+                مسافر
+              </th>
+              <th className="px-3 py-2 text-center font-semibold text-default-700 whitespace-nowrap">
                 راننده
               </th>
             </tr>
@@ -355,6 +358,50 @@ export default function TripTable({
                     </div>
                   </td>
                   <td className="px-3 py-2 text-center align-middle">
+                    {(t.passengerName || t.passengerPhone) ? (
+                      <div className="inline-flex items-center gap-1.5 bg-primary-50/50 rounded-lg px-2.5 py-1.5 border border-primary-100/60">
+                        <Icon
+                          className="text-primary"
+                          icon="solar:user-circle-bold"
+                          width={16}
+                        />
+                        <div className="flex items-center gap-1.5">
+                          {t.passengerName && (
+                            <span className="font-semibold text-xs text-primary whitespace-nowrap">
+                              {t.passengerName}
+                            </span>
+                          )}
+                          {t.passengerName && t.passengerPhone && (
+                            <span className="text-default-400">•</span>
+                          )}
+                          {t.passengerPhone && (
+                            <a 
+                              href={`tel:${t.passengerPhone}`}
+                              className="text-xs text-success hover:text-primary transition-colors hover:underline whitespace-nowrap"
+                            >
+                              {t.passengerPhone}
+                            </a>
+                          )}
+                        </div>
+                        {t.passengerPhone && (
+                          <Button
+                            isIconOnly
+                            aria-label="تماس با مسافر"
+                            className="text-primary bg-white/80 border-primary-200 hover:bg-primary hover:text-white transition-colors min-w-unit-7 w-7 h-7"
+                            size="sm"
+                            variant="flat"
+                            as="a"
+                            href={`tel:${t.passengerPhone}`}
+                          >
+                            <Icon icon="solar:phone-calling-bold" width={14} />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-default-400">اطلاعات ناقص</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-center align-middle">
                     {t.assignedDriverId ? (
                       <div className="inline-flex items-center gap-4">
                         <div className="inline-flex items-center gap-1">
@@ -425,7 +472,7 @@ export default function TripTable({
                 groupBreakIndex > 0 &&
                 groupBreakIndex < trips.length ? (
                   <tr>
-                    <td className="py-2" colSpan={4}>
+                    <td className="py-2" colSpan={5}>
                       <div className="border-t border-default-200" />
                     </td>
                   </tr>

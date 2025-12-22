@@ -72,6 +72,10 @@ export default function TripsTable(/** @type {TripsTableProps} */ props) {
   // Modal state for driver details
   const {isOpen, onOpen, onOpenChange, onClose} = useDisclosure();
   const [selectedDriver, setSelectedDriver] = React.useState(null);
+  
+  // Modal state for passenger details
+  const {isOpen: isPassengerOpen, onOpen: onPassengerOpen, onOpenChange: onPassengerOpenChange, onClose: onPassengerClose} = useDisclosure();
+  const [selectedPassenger, setSelectedPassenger] = React.useState(null);
 
   /**
    * Open driver modal for given trip row's driver
@@ -85,6 +89,21 @@ export default function TripsTable(/** @type {TripsTableProps} */ props) {
         tripId: trip.id,
       });
       onOpen();
+    }
+  };
+
+  /**
+   * Open passenger modal for given trip row's passenger
+   * @param {TripRow} trip
+   */
+  const handleOpenPassenger = (trip) => {
+    if (trip?.Passenger) {
+      setSelectedPassenger({
+        ...trip.Passenger,
+        tripId: trip.id,
+        ticketCode: trip.TicketCode,
+      });
+      onPassengerOpen();
     }
   };
 
@@ -237,24 +256,43 @@ export default function TripsTable(/** @type {TripsTableProps} */ props) {
                         color="secondary"
                         className="font-medium"
                         onPress={() => handleOpenDriver(r)}
-                        startContent={<Icon icon="radix-icons:person" className="text-base" />}
+                        startContent={<Icon icon="solar:user-id-bold-duotone" className="text-lg" />}
                       >
                         {r.Driver.Firstname} {r.Driver.Lastname}
                       </Button>
                     ) : (
-                      <span className="font-thin text-default-400">بدون راننده</span>
+                      <div className="flex items-center gap-2">
+                        <Icon icon="solar:shield-warning-bold-duotone" className="text-warning text-lg" />
+                        <span className="text-sm text-default-400">بدون راننده</span>
+                      </div>
                     )}
                   </TableCell>
 
                   <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <span className="font-medium">
-                        {r.Passenger?.Firstname} {r.Passenger?.Lastname}
-                      </span>
-                      <span className="text-sm text-default-500">
-                        {r.Passenger?.NumberPhone || "شماره تماس ثبت نشده"}
-                      </span>
-                    </div>
+                    {r.Passenger ? (
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        color="primary"
+                        className="font-medium"
+                        onPress={() => handleOpenPassenger(r)}
+                        startContent={<Icon icon="solar:user-id-bold" className="text-lg" />}
+                      >
+                        <div className="flex flex-col items-start gap-0.5">
+                          <span>{r.Passenger.Firstname} {r.Passenger.Lastname}</span>
+                          {r.Passenger.NumberPhone && (
+                            <span className="text-xs text-default-500 font-normal">
+                              {r.Passenger.NumberPhone}
+                            </span>
+                          )}
+                        </div>
+                      </Button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Icon icon="solar:danger-circle-bold-duotone" className="text-danger text-lg" />
+                        <span className="text-sm text-default-400">اطلاعات مسافر ناقص</span>
+                      </div>
+                    )}
                   </TableCell>
                   
 
@@ -295,30 +333,32 @@ export default function TripsTable(/** @type {TripsTableProps} */ props) {
         <ModalContent>
           {(close) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">اطلاعات راننده</ModalHeader>
+              <ModalHeader className="flex items-center gap-2">
+                <Icon icon="solar:user-id-bold-duotone" className="text-secondary text-2xl" />
+                <span>اطلاعات راننده</span>
+              </ModalHeader>
               <ModalBody>
                 {selectedDriver ? (
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center justify-start gap-3">
-                      <span className="text-default-500">نام راننده:</span>
-                      <span className="font-medium">{selectedDriver.Firstname} {selectedDriver.Lastname}</span>
+                  <div className="space-y-4 text-sm">
+                    <div className="flex items-start justify-between p-3 bg-secondary-50 rounded-lg">
+                      <span className="text-default-600">نام و نام خانوادگی:</span>
+                      <span className="font-semibold text-secondary">{selectedDriver.Firstname} {selectedDriver.Lastname}</span>
                     </div>
-                    {selectedDriver.id && (
-                      <div className="flex items-center justify-start gap-3">
-                        <span className="text-default-500">نام خودرو:</span>
-                        <span className="font-mono">{selectedDriver.Car}</span>
+                    {selectedDriver.Car && (
+                      <div className="flex items-start justify-between p-3 bg-default-50 rounded-lg">
+                        <span className="text-default-600">نام خودرو:</span>
+                        <span className="font-medium">{selectedDriver.Car}</span>
                       </div>
                     )}
                     {selectedDriver.NumberPhone && (
-                      <div className="flex items-center justify-start gap-3">
-                        <span className="text-default-500">شماره تماس:</span>
-                        <span className="font-medium ltr:font-mono">{selectedDriver.NumberPhone}</span>
-                      </div>
-                    )}
-                    {selectedDriver.tripId && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-default-500">Trip ID:</span>
-                        <span className="font-mono">{selectedDriver.tripId}</span>
+                      <div className="flex items-start justify-between p-3 bg-default-50 rounded-lg">
+                        <span className="text-default-600">شماره تماس:</span>
+                        <a 
+                          href={`tel:${selectedDriver.NumberPhone}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {selectedDriver.NumberPhone}
+                        </a>
                       </div>
                     )}
                   </div>
@@ -327,6 +367,95 @@ export default function TripsTable(/** @type {TripsTableProps} */ props) {
                 )}
               </ModalBody>
               <ModalFooter>
+                <Button color="default" variant="light" onPress={close}>بستن</Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Passenger Details Modal */}
+      <Modal isOpen={isPassengerOpen} onOpenChange={onPassengerOpenChange} placement="center" backdrop="blur">
+        <ModalContent>
+          {(close) => (
+            <>
+              <ModalHeader className="flex items-center gap-2">
+                <Icon icon="solar:user-id-bold" className="text-primary text-2xl" />
+                <span>اطلاعات مسافر</span>
+              </ModalHeader>
+              <ModalBody>
+                {selectedPassenger ? (
+                  <div className="space-y-4 text-sm">
+                    {/* Trip Code Badge */}
+                    {selectedPassenger.ticketCode && (
+                      <div className="flex items-center justify-center p-3 bg-primary-50 rounded-lg border border-primary-100">
+                        <span className="text-default-600 ml-2">کد سفر:</span>
+                        <span className="font-mono font-bold text-primary">{selectedPassenger.ticketCode}</span>
+                      </div>
+                    )}
+                    
+                    {/* Passenger Name */}
+                    <div className="flex items-start justify-between p-3 bg-primary-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Icon icon="solar:user-bold-duotone" className="text-primary text-lg" />
+                        <span className="text-default-600">نام و نام خانوادگی:</span>
+                      </div>
+                      <span className="font-semibold text-primary">{selectedPassenger.Firstname} {selectedPassenger.Lastname}</span>
+                    </div>
+                    
+                    {/* Phone Number */}
+                    {selectedPassenger.NumberPhone && (
+                      <div className="flex items-start justify-between p-3 bg-default-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Icon icon="solar:phone-bold-duotone" className="text-success text-lg" />
+                          <span className="text-default-600">شماره تماس:</span>
+                        </div>
+                        <a 
+                          href={`tel:${selectedPassenger.NumberPhone}`}
+                          className="font-medium text-success hover:underline flex items-center gap-1"
+                        >
+                          {selectedPassenger.NumberPhone}
+                          <Icon icon="solar:phone-calling-bold" className="text-base" />
+                        </a>
+                      </div>
+                    )}
+                    
+                    {/* National Code */}
+                    {selectedPassenger.NaCode && (
+                      <div className="flex items-start justify-between p-3 bg-default-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Icon icon="solar:card-bold-duotone" className="text-default-500 text-lg" />
+                          <span className="text-default-600">کد ملی:</span>
+                        </div>
+                        <span className="font-mono font-medium">{selectedPassenger.NaCode}</span>
+                      </div>
+                    )}
+
+                    {/* Passenger ID */}
+                    <div className="flex items-start justify-between p-3 bg-default-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Icon icon="solar:shield-user-bold-duotone" className="text-default-500 text-lg" />
+                        <span className="text-default-600">شناسه مسافر:</span>
+                      </div>
+                      <span className="font-mono text-xs text-default-500">#{selectedPassenger.id}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-default-400 text-center py-4">مسافری انتخاب نشده است</div>
+                )}
+              </ModalBody>
+              <ModalFooter className="gap-2">
+                {selectedPassenger?.NumberPhone && (
+                  <Button 
+                    color="success" 
+                    variant="flat"
+                    as="a"
+                    href={`tel:${selectedPassenger.NumberPhone}`}
+                    startContent={<Icon icon="solar:phone-calling-bold" className="text-lg" />}
+                  >
+                    تماس با مسافر
+                  </Button>
+                )}
                 <Button color="default" variant="light" onPress={close}>بستن</Button>
               </ModalFooter>
             </>

@@ -37,6 +37,9 @@ export type Trip = {
   destinationAddress?: string;
   destinationDescription?: string;
   startsAtMs?: number;
+  // Passenger information
+  passengerName?: string;
+  passengerPhone?: string;
 };
 
 export type TripLocationContext = "origin" | "destination";
@@ -362,17 +365,68 @@ export default function TripCard({
               <CountdownChip />
             </div>
           ) : null}
+          
+          {/* Passenger Information Section - Compact Layout */}
+          {(trip.passengerName || trip.passengerPhone) && (
+            <>
+              <Divider className="my-1 mx-0" />
+              <div className="flex items-center justify-between gap-2 bg-primary-50/50 rounded-lg px-2.5 py-1.5 border border-primary-100/60">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <Icon
+                    className="text-primary shrink-0"
+                    icon="solar:user-circle-bold"
+                    width={18}
+                  />
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    {trip.passengerName && (
+                      <span className="font-semibold text-xs text-primary truncate">
+                        {trip.passengerName}
+                      </span>
+                    )}
+                    {trip.passengerName && trip.passengerPhone && (
+                      <span className="text-default-400">•</span>
+                    )}
+                    {trip.passengerPhone && (
+                      <a 
+                        href={`tel:${trip.passengerPhone}`}
+                        className="text-xs text-success hover:text-primary transition-colors hover:underline shrink-0"
+                      >
+                        {trip.passengerPhone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+                {trip.passengerPhone && (
+                  <Button
+                    isIconOnly
+                    aria-label="تماس با مسافر"
+                    className="text-primary bg-white/80 border-primary-200 hover:bg-primary hover:text-white transition-colors min-w-unit-8 w-8 h-8"
+                    size="sm"
+                    variant="flat"
+                    as="a"
+                    href={`tel:${trip.passengerPhone}`}
+                  >
+                    <Icon icon="solar:phone-calling-bold" width={16} />
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+          
           <Divider className="my-1 mx-0" />
           <div className="flex items-center justify-between gap-2 ">
             {assigned ? (
-              <div className="text-default-700 text-sm">
+              <div className="text-default-700 text-sm flex-1">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Icon
+                    className="text-secondary"
+                    icon="solar:user-id-bold-duotone"
+                    width={16}
+                  />
+                  <span className="text-xs text-secondary/70 font-medium">راننده:</span>
+                </div>
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-flex items-center gap-1">
-                    <Icon
-                      className="text-default-500"
-                      icon="heroicons-outline:user"
-                      width={18}
-                    />
                     <span className="font-medium">
                       {trip.driverName ?? "راننده"}
                     </span>

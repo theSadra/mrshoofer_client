@@ -260,6 +260,11 @@ export default function UpcomingsPage() {
       originDescription: t.Location?.Description ?? undefined,
       destinationDescription: t.DestinationLocation?.Description ?? undefined,
       startsAtMs: startsAt ? startsAt.getTime() : Number.POSITIVE_INFINITY,
+      // Passenger information
+      passengerName: t.Passenger
+        ? `${t.Passenger.Firstname ?? ""} ${t.Passenger.Lastname ?? ""}`.trim()
+        : undefined,
+      passengerPhone: t.Passenger?.NumberPhone ?? undefined,
     };
   };
 
@@ -278,7 +283,18 @@ export default function UpcomingsPage() {
         const data: any[] = await res.json();
 
         if (cancelled) return;
-        const mapped: ExtendedTrip[] = data.map(mapTripRecord);
+        // Filter out test trips and map the remaining ones
+        const filtered = data.filter((t: any) => {
+          const originCity = t?.OriginCity || "";
+          const destCity = t?.DestinationCity || "";
+          const passengerFirstname = t?.Passenger?.Firstname || "";
+          const passengerLastname = t?.Passenger?.Lastname || "";
+          return !originCity.includes("تست") && 
+                 !destCity.includes("تست") && 
+                 !passengerFirstname.includes("تست") && 
+                 !passengerLastname.includes("تست");
+        });
+        const mapped: ExtendedTrip[] = filtered.map(mapTripRecord);
 
         setTrips(mapped);
       } catch (e: any) {
@@ -372,7 +388,18 @@ export default function UpcomingsPage() {
 
     if (tRes.ok) {
       const data: any[] = await tRes.json();
-      const mapped: ExtendedTrip[] = data.map(mapTripRecord);
+      // Filter out test trips
+      const filtered = data.filter((t: any) => {
+        const originCity = t?.OriginCity || "";
+        const destCity = t?.DestinationCity || "";
+        const passengerFirstname = t?.Passenger?.Firstname || "";
+        const passengerLastname = t?.Passenger?.Lastname || "";
+        return !originCity.includes("تست") && 
+               !destCity.includes("تست") && 
+               !passengerFirstname.includes("تست") && 
+               !passengerLastname.includes("تست");
+      });
+      const mapped: ExtendedTrip[] = filtered.map(mapTripRecord);
 
       setTrips(mapped);
     }
