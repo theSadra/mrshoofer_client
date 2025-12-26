@@ -414,31 +414,18 @@ export default function TripCard({
           )}
           
           <Divider className="my-1 mx-0" />
-          <div className="flex items-center justify-between gap-2 ">
+          <div className="flex items-center justify-between gap-2">
             {assigned ? (
-              <div className="text-default-700 text-sm flex-1">
-                <div className="flex items-center gap-1.5 mb-1">
+              <div className="text-default-700 text-sm flex-1 text-right">
+                <div className="flex items-center gap-1.5 mb-1 justify-end">
+                  <span className="text-xs text-secondary/70 font-medium">راننده:</span>
                   <Icon
                     className="text-secondary"
                     icon="solar:user-id-bold-duotone"
                     width={16}
                   />
-                  <span className="text-xs text-secondary/70 font-medium">راننده:</span>
                 </div>
-                <span className="inline-flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="font-medium">
-                      {trip.driverName ?? "راننده"}
-                    </span>
-                    {trip.driverCar ? (
-                      <>
-                        <span className="text-default-400">•</span>
-                        <span className="text-default-600">
-                          {trip.driverCar}
-                        </span>
-                      </>
-                    ) : null}
-                  </span>
+                <div className="flex items-center justify-end gap-2">
                   <Button
                     isIconOnly
                     aria-label="تماس با راننده"
@@ -453,10 +440,23 @@ export default function TripCard({
                   >
                     <Icon icon="ion:call" width={18} />
                   </Button>
-                </span>
+                  <div className="flex items-center gap-1">
+                    {trip.driverCar ? (
+                      <>
+                        <span className="text-default-600">
+                          {trip.driverCar}
+                        </span>
+                        <span className="text-default-400">•</span>
+                      </>
+                    ) : null}
+                    <span className="font-medium">
+                      {trip.driverName ?? "راننده"}
+                    </span>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="text-default-900 font-medium text-sm text-start">
+              <div className="text-default-900 font-medium text-sm text-right flex-1">
                 برای این سفر راننده‌ای انتخاب نشده است.
               </div>
             )}

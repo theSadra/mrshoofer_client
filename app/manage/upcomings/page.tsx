@@ -416,7 +416,7 @@ export default function UpcomingsPage() {
 
   return (
     <div
-      className="container mx-auto max-w-xl lg:max-w-none px-3 py-4"
+      className="w-full px-3 py-4"
       dir="rtl"
     >
       <div className="flex flex-col gap-3 mb-3">
