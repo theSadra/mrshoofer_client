@@ -40,6 +40,8 @@ model Trip {
   driverId              Int?
   originLocationId      Int?
   destinationLocationId Int?
+  sellerName            String?
+  sellerLogoUrl         String?
   DestinationLocation   Location?  @relation("TripDestination", fields: [destinationLocationId], references: [id])
   Driver                Driver?    @relation(fields: [driverId], references: [id])
   Location              Location?  @relation("TripLocation", fields: [locationId], references: [id])

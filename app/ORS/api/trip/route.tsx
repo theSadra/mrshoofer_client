@@ -209,6 +209,8 @@ export async function POST(req: NextRequest) {
       StartsAt: parseLocalNaive(
         getProperty(trip, "StartsAt", "startsAt", "startsat"),
       ),
+      sellerName: getProperty(trip, "sellerName", "SellerName", "sellername"),
+      sellerLogoUrl: getProperty(trip, "sellerLogoUrl", "SellerLogoUrl", "sellerlogourl"),
     };
 
     // Create trip and relate to passenger
