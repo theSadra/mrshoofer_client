@@ -66,11 +66,15 @@ export default withAuth(
   },
 );
 
+// Matcher intentionally does NOT include /api/:path* to avoid blocking public API routes like /ORS/api/trip
+// If you ever need to match all API routes but exclude /ORS/api/*, use:
+// matcher: ["/api/(?!ORS/).*"]
 export const config = {
   matcher: [
     "/manage/:path*",
     "/api/admin/:path*",
     "/superadmin/:path*",
     "/api/superadmin/:path*",
+    // Do NOT add "/api/:path*" unless you want to protect all API routes (will block /ORS/api/*)
   ],
 };
