@@ -27,7 +27,7 @@ function getProperty(obj: any, ...possibleNames: string[]) {
 }
 
 // Helper to generate a unique alphanumeric token
-function generateSecureToken(length = 5) {
+function generateSecureToken(length = 10) {
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let token = "";
