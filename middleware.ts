@@ -9,6 +9,7 @@ export default withAuth(
 
     // CRITICAL: Allow ALL /ORS routes to bypass authentication completely
     if (pathname.startsWith("/ORS")) {
+      console.log(`[Middleware] Allowing ORS route: ${pathname}`);
       return NextResponse.next();
     }
 
@@ -72,14 +73,13 @@ export default withAuth(
 );
 
 // Matcher intentionally does NOT include /api/:path* to avoid blocking public API routes like /ORS/api/trip
-// If you ever need to match all API routes but exclude /ORS/api/*, use:
-// matcher: ["/api/(?!ORS/).*"]
+// The middleware explicitly checks and allows /ORS/* routes at the very beginning
 export const config = {
   matcher: [
     "/manage/:path*",
     "/api/admin/:path*",
     "/superadmin/:path*",
     "/api/superadmin/:path*",
-    // Do NOT add "/api/:path*" unless you want to protect all API routes (will block /ORS/api/*)
+    // /ORS/* routes are explicitly allowed in middleware, no need to list here
   ],
 };
