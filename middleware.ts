@@ -7,6 +7,11 @@ export default withAuth(
     const token = req.nextauth.token as any;
     const isApi = pathname.startsWith("/api/");
 
+    // CRITICAL: Allow ALL /ORS routes to bypass authentication completely
+    if (pathname.startsWith("/ORS")) {
+      return NextResponse.next();
+    }
+
     // Helper to handle unauthorized consistently
     const deny = (reason: string) => {
       if (isApi) {
