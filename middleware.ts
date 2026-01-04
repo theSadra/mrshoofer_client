@@ -1,67 +1,84 @@
 import { withAuth } from "next-auth/middleware";
 import { NextRequest, NextResponse } from "next/server";
-
-
-
-
-
-
-
-
-
-
-
-
-
-node verify-ors-unprotected.jsWrite-Host "🧪 Testing..." -ForegroundColor YellowStart-Sleep -Seconds 10Write-Host "`n✅ Deployed! Waiting 10 seconds...`n" -ForegroundColor Greenliara deploy --app mrshoofer-client --port 3000Write-Host "Deploying directly to Liara..." -ForegroundColor Yellow# Option 1: Direct Liara deploy (faster, no Docker Hub needed)Set-Location "c:\Users\doros\OneDrive\Desktop\MrShoofer client webapp\mrshoofer_client"import { isPublicRoute } from "@/lib/public-routes";
+import { isPublicRoute } from "@/lib/public-routes";
 
 /**
- * CRITICAL MIDDLEWARE CONFIGURATION
- * =================================
- * This middleware handles authentication for protected routes.
- * ORS routes MUST be completely bypassed - they use their own token auth.
- *
- * Protection Strategy (Multiple Layers):
- * 1. Centralized public route checker
- * 2. Case-insensitive ORS path check
- * 3. Explicit /ORS/ and /ors/ prefix check
- * 4. Matcher pattern exclusion
- * 5. Route-level configuration
+ * ============================================================================
+ * AUTHENTICATION MIDDLEWARE - TWO SEPARATE SYSTEMS
+ * ============================================================================
+ * 
+ * SYSTEM 1: ORS API Authentication (Token-Based)
+ * ------------------------------------------------
+ * - Routes: /ORS/* and /ors/*
+ * - Auth Method: Bearer token in Authorization header
+ * - Token: YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6
+ * - Handler: requireORSAuth() in each ORS route
+ * - NEVER uses NextAuth - completely bypassed
+ * 
+ * SYSTEM 2: Admin/Manage Authentication (Session-Based)
+ * ------------------------------------------------------
+ * - Routes: /manage/*, /superadmin/*, /api/admin/*, /api/superadmin/*
+ * - Auth Method: NextAuth session cookies
+ * - Handler: withAuth() middleware below
+ * - NEVER applies to ORS routes
+ * 
+ * ============================================================================
  */
 
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // === LAYER 1: Centralized Public Routes ===
+  // =========================================================================
+  // ORS ROUTES: BYPASS ALL NEXTAUTH AUTHENTICATION
+  // =========================================================================
+  // These routes use their own Bearer token authentication system
+  // They must NEVER be checked by NextAuth middleware
+  
+  // Check 1: Centralized public route checker
   if (isPublicRoute(pathname)) {
-    console.log(`[Middleware] ✅ PUBLIC ROUTE: ${pathname}`);
+    console.log(`[Middleware] ✅ PUBLIC ROUTE - NO AUTH: ${pathname}`);
     const response = NextResponse.next();
-    response.headers.set('X-Public-Route', 'true');
-    response.headers.set('X-ORS-Bypass', 'true');
+    response.headers.set("X-Auth-System", "none");
+    response.headers.set("X-ORS-Bypass", "true");
     return response;
   }
 
-  // === LAYER 2: Case-Insensitive ORS Check ===
+  // Check 2: Case-insensitive ORS check
   const pathLower = pathname.toLowerCase();
   if (pathLower.startsWith("/ors")) {
-    console.log(`[Middleware] ✅ ORS ROUTE (case-insensitive): ${pathname}`);
+    console.log(`[Middleware] ✅ ORS ROUTE - TOKEN AUTH (not NextAuth): ${pathname}`);
     const response = NextResponse.next();
-    response.headers.set('X-ORS-Bypass', 'true');
+    response.headers.set("X-Auth-System", "ors-token");
+    response.headers.set("X-ORS-Bypass", "true");
     return response;
   }
 
-  // === LAYER 3: Explicit Path Prefix Check ===
-  if (pathname.startsWith("/ORS/") || pathname.startsWith("/ors/") || pathname === "/ORS" || pathname === "/ors") {
-    console.log(`[Middleware] ✅ ORS API: ${pathname}`);
+  // Check 3: Explicit ORS path check
+  if (
+    pathname.startsWith("/ORS/") ||
+    pathname.startsWith("/ors/") ||
+    pathname === "/ORS" ||
+    pathname === "/ors"
+  ) {
+    console.log(`[Middleware] ✅ ORS API - TOKEN AUTH (not NextAuth): ${pathname}`);
     const response = NextResponse.next();
-    response.headers.set('X-ORS-Bypass', 'true');
+    response.headers.set("X-Auth-System", "ors-token");
+    response.headers.set("X-ORS-Bypass", "true");
     return response;
   }
 
-  // === PROTECTED ROUTES: Use NextAuth ===
+  // =========================================================================
+  // PROTECTED ROUTES: USE NEXTAUTH MIDDLEWARE
+  // =========================================================================
+  // Only /manage, /superadmin, /api/admin, /api/superadmin routes reach here
+  // ORS routes never get here - they returned early above
+  
+  console.log(`[Middleware] 🔐 Protected route - using NextAuth: ${pathname}`);
   return withAuthMiddleware(req);
 }
 
+// NextAuth middleware - ONLY for /manage, /superadmin, and admin API routes
+// ORS routes NEVER execute this code
 const withAuthMiddleware = withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl;
@@ -71,25 +88,29 @@ const withAuthMiddleware = withAuth(
     // Helper to handle unauthorized consistently
     const deny = (reason: string) => {
       if (isApi) {
-        return NextResponse.json({ error: "Forbidden", reason }, { status: 403 });
+        return NextResponse.json(
+          { error: "Forbidden", reason, authSystem: "nextauth" },
+          { status: 403 }
+        );
       }
       const url = new URL("/403", req.url);
-      url.searchParams.set("r", pathname); // keep reference
+      url.searchParams.set("r", pathname);
       return NextResponse.redirect(url);
     };
 
     // Public manage login always allowed
-    if (pathname === "/manage/login") return NextResponse.next();
+    if (pathname === "/manage/login") {
+      return NextResponse.next();
+    }
 
-    // OTP request endpoint must stay public so admins can receive codes before logging in
+    // OTP request endpoint must stay public
     if (pathname === "/manage/api/auth/request-otp") {
       return NextResponse.next();
     }
 
-    // Superadmin section
+    // Superadmin section - requires NextAuth session with isSuperAdmin
     if (pathname.startsWith("/superadmin")) {
       if (!token) {
-        // unauthenticated → login
         return NextResponse.redirect(new URL("/manage/login", req.url));
       }
       if (!token.isSuperAdmin) {
@@ -97,7 +118,7 @@ const withAuthMiddleware = withAuth(
       }
     }
 
-    // Manage section (excluding login handled above)
+    // Manage section - requires NextAuth session with isAdmin
     if (pathname.startsWith("/manage")) {
       if (!token) {
         return NextResponse.redirect(new URL("/manage/login", req.url));
@@ -107,12 +128,16 @@ const withAuthMiddleware = withAuth(
       }
     }
 
-    // API namespaces (already matched by config) fallback checks
+    // API namespaces - requires NextAuth session
     if (pathname.startsWith("/api/superadmin")) {
-      if (!token?.isSuperAdmin) return deny("requires-superadmin");
+      if (!token?.isSuperAdmin) {
+        return deny("requires-superadmin");
+      }
     }
     if (pathname.startsWith("/api/admin")) {
-      if (!token?.isAdmin) return deny("requires-admin");
+      if (!token?.isAdmin) {
+        return deny("requires-admin");
+      }
     }
 
     return NextResponse.next();
@@ -120,32 +145,34 @@ const withAuthMiddleware = withAuth(
   {
     callbacks: {
       authorized: ({ token }) => {
-        // Defer detailed logic to middleware above; just allow so we can examine token there.
-        return true; // We handle redirects/denials manually.
+        // We handle authorization logic in the middleware function above
+        return true;
       },
     },
-  },
+  }
 );
 
-// Matcher configuration - ORS routes are explicitly excluded BOTH in matcher AND in function
-// CRITICAL: ORS routes must NEVER be protected - they use their own token-based auth
+// ============================================================================
+// MATCHER CONFIGURATION
+// ============================================================================
+// Explicitly exclude ORS routes from even being considered by middleware
+// This is a performance optimization - ORS routes return early anyway
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
+     * Match all paths EXCEPT:
      * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files
-     * - ORS (ORS API - explicitly excluded - NEVER protected)
-     * - ors (lowercase variant - NEVER protected)
+     * - _next/image (image optimization)
+     * - favicon.ico
+     * - public folder
+     * - ORS routes (both /ORS and /ors)
+     * - api/health (health check)
      */
     "/((?!_next/static|_next/image|favicon.ico|public/|ORS|ors|api/health).*)",
+    // Explicitly match admin routes (will be checked by NextAuth)
     "/manage/:path*",
     "/api/admin/:path*",
     "/superadmin/:path*",
     "/api/superadmin/:path*",
-    // IMPORTANT: /ORS routes are NOT listed here - they bypass ALL auth
-    // DO NOT add /ORS/:path* or /ors/:path* to this matcher
   ],
 };
