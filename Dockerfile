@@ -60,5 +60,6 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Start with migrations and then the app
-CMD ["sh", "-c", "echo '🔄 Running database migrations...' && npx prisma migrate deploy || echo '⚠️ Migration failed or no migrations to run' && echo '🚀 Starting Next.js application...' && exec node server.js"]
+# Start the app without running migrations
+# Migrations should be run separately during deployment, not on every container restart
+CMD ["node", "server.js"]
