@@ -1,17 +1,26 @@
 import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export default withAuth(
+// CRITICAL: Check ORS routes BEFORE NextAuth wrapper
+export default function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Allow ALL /ORS routes to bypass authentication completely
+  // This must happen BEFORE withAuth is invoked
+  if (pathname.startsWith("/ORS")) {
+    console.log(`[Middleware] Bypassing auth for ORS route: ${pathname}`);
+    return NextResponse.next();
+  }
+
+  // For all other routes, use NextAuth middleware
+  return withAuthMiddleware(req);
+}
+
+const withAuthMiddleware = withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token as any;
     const isApi = pathname.startsWith("/api/");
-
-    // CRITICAL: Allow ALL /ORS routes to bypass authentication completely
-    if (pathname.startsWith("/ORS")) {
-      console.log(`[Middleware] Allowing ORS route: ${pathname}`);
-      return NextResponse.next();
-    }
 
     // Helper to handle unauthorized consistently
     const deny = (reason: string) => {
@@ -72,14 +81,15 @@ export default withAuth(
   },
 );
 
-// Matcher intentionally does NOT include /api/:path* to avoid blocking public API routes like /ORS/api/trip
-// The middleware explicitly checks and allows /ORS/* routes at the very beginning
+// Matcher configuration - ORS routes are explicitly excluded
+// The middleware function itself handles ORS bypass before NextAuth
 export const config = {
   matcher: [
     "/manage/:path*",
     "/api/admin/:path*",
     "/superadmin/:path*",
     "/api/superadmin/:path*",
-    // /ORS/* routes are explicitly allowed in middleware, no need to list here
+    // IMPORTANT: /ORS routes are NOT listed here - they bypass all auth
+    // DO NOT add /ORS/:path* to this matcher
   ],
 };
