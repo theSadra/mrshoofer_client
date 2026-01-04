@@ -4,6 +4,10 @@ import { PrismaClient, TripStatus } from "@prisma/client";
 import { requireORSAuth } from "@/lib/ors-auth-middleware";
 import { sendDriverTripCanceled } from "@/lib/SmsService/DriverSMSSender";
 
+// Route configuration - ensure this route is completely public
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const prisma = new PrismaClient();
 
 // POST /ORS/api/trip/cancel

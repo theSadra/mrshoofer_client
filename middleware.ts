@@ -2,6 +2,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextRequest, NextResponse } from "next/server";
 
 // CRITICAL: Check ORS routes BEFORE NextAuth wrapper
+// ORS routes must NEVER be protected - they use their own token-based auth
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -9,8 +10,19 @@ export default function middleware(req: NextRequest) {
   // This must happen BEFORE withAuth is invoked
   const pathLower = pathname.toLowerCase();
   if (pathLower.startsWith("/ors")) {
-    console.log(`[Middleware] Bypassing auth for ORS route: ${pathname}`);
-    return NextResponse.next();
+    console.log(`[Middleware] ✅ BYPASSING ALL AUTH for ORS route: ${pathname}`);
+    // Set a header to indicate ORS bypass for debugging
+    const response = NextResponse.next();
+    response.headers.set('X-ORS-Bypass', 'true');
+    return response;
+  }
+
+  // Double-check: Explicitly allow ORS API routes
+  if (pathname.startsWith("/ORS/") || pathname.startsWith("/ors/")) {
+    console.log(`[Middleware] ✅ BYPASSING ALL AUTH for ORS API: ${pathname}`);
+    const response = NextResponse.next();
+    response.headers.set('X-ORS-Bypass', 'true');
+    return response;
   }
 
   // For all other routes, use NextAuth middleware
@@ -82,15 +94,25 @@ const withAuthMiddleware = withAuth(
   },
 );
 
-// Matcher configuration - ORS routes are explicitly excluded
-// The middleware function itself handles ORS bypass before NextAuth
+// Matcher configuration - ORS routes are explicitly excluded BOTH in matcher AND in function
+// CRITICAL: ORS routes must NEVER be protected - they use their own token-based auth
 export const config = {
   matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files
+     * - ORS (ORS API - explicitly excluded - NEVER protected)
+     * - ors (lowercase variant - NEVER protected)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|public/|ORS|ors|api/health).*)",
     "/manage/:path*",
     "/api/admin/:path*",
     "/superadmin/:path*",
     "/api/superadmin/:path*",
-    // IMPORTANT: /ORS routes are NOT listed here - they bypass all auth
-    // DO NOT add /ORS/:path* to this matcher
+    // IMPORTANT: /ORS routes are NOT listed here - they bypass ALL auth
+    // DO NOT add /ORS/:path* or /ors/:path* to this matcher
   ],
 };

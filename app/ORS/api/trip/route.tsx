@@ -4,6 +4,10 @@ import { PrismaClient } from "@prisma/client";
 import { sendPassengerSMS } from "@/lib/SmsService/PassengerSMSSender";
 import { requireORSAuth } from "@/lib/ors-auth-middleware";
 
+// Route configuration - ensure this route is completely public
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const prisma = new PrismaClient();
 
 // Helper to safely get property case-insensitively

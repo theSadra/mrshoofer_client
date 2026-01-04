@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Route configuration - ensure this route is completely public
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 // Test endpoint to check environment variables
 export async function GET(req: NextRequest) {
   const apiSecret = process.env.ORS_API_SECRET;
