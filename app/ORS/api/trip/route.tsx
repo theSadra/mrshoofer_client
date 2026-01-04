@@ -213,6 +213,18 @@ export async function POST(req: NextRequest) {
       sellerLogoUrl: getProperty(trip, "sellerLogoUrl", "SellerLogoUrl", "sellerlogourl"),
     };
 
+    // Validate required fields
+    if (!tripData.StartsAt || isNaN(tripData.StartsAt.getTime())) {
+      return NextResponse.json(
+        {
+          error: "Missing or invalid StartsAt field",
+          details: "StartsAt must be a valid date/time in ISO format (e.g., 2024-01-15T10:30:00)",
+          receivedValue: getProperty(trip, "StartsAt", "startsAt", "startsat"),
+        },
+        { status: 400 },
+      );
+    }
+
     // Create trip and relate to passenger
     const newTrip = await prisma.trip.create({
       data: {

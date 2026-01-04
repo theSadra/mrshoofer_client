@@ -5,9 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow ALL /ORS routes to bypass authentication completely
+  // Allow ALL /ORS routes to bypass authentication completely (case-insensitive)
   // This must happen BEFORE withAuth is invoked
-  if (pathname.startsWith("/ORS")) {
+  const pathLower = pathname.toLowerCase();
+  if (pathLower.startsWith("/ors")) {
     console.log(`[Middleware] Bypassing auth for ORS route: ${pathname}`);
     return NextResponse.next();
   }
