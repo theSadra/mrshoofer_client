@@ -1,31 +1,64 @@
 import { withAuth } from "next-auth/middleware";
 import { NextRequest, NextResponse } from "next/server";
 
-// CRITICAL: Check ORS routes BEFORE NextAuth wrapper
-// ORS routes must NEVER be protected - they use their own token-based auth
+
+
+
+
+
+
+
+
+
+
+
+
+node verify-ors-unprotected.jsWrite-Host "🧪 Testing..." -ForegroundColor YellowStart-Sleep -Seconds 10Write-Host "`n✅ Deployed! Waiting 10 seconds...`n" -ForegroundColor Greenliara deploy --app mrshoofer-client --port 3000Write-Host "Deploying directly to Liara..." -ForegroundColor Yellow# Option 1: Direct Liara deploy (faster, no Docker Hub needed)Set-Location "c:\Users\doros\OneDrive\Desktop\MrShoofer client webapp\mrshoofer_client"import { isPublicRoute } from "@/lib/public-routes";
+
+/**
+ * CRITICAL MIDDLEWARE CONFIGURATION
+ * =================================
+ * This middleware handles authentication for protected routes.
+ * ORS routes MUST be completely bypassed - they use their own token auth.
+ *
+ * Protection Strategy (Multiple Layers):
+ * 1. Centralized public route checker
+ * 2. Case-insensitive ORS path check
+ * 3. Explicit /ORS/ and /ors/ prefix check
+ * 4. Matcher pattern exclusion
+ * 5. Route-level configuration
+ */
+
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow ALL /ORS routes to bypass authentication completely (case-insensitive)
-  // This must happen BEFORE withAuth is invoked
+  // === LAYER 1: Centralized Public Routes ===
+  if (isPublicRoute(pathname)) {
+    console.log(`[Middleware] ✅ PUBLIC ROUTE: ${pathname}`);
+    const response = NextResponse.next();
+    response.headers.set('X-Public-Route', 'true');
+    response.headers.set('X-ORS-Bypass', 'true');
+    return response;
+  }
+
+  // === LAYER 2: Case-Insensitive ORS Check ===
   const pathLower = pathname.toLowerCase();
   if (pathLower.startsWith("/ors")) {
-    console.log(`[Middleware] ✅ BYPASSING ALL AUTH for ORS route: ${pathname}`);
-    // Set a header to indicate ORS bypass for debugging
+    console.log(`[Middleware] ✅ ORS ROUTE (case-insensitive): ${pathname}`);
     const response = NextResponse.next();
     response.headers.set('X-ORS-Bypass', 'true');
     return response;
   }
 
-  // Double-check: Explicitly allow ORS API routes
-  if (pathname.startsWith("/ORS/") || pathname.startsWith("/ors/")) {
-    console.log(`[Middleware] ✅ BYPASSING ALL AUTH for ORS API: ${pathname}`);
+  // === LAYER 3: Explicit Path Prefix Check ===
+  if (pathname.startsWith("/ORS/") || pathname.startsWith("/ors/") || pathname === "/ORS" || pathname === "/ors") {
+    console.log(`[Middleware] ✅ ORS API: ${pathname}`);
     const response = NextResponse.next();
     response.headers.set('X-ORS-Bypass', 'true');
     return response;
   }
 
-  // For all other routes, use NextAuth middleware
+  // === PROTECTED ROUTES: Use NextAuth ===
   return withAuthMiddleware(req);
 }
 

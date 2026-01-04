@@ -47,6 +47,26 @@ const nextConfig = {
     unoptimized: true,
   },
   
+  // Headers configuration - ensure ORS routes are never blocked
+  async headers() {
+    return [
+      {
+        source: '/ORS/:path*',
+        headers: [
+          { key: 'X-ORS-Public-Route', value: 'true' },
+          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+        ],
+      },
+      {
+        source: '/ors/:path*',
+        headers: [
+          { key: 'X-ORS-Public-Route', value: 'true' },
+          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+        ],
+      },
+    ];
+  },
+  
   // Minimize experimental features
   experimental: {},
   
