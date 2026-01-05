@@ -7,6 +7,8 @@
   "healthCheck": {
     "command": "curl -f http://localhost:3000/api/health || curl -f http://localhost:3000 || exit 1"
   },
+  "network": "public",
+  "disks": [],
   "env": {
     "NODE_ENV": "production",
     "PORT": "3000",
@@ -26,5 +28,12 @@
   "scale": {
     "memory": "1GB",
     "cpu": 1
+  },
+  "zone": "ir",
+  "waf": {
+    "enabled": false
+  },
+  "rateLimit": {
+    "enabled": false
   }
 }
