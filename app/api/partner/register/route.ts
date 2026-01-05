@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 const prisma = new PrismaClient();
 
-// POST /api/partner/api/register
+// POST /api/partner/register
 // Register a new passenger in the system
 export async function POST(req: NextRequest) {
   // Authenticate the request
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET /api/partner/api/register?phone=XXXXXXXXXX
+// GET /api/partner/register?phone=XXXXXXXXXX
 // Check if a passenger exists by phone number
 export async function GET(req: NextRequest) {
   // Authenticate the request
