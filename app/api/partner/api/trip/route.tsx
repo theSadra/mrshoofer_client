@@ -60,7 +60,7 @@ async function generateUniqueTicketCode(prisma: PrismaClient, maxRetries = 10) {
   return `TC${Date.now()}${Math.floor(Math.random() * 1000)}`;
 }
 
-// POST /ORS/api/trip
+// POST /api/partner/api/trip
 export async function POST(req: NextRequest) {
   const authResult = requireORSAuth(req);
 

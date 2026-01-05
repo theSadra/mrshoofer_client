@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Debug endpoint to troubleshoot ORS routes and middleware
-// GET /ORS/api/debug
+// Debug endpoint to troubleshoot Partner API routes and middleware
+// GET /api/partner/api/debug
 export async function GET(req: NextRequest) {
   const headers = Object.fromEntries(req.headers.entries());
   const url = new URL(req.url);
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// POST /ORS/api/debug - Echo back the request body for testing
+// POST /api/partner/api/debug - Echo back the request body for testing
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 const prisma = new PrismaClient();
 
-// POST /ORS/api/trip/cancel
+// POST /api/partner/api/trip/cancel
 export async function POST(req: NextRequest) {
   const authResult = requireORSAuth(req);
 

@@ -7,12 +7,12 @@ import { isPublicRoute } from "@/lib/public-routes";
  * AUTHENTICATION MIDDLEWARE - TWO SEPARATE SYSTEMS
  * ============================================================================
  * 
- * SYSTEM 1: ORS API Authentication (Token-Based)
+ * SYSTEM 1: Partner API Authentication (Token-Based)
  * ------------------------------------------------
- * - Routes: /ORS/* and /ors/*
+ * - Routes: /api/partner/*
  * - Auth Method: Bearer token in Authorization header
  * - Token: YJure760oRHOgR0YAGOOGO1233211yMMB9R0my7cLtNOlscPgMLazgZCQhVy6
- * - Handler: requireORSAuth() in each ORS route
+ * - Handler: requireORSAuth() in each partner route
  * - NEVER uses NextAuth - completely bypassed
  * 
  * SYSTEM 2: Admin/Manage Authentication (Session-Based)
@@ -20,7 +20,7 @@ import { isPublicRoute } from "@/lib/public-routes";
  * - Routes: /manage/*, /superadmin/*, /api/admin/*, /api/superadmin/*
  * - Auth Method: NextAuth session cookies
  * - Handler: withAuth() middleware below
- * - NEVER applies to ORS routes
+ * - NEVER applies to Partner API routes
  * 
  * ============================================================================
  */
@@ -29,7 +29,7 @@ export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // =========================================================================
-  // ORS ROUTES: BYPASS ALL NEXTAUTH AUTHENTICATION
+  // PARTNER API ROUTES: BYPASS ALL NEXTAUTH AUTHENTICATION
   // =========================================================================
   // These routes use their own Bearer token authentication system
   // They must NEVER be checked by NextAuth middleware
@@ -43,27 +43,24 @@ export default function middleware(req: NextRequest) {
     return response;
   }
 
-  // Check 2: Case-insensitive ORS check
-  const pathLower = pathname.toLowerCase();
-  if (pathLower.startsWith("/ors")) {
-    console.log(`[Middleware] ✅ ORS ROUTE - TOKEN AUTH (not NextAuth): ${pathname}`);
+  // Check 2: Partner API routes
+  if (pathname.startsWith("/api/partner")) {
+    console.log(`[Middleware] ✅ PARTNER API - TOKEN AUTH (not NextAuth): ${pathname}`);
     const response = NextResponse.next();
-    response.headers.set("X-Auth-System", "ors-token");
-    response.headers.set("X-ORS-Bypass", "true");
+    response.headers.set("X-Auth-System", "partner-token");
+    response.headers.set("X-Partner-Bypass", "true");
     return response;
   }
 
-  // Check 3: Explicit ORS path check
+  // Check 3: Explicit Partner API path check
   if (
-    pathname.startsWith("/ORS/") ||
-    pathname.startsWith("/ors/") ||
-    pathname === "/ORS" ||
-    pathname === "/ors"
+    pathname.startsWith("/api/partner/") ||
+    pathname === "/api/partner"
   ) {
-    console.log(`[Middleware] ✅ ORS API - TOKEN AUTH (not NextAuth): ${pathname}`);
+    console.log(`[Middleware] ✅ PARTNER API - TOKEN AUTH (not NextAuth): ${pathname}`);
     const response = NextResponse.next();
-    response.headers.set("X-Auth-System", "ors-token");
-    response.headers.set("X-ORS-Bypass", "true");
+    response.headers.set("X-Auth-System", "partner-token");
+    response.headers.set("X-Partner-Bypass", "true");
     return response;
   }
 
@@ -71,7 +68,7 @@ export default function middleware(req: NextRequest) {
   // PROTECTED ROUTES: USE NEXTAUTH MIDDLEWARE
   // =========================================================================
   // Only /manage, /superadmin, /api/admin, /api/superadmin routes reach here
-  // ORS routes never get here - they returned early above
+  // Partner API routes never get here - they returned early above
   
   console.log(`[Middleware] 🔐 Protected route - using NextAuth: ${pathname}`);
   return withAuthMiddleware(req);
@@ -165,10 +162,10 @@ export const config = {
      * - _next/image (image optimization)
      * - favicon.ico
      * - public folder
-     * - ORS routes (both /ORS and /ors)
+     * - api/partner routes
      * - api/health (health check)
      */
-    "/((?!_next/static|_next/image|favicon.ico|public/|ORS|ors|api/health).*)",
+    "/((?!_next/static|_next/image|favicon.ico|public/|api/partner|api/health).*)",
     // Explicitly match admin routes (will be checked by NextAuth)
     "/manage/:path*",
     "/api/admin/:path*",

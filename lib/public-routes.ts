@@ -4,8 +4,7 @@
  */
 
 export const PUBLIC_API_ROUTES = [
-  '/ORS',
-  '/ors',
+  '/api/partner',
   '/api/health',
   '/_next',
   '/public',
