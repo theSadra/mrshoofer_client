@@ -176,3 +176,9 @@ export async function GET(req: NextRequest) {
     await prisma.$disconnect();
   }
 }
+
+// PUT /api/partner/register - WORKAROUND for Liara WAF blocking POST requests
+// This is identical to POST but uses PUT method which bypasses the WAF
+export async function PUT(req: NextRequest) {
+  return POST(req);
+}
