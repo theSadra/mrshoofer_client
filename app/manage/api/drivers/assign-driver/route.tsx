@@ -108,5 +108,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// PUT - Workaround for Liara WAF blocking POST
+export async function PUT(req: NextRequest) {
+  return POST(req);
+}
+
 // TODO : Sending SMS TO driver after driver assigned
 //TODO : adding driver changed message to the previus driver

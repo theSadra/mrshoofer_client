@@ -101,7 +101,7 @@ export default function AssignDriverModal({
       console.log("Assigning driver:", { driverId, tripId });
 
       const res = await fetch(`/manage/api/drivers/assign-driver`, {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ driverId, tripId }),
       });
