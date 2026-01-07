@@ -261,7 +261,7 @@ export default function AssignDriverModal({
                         }
                         try {
                           const res = await fetch("/manage/api/drivers", {
-                            method: "POST",
+                            method: "PUT",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                               Firstname,

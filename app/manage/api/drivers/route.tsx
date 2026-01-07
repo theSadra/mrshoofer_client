@@ -87,3 +87,8 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// PUT - Workaround for Liara WAF blocking POST
+export async function PUT(req: NextRequest) {
+  return POST(req);
+}

@@ -59,7 +59,7 @@ export default function AddDriverModal({
     }
     try {
       const res = await fetch("/manage/api/drivers", {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ Firstname, Lastname, PhoneNumber, CarName }),
       });
